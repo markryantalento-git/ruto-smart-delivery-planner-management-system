@@ -4,24 +4,58 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RUTO – Delivery Least Cost System</title>
+<meta name="theme-color" content="#171717">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/app-icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<aside class="install-banner" id="installBanner" aria-label="Install RUTO" hidden>
+ <p data-i="installBanner"></p>
+ <button class="install-action" id="installAppButton" type="button" data-i="installButton"></button>
+ <button class="install-close" id="installBannerClose" type="button" aria-label="Dismiss install banner">×</button>
+</aside>
 <svg width="0" height="0" style="position:absolute">
 <defs>
+<radialGradient id="truck-tire-rubber">
+ <stop offset="70%" stop-color="#292E33"/>
+ <stop offset="100%" stop-color="#090B0D"/>
+</radialGradient>
+<linearGradient id="truck-rim-metal" x1="0" y1="0" x2="1" y2="1">
+ <stop stop-color="#DDE2E7"/>
+ <stop offset=".45" stop-color="#737E88"/>
+ <stop offset="1" stop-color="#343C45"/>
+</linearGradient>
 <symbol id="logo" viewBox="0 0 64 64">
- <rect width="64" height="64" rx="15" fill="#12264A"/>
- <path d="M21 6c-5.5 0-10 4.3-10 9.7C11 23 21 32 21 32s10-9 10-16.300C31 10.300 26.500 6 21 6z" fill="#FFB020"/><circle cx="21" cy="15.500" r="3.800" fill="#12264A"/>
- <path d="M44 8c-3.700 0-6.700 2.800-6.700 6.400 0 4.900 6.700 10.600 6.700 10.600s6.700-5.700 6.700-10.600C50.700 10.800 47.700 8 44 8z" fill="#fff"/><circle cx="44" cy="14.400" r="2.400" fill="#12264A"/>
- <path d="M24 30c8 2 12 2 17-4" stroke="#FFB020" stroke-width="2" stroke-dasharray="3 3" fill="none" stroke-linecap="round"/>
- <rect x="7" y="35" width="30" height="16" rx="2.500" fill="#fff"/>
- <rect x="10" y="38" width="10" height="10" rx="1" fill="#FFB020"/><path d="M15 38v10M10 43h10" stroke="#12264A" stroke-width="1.200"/>
- <rect x="22" y="42" width="12" height="6" rx="1" fill="#FFB020"/><path d="M28 42v6" stroke="#12264A" stroke-width="1.200"/>
- <path d="M37 39h9l6 6.500V51H37z" fill="#FFB020"/><path d="M41 42h4l3 3.500h-7z" fill="#12264A"/>
- <circle cx="17" cy="52" r="4.500" fill="#12264A" stroke="#FFB020" stroke-width="2.500"/><circle cx="45" cy="52" r="4.500" fill="#12264A" stroke="#FFB020" stroke-width="2.500"/>
+ <rect width="64" height="64" rx="15" fill="var(--logo-bg, #171717)" stroke="var(--logo-outline, transparent)" stroke-width=".8"/>
+ <path d="M44 5c-7.2 0-13 5.8-13 13 0 9.4 13 23 13 23s13-13.6 13-23c0-7.2-5.8-13-13-13z" fill="var(--logo-pin, #FFB020)"/>
+ <circle cx="44" cy="18" r="5.4" fill="#17191d" stroke="#fff" stroke-width=".8"/>
+ <circle cx="44" cy="18" r="4.45" fill="#3b424b" stroke="#0b1020" stroke-width=".5"/>
+ <circle cx="44" cy="18" r="3.65" fill="#adb4bd" stroke="#e8edf2" stroke-width=".45"/>
+ <circle cx="44" cy="18" r="3.05" fill="#273248" stroke="#656e78" stroke-width=".45"/>
+ <path d="M44 16.8v-1.9M45 17.4l1.65-1M45 18.6l1.65 1M44 19.2v1.9M43 18.6l-1.65 1M43 17.4l-1.65-1" fill="none" stroke="#d8dde3" stroke-width=".72" stroke-linecap="round"/>
+ <circle cx="44" cy="18" r="1.05" fill="#c8cfd7" stroke="#414955" stroke-width=".4"/>
+ <circle cx="44" cy="18" r=".35" fill="#343c47"/>
+ <path class="logo-mark" fill="var(--logo-mark, #fff)" fill-rule="evenodd" d="M7 11h12c7.5 0 12 3.7 12 10 0 4.7-2.8 7.8-8 9.1L31 45h-8l-8-14h-1v14H7z M14 18v6h5c2.4 0 3.5-1 3.5-3s-1.1-3-3.5-3z"/>
+ <path class="logo-mark" d="M32 40h14l6 6h7v7H32z" fill="var(--logo-mark, #fff)"/>
+ <path d="M47 43h-1v4h5z" fill="#FFB020"/>
+ <path d="M35 42h10v3H35z" fill="#FFB020"/>
+ <circle cx="39" cy="53" r="3" fill="var(--logo-bg, #171717)" stroke="#FFB020" stroke-width="2"/>
+ <circle cx="53" cy="53" r="3" fill="var(--logo-bg, #171717)" stroke="#FFB020" stroke-width="2"/>
+</symbol>
+<symbol id="wordmark-wheel" viewBox="0 0 32 32">
+ <g class="wheel-spin">
+  <circle cx="16" cy="16" r="14" fill="#F28C00"/>
+  <circle cx="16" cy="16" r="11.5" fill="#202735"/>
+  <circle cx="16" cy="16" r="9.5" fill="none" stroke="#FFB020" stroke-width="1.4"/>
+  <path d="M16 7v6M22.4 9.6l-4.2 4.2M25 16h-6M22.4 22.4l-4.2-4.2M16 25v-6M9.6 22.4l4.2-4.2M7 16h6M9.6 9.6l4.2 4.2" fill="none" stroke="#FFB020" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cx="16" cy="16" r="2.4" fill="#FFB020"/>
+ </g>
 </symbol>
 <symbol id="trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6"/></symbol>
 <symbol id="edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/></symbol>
@@ -29,13 +63,13 @@
 <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
 <symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.500 1.500M17.500 17.500L19 19M5 19l1.500-1.500M17.500 6.500L19 5"/></symbol>
 <symbol id="moon" viewBox="0 0 24 24"><path d="M20 14A8 8 0 0 1 10 4a8 8 0 1 0 10 10z"/></symbol>
-<symbol id="g-moto" viewBox="0 0 24 24"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l4-7h4l2 3h4M13 10l1-3h3M9 10H7"/></symbol><symbol id="g-trike" viewBox="0 0 24 24"><circle cx="5" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/><path d="M7.5 17H14.5M5 17l3-6h4l2 6M14 11h6v6h-.5"/></symbol><symbol id="g-etrike" viewBox="0 0 24 24"><circle cx="5" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/><path d="M7.5 17H14.5M5 17l3-6h2M14 11h6v6h-.5M13 3l-3 5h4l-3 5"/></symbol><symbol id="g-car" viewBox="0 0 24 24"><path d="M3 16v-4l2-5h14l2 5v4zM3 12h18"/><circle cx="7.5" cy="16.5" r="1.8"/><circle cx="16.5" cy="16.5" r="1.8"/></symbol><symbol id="g-bus" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M3 11h18M7 17v2M17 17v2"/><circle cx="7.5" cy="14" r=".7"/><circle cx="16.5" cy="14" r=".7"/></symbol><symbol id="g-van" viewBox="0 0 24 24"><path d="M2 16V7h12v9M14 10h4l4 3v3h-8"/><circle cx="6.5" cy="17" r="2"/><circle cx="17.5" cy="17" r="2"/></symbol><symbol id="g-pickup" viewBox="0 0 24 24"><path d="M2 16v-6h9V7h6l5 5v4M11 10v6"/><circle cx="7" cy="17" r="2"/><circle cx="18" cy="17" r="2"/></symbol><symbol id="g-truck" viewBox="0 0 24 24"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l4 4v3h-8"/><circle cx="6" cy="17.5" r="2"/><circle cx="18" cy="17.5" r="2"/></symbol><symbol id="g-truck2" viewBox="0 0 24 24"><rect x="1" y="5" width="14" height="11" rx="1"/><path d="M15 9h3l4 4v3h-7"/><circle cx="5" cy="17.5" r="2"/><circle cx="11" cy="17.5" r="2"/><circle cx="19" cy="17.5" r="2"/></symbol><symbol id="g-boat" viewBox="0 0 24 24"><path d="M2 14h20l-3 5H5zM12 4v8M12 5l5 6h-5M7 10l5-6"/></symbol><symbol id="g-ship" viewBox="0 0 24 24"><path d="M3 16l2 4h14l2-4zM6 16V9h12v7M9 9V5h6v4M9 12h6"/></symbol><symbol id="g-pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol><symbol id="g-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a3 3 0 0 0 0-6H8a3 3 0 0 1 0-6h8"/></symbol><symbol id="g-fuel" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M4 21h10M4 10h10M14 8h2a2 2 0 0 1 2 2v7a1.5 1.5 0 0 0 3 0V9l-3-3"/></symbol><symbol id="g-snow" viewBox="0 0 24 24"><path d="M12 2v20M4.5 7l15 10M19.5 7l-15 10M9 4l3 2 3-2M9 20l3-2 3 2"/></symbol><symbol id="g-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/></symbol><symbol id="g-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M10 17h4"/></symbol><symbol id="g-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="g-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"/></symbol><symbol id="g-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol><symbol id="g-warehouse" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M7 21v-7h10v7M7 17h10"/></symbol><symbol id="g-meat" viewBox="0 0 24 24"><path d="M14 4a5 5 0 0 1 6 6c-1 2-4 3-6 3l-4 4a2.5 2.5 0 1 1-3-3l4-4c0-2 1-5 3-6z"/></symbol><symbol id="g-food" viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-2 6 0 8v10"/></symbol><symbol id="g-leaf" viewBox="0 0 24 24"><path d="M5 19C5 9 11 4 20 4c0 9-5 15-15 15zM5 19l8-8"/></symbol><symbol id="g-pill" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="4" transform="rotate(-35 12 12)"/><path d="M9 15l6-6"/></symbol><symbol id="g-laptop" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1"/><path d="M2 20h20"/></symbol><symbol id="g-glass" viewBox="0 0 24 24"><path d="M7 3h10l-1 7a4 4 0 0 1-8 0zM12 14v7M8 21h8"/></symbol><symbol id="g-weight" viewBox="0 0 24 24"><path d="M5 9h14l2 12H3z"/><circle cx="12" cy="6" r="3"/></symbol><symbol id="g-return" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol><symbol id="g-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol><symbol id="g-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol></defs></svg>
+<symbol id="g-moto" viewBox="0 0 24 24"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l4-7h4l2 3h4M13 10l1-3h3M9 10H7"/></symbol><symbol id="g-trike" viewBox="0 0 24 24"><circle cx="5" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/><path d="M7.5 17H14.5M5 17l3-6h4l2 6M14 11h6v6h-.5"/></symbol><symbol id="g-etrike" viewBox="0 0 24 24"><circle cx="5" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/><path d="M7.5 17H14.5M5 17l3-6h2M14 11h6v6h-.5M13 3l-3 5h4l-3 5"/></symbol><symbol id="g-car" viewBox="0 0 24 24"><path d="M3 16v-4l2-5h14l2 5v4zM3 12h18"/><circle cx="7.5" cy="16.5" r="1.8"/><circle cx="16.5" cy="16.5" r="1.8"/></symbol><symbol id="g-bus" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M3 11h18M7 17v2M17 17v2"/><circle cx="7.5" cy="14" r=".7"/><circle cx="16.5" cy="14" r=".7"/></symbol><symbol id="g-van" viewBox="0 0 24 24"><path d="M2 16V7h12v9M14 10h4l4 3v3h-8"/><circle cx="6.5" cy="17" r="2"/><circle cx="17.5" cy="17" r="2"/></symbol><symbol id="g-pickup" viewBox="0 0 24 24"><path d="M2 16v-6h9V7h6l5 5v4M11 10v6"/><circle cx="7" cy="17" r="2"/><circle cx="18" cy="17" r="2"/></symbol><symbol id="g-truck" viewBox="0 0 24 24"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l4 4v3h-8"/><circle cx="6" cy="17.5" r="2"/><circle cx="18" cy="17.5" r="2"/></symbol><symbol id="g-truck2" viewBox="0 0 24 24"><rect x="1" y="5" width="14" height="11" rx="1"/><path d="M15 9h3l4 4v3h-7"/><circle cx="5" cy="17.5" r="2"/><circle cx="11" cy="17.5" r="2"/><circle cx="19" cy="17.5" r="2"/></symbol><symbol id="g-boat" viewBox="0 0 24 24"><path d="M2 14h20l-3 5H5zM12 4v8M12 5l5 6h-5M7 10l5-6"/></symbol><symbol id="g-ship" viewBox="0 0 24 24"><path d="M3 16l2 4h14l2-4zM6 16V9h12v7M9 9V5h6v4M9 12h6"/></symbol><symbol id="g-pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol><symbol id="g-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a3 3 0 0 0 0-6H8a3 3 0 0 1 0-6h8"/></symbol><symbol id="g-fuel" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M4 21h10M4 10h10M14 8h2a2 2 0 0 1 2 2v7a1.5 1.5 0 0 0 3 0V9l-3-3"/></symbol><symbol id="g-snow" viewBox="0 0 24 24"><path d="M12 2v20M4.5 7l15 10M19.5 7l-15 10M9 4l3 2 3-2M9 20l3-2 3 2"/></symbol><symbol id="g-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/></symbol><symbol id="g-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M10 17h4"/></symbol><symbol id="g-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="g-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"/></symbol><symbol id="g-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol><symbol id="g-warehouse" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M7 21v-7h10v7M7 17h10"/></symbol><symbol id="g-meat" viewBox="0 0 24 24"><path d="M14 4a5 5 0 0 1 6 6c-1 2-4 3-6 3l-4 4a2.5 2.5 0 1 1-3-3l4-4c0-2 1-5 3-6z"/></symbol><symbol id="g-food" viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-2 6 0 8v10"/></symbol><symbol id="g-leaf" viewBox="0 0 24 24"><path d="M5 19C5 9 11 4 20 4c0 9-5 15-15 15zM5 19l8-8"/></symbol><symbol id="g-pill" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="4" transform="rotate(-35 12 12)"/><path d="M9 15l6-6"/></symbol><symbol id="g-laptop" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1"/><path d="M2 20h20"/></symbol><symbol id="g-glass" viewBox="0 0 24 24"><path d="M7 3h10l-1 7a4 4 0 0 1-8 0zM12 14v7M8 21h8"/></symbol><symbol id="g-weight" viewBox="0 0 24 24"><path d="M5 9h14l2 12H3z"/><circle cx="12" cy="6" r="3"/></symbol><symbol id="g-return" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol><symbol id="g-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol><symbol id="g-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol><symbol id="g-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="g-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></symbol><symbol id="g-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></symbol><symbol id="g-sound" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM17 9a4 4 0 0 1 0 6M19.500 6.500a8 8 0 0 1 0 11"/></symbol></defs></svg>
 
 <!-- LANDING + SIGN IN/UP -->
 <section id="land">
- <div class="top"><div class="brand"><svg><use href="#logo"/></svg>RUTO</div><div class="sp"></div>
-  <select class="lang" aria-label="Language"><option value="0">English</option><option value="1">Tagalog</option><option value="2">Taglish</option></select>
-  <button class="ib th" aria-label="Theme"><svg class="i"><use href="#moon"/></svg></button></div>
+ <div class="top"><div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUT</span><svg class="wordmark-wheel" aria-hidden="true"><use href="#wordmark-wheel"/></svg></span></div><div class="sp"></div>
+  <span class="locale-control"><svg class="i" aria-hidden="true"><use href="#g-globe"/></svg><select class="lang" aria-label="Language"><option value="0">English</option><option value="1">Tagalog</option><option value="2">Taglish</option></select></span>
+  <button class="ib th" aria-label="Theme"><svg class="i"><use href="#sun"/></svg></button></div>
  <div class="hero">
   <div class="copy"><span class="pill"><i class="dot"></i><span data-i="pill"></span></span><h1 data-i="hero"></h1><p data-i="heroP"></p>
    <div class="vrow" aria-hidden="true"><span class="vchip" style="--i:0"><svg class="i"><use href="#g-moto"/></svg></span><span class="vchip" style="--i:1"><svg class="i"><use href="#g-trike"/></svg></span><span class="vchip" style="--i:2"><svg class="i"><use href="#g-car"/></svg></span><span class="vchip" style="--i:3"><svg class="i"><use href="#g-bus"/></svg></span><span class="vchip" style="--i:4"><svg class="i"><use href="#g-van"/></svg></span><span class="vchip" style="--i:5"><svg class="i"><use href="#g-truck"/></svg></span><span class="vchip" style="--i:6"><svg class="i"><use href="#g-truck2"/></svg></span><span class="vchip" style="--i:7"><svg class="i"><use href="#g-boat"/></svg></span><span class="vchip" style="--i:8"><svg class="i"><use href="#g-ship"/></svg></span></div>
@@ -46,21 +80,143 @@
     <circle cx="40" cy="180" r="13" fill="none" stroke="#FFB020" stroke-width="2"><animate attributeName="r" values="13;32" dur="2.4s" begin="0s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="2.4s" begin="0s" repeatCount="indefinite"/></circle><circle cx="380" cy="100" r="13" fill="none" stroke="#FFB020" stroke-width="2"><animate attributeName="r" values="13;32" dur="2.4s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></circle><g class="pp"><circle cx="40" cy="180" r="13" style="fill:#12264A;stroke:#FFB020;stroke-width:3"/><use class="ui" href="#g-warehouse" x="32" y="172" width="16" height="16" style="color:#fff"/></g><g class="pp"><circle cx="120" cy="110" r="13" style="fill:#12264A;stroke:#FFB020;stroke-width:3"/><text x="120" y="114" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">1</text></g><g class="pp"><circle cx="210" cy="150" r="13" style="fill:#12264A;stroke:#FFB020;stroke-width:3"/><text x="210" y="154" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">2</text></g><g class="pp"><circle cx="290" cy="70" r="13" style="fill:#12264A;stroke:#FFB020;stroke-width:3"/><text x="290" y="74" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">3</text></g><g class="pp"><circle cx="380" cy="100" r="13" style="fill:#12264A;stroke:#FFB020;stroke-width:3"/><text x="380" y="104" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">4</text></g><rect x="14" y="14" width="168" height="28" rx="14" style="fill:#12264A"/><use class="ui" href="#g-clock" x="24" y="21" width="14" height="14" style="color:#FFB020"/><text x="44" y="33" style="fill:#FFB020;font-size:13px;font-weight:700">₱1,240 · 2h 10m</text>
     <g><circle r="17" style="fill:#FFB020;stroke:#fff;stroke-width:2"/><use class="ui" href="#g-truck" x="-11" y="-11" width="22" height="22" style="color:#12264A"/><animateMotion dur="9s" repeatCount="indefinite" path="M40 180 L120 110 L210 150 L290 70 L380 100 L290 70 L210 150 L120 110 L40 180"/></g></svg></div>
   <form class="auth" id="auth">
-   <div class="tabs"><button type="button" class="btn on" data-m="in" data-i="signin"></button><button type="button" class="btn" data-m="up" data-i="signup"></button></div>
+   <h1 class="auth-title" id="authHeading"></h1>
+   <p class="auth-intro" data-i="authIntro"></p>
+   <div class="tabs"><button type="button" class="btn" data-m="in" data-i="signin"></button><button type="button" class="btn on" data-m="up" data-i="signup"></button></div>
+   <div class="account-type" id="accountTypeChoice" role="group" aria-label="Account type">
+    <button type="button" class="btn on" data-account-type="personal" aria-pressed="true" data-i="personalAccount"></button>
+    <button type="button" class="btn" data-account-type="company" aria-pressed="false" data-i="companyAccount"></button>
+   </div>
+   <p class="auth-policy company-hint" id="companyHint" data-i="companyHint" hidden></p>
+   <div class="provider-options" id="providerBox">
+    <button type="button" class="btn soc" id="gbtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.09a6.6 6.6 0 0 1 0-4.18V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg><span data-i="google"></span></button>
+    <button type="button" class="btn soc" id="abtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.8c0-2 1.6-3 1.7-3.1a3.7 3.7 0 0 0-2.9-1.6c-1.2-.1-2.4.7-3 .7s-1.5-.7-2.5-.7a3.9 3.9 0 0 0-3.3 2c-1.4 2.4-.4 6 1 8 .7 1 1.4 2 2.4 2s1.3-.6 2.5-.6 1.5.6 2.5.6 1.7-1 2.3-2a9 9 0 0 0 1.1-2.2 3.4 3.4 0 0 1-1.8-3.1zM14.4 6.8a3.6 3.6 0 0 0 .8-2.6 3.8 3.8 0 0 0-2.4 1.2 3.4 3.4 0 0 0-.8 2.5 3.2 3.2 0 0 0 2.4-1.1z"/></svg><span data-i="apple"></span></button>
+   </div>
+   <div class="or" id="orSocial"><span data-i="orDiv"></span></div>
+   <div id="mailBox">
    <div id="nmw"><label for="nm" data-i="name"></label><input id="nm" autocomplete="name"></div>
+   <div id="companyNameWrap" hidden><label for="companyName" data-i="companyName"></label><input id="companyName" autocomplete="organization" maxlength="160"></div>
    <label for="em" data-i="email"></label><input id="em" type="email" required autocomplete="email">
    <label for="pw" data-i="pass"></label><input id="pw" type="password" required minlength="6" autocomplete="current-password">
+   <a class="auth-link" id="forgotPassword" href="password-reset.html?method=email" data-i="forgotPassword" hidden></a>
+   </div>
+   <div id="phoneBox" hidden>
+    <label for="phnm" data-i="nameOpt"></label><input id="phnm" autocomplete="name">
+    <label for="ph" data-i="phoneL"></label><div class="row"><input id="ph" type="tel" inputmode="tel" autocomplete="tel" placeholder="0917 123 4567"><button type="button" class="btn" id="phsend" data-i="sendCode"></button></div>
+    <div id="phcode" hidden><label for="otp" data-i="otpL"></label><div class="row"><input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><button type="button" class="btn p" id="phok" data-i="verify"></button></div></div>
+    <p class="muted" data-i="smsNote"></p>
+    <button type="button" class="btn auth-phone-back" id="phback" data-i="useEmail"></button>
+   </div>
    <p class="err" id="err" role="alert"></p>
+   <div id="recaptcha"></div>
    <button class="btn p" style="width:100%" id="sub"></button>
-   <div class="or"><span data-i="orDiv"></span></div>
-   <button type="button" class="btn soc" id="gbtn"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.09a6.6 6.6 0 0 1 0-4.18V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg><span data-i="google"></span></button>
-   <button type="button" class="btn soc" id="abtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg><span data-i="apple"></span></button>
+   <p class="auth-policy" id="signupRule" data-i="signupRule" hidden></p>
+   <button type="button" class="btn soc auth-phone-button" id="pbtn"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><span data-i="phoneBtn"></span></button>
   </form>
  </div>
  <div class="sec"><h2 data-i="featH"></h2><div class="feat"><div class="fc"><div class="fi"><svg class="i"><use href="#g-route"/></svg></div><h3 data-i="f1t"></h3><p data-i="f1p"></p></div><div class="fc"><div class="fi"><svg class="i"><use href="#g-truck"/></svg></div><h3 data-i="f2t"></h3><p data-i="f2p"></p></div><div class="fc"><div class="fi"><svg class="i"><use href="#g-fuel"/></svg></div><h3 data-i="f3t"></h3><p data-i="f3p"></p></div><div class="fc"><div class="fi"><svg class="i"><use href="#g-snow"/></svg></div><h3 data-i="f4t"></h3><p data-i="f4p"></p></div></div></div>
  <div class="sec"><h2 data-i="howH"></h2><div class="steps"><div class="st"><b>1</b><span data-i="s1"></span><svg class="i sico"><use href="#g-pin"/></svg></div><div class="st"><b>2</b><span data-i="s2"></span><svg class="i sico"><use href="#g-box"/></svg></div><div class="st"><b>3</b><span data-i="s3"></span><svg class="i sico"><use href="#g-trophy"/></svg></div></div></div>
- <div class="sec"><div class="cta"><h2 data-i="ctaH"></h2><button class="btn p" id="cta"><span data-i="ctaB"></span> <svg class="i arr"><use href="#g-arrow"/></svg></button><div class="road"><svg class="rtruck"><use href="#g-truck"/></svg></div></div></div>
- <footer class="foot"><svg><use href="#logo"/></svg><span data-i="foot"></span></footer>
+ <div class="sec"><div class="cta"><h2 data-i="ctaH"></h2><button class="btn p" id="cta"><span data-i="ctaB"></span> <svg class="i arr"><use href="#g-arrow"/></svg></button>
+  <svg class="cityscape" viewBox="0 0 900 150" preserveAspectRatio="none" aria-hidden="true">
+   <g class="buildings">
+    <path d="M0 140V76h58V52h42v88h32V68h48v72h30V42h62v98h30V82h54v58h32V58h58v82h34V34h64v106h36V70h54v70h36V50h62v90h48V82h48v58z"/>
+    <g class="building-windows">
+     <rect x="12" y="90" width="7" height="10"/><rect x="34" y="90" width="7" height="10"/><rect x="12" y="110" width="7" height="10"/><rect x="34" y="110" width="7" height="10"/>
+     <rect x="68" y="65" width="7" height="10"/><rect x="84" y="65" width="7" height="10"/><rect x="68" y="85" width="7" height="10"/><rect x="84" y="85" width="7" height="10"/><rect x="68" y="105" width="7" height="10"/><rect x="84" y="105" width="7" height="10"/><rect x="68" y="125" width="7" height="10"/><rect x="84" y="125" width="7" height="10"/>
+     <rect x="140" y="82" width="8" height="10"/><rect x="160" y="82" width="8" height="10"/><rect x="140" y="102" width="8" height="10"/><rect x="160" y="102" width="8" height="10"/><rect x="140" y="122" width="8" height="10"/><rect x="160" y="122" width="8" height="10"/>
+     <rect x="222" y="58" width="9" height="10"/><rect x="246" y="58" width="9" height="10"/><rect x="222" y="78" width="9" height="10"/><rect x="246" y="78" width="9" height="10"/><rect x="222" y="98" width="9" height="10"/><rect x="246" y="98" width="9" height="10"/><rect x="222" y="118" width="9" height="10"/><rect x="246" y="118" width="9" height="10"/>
+     <rect x="312" y="96" width="8" height="10"/><rect x="334" y="96" width="8" height="10"/><rect x="312" y="116" width="8" height="10"/><rect x="334" y="116" width="8" height="10"/>
+     <rect x="400" y="74" width="9" height="10"/><rect x="424" y="74" width="9" height="10"/><rect x="400" y="94" width="9" height="10"/><rect x="424" y="94" width="9" height="10"/><rect x="400" y="114" width="9" height="10"/><rect x="424" y="114" width="9" height="10"/>
+     <rect x="494" y="52" width="9" height="10"/><rect x="520" y="52" width="9" height="10"/><rect x="494" y="72" width="9" height="10"/><rect x="520" y="72" width="9" height="10"/><rect x="494" y="92" width="9" height="10"/><rect x="520" y="92" width="9" height="10"/><rect x="494" y="112" width="9" height="10"/><rect x="520" y="112" width="9" height="10"/>
+     <rect x="590" y="86" width="9" height="10"/><rect x="614" y="86" width="9" height="10"/><rect x="590" y="106" width="9" height="10"/><rect x="614" y="106" width="9" height="10"/><rect x="590" y="126" width="9" height="10"/><rect x="614" y="126" width="9" height="10"/>
+     <rect x="682" y="66" width="9" height="10"/><rect x="708" y="66" width="9" height="10"/><rect x="682" y="86" width="9" height="10"/><rect x="708" y="86" width="9" height="10"/><rect x="682" y="106" width="9" height="10"/><rect x="708" y="106" width="9" height="10"/><rect x="682" y="126" width="9" height="10"/><rect x="708" y="126" width="9" height="10"/>
+     <rect x="790" y="98" width="7" height="10"/><rect x="810" y="98" width="7" height="10"/><rect x="790" y="118" width="7" height="10"/><rect x="810" y="118" width="7" height="10"/>
+    </g>
+   </g>
+   <g class="streetlight">
+    <path class="lamp-beam" d="M183 47 135 139h96z"/>
+    <path class="lamp-pole" d="M155 139V34h19a9 9 0 0 1 9 9"/>
+    <path class="lamp-head" d="M174 43h9"/>
+    <circle class="lamp-bulb" cx="183" cy="43" r="4"/>
+    <path class="lamp-beam" d="M748 47 700 139h96z"/>
+    <path class="lamp-pole" d="M720 139V34h19a9 9 0 0 1 9 9"/>
+    <path class="lamp-head" d="M739 43h9"/>
+    <circle class="lamp-bulb" cx="748" cy="43" r="4"/>
+   </g>
+   <g class="traffic-light" aria-hidden="true">
+    <path class="traffic-light-pole" d="M844 108v31"/>
+    <rect class="traffic-light-case" x="832" y="61" width="24" height="49" rx="5"/>
+    <circle class="signal-light signal-red" cx="844" cy="72" r="4"/>
+    <circle class="signal-light signal-amber" cx="844" cy="86" r="4"/>
+    <circle class="signal-light signal-green" cx="844" cy="100" r="4"/>
+   </g>
+  </svg>
+  <div class="road"><svg class="rtruck" viewBox="0 0 88 44" aria-hidden="true">
+   <path class="truck-cargo" d="M3 7h43v27H3z"/>
+   <path class="truck-cargo-seams" d="M9 10v21m12-21v21m12-21v21"/>
+   <path class="truck-package" d="m16 15 8-4 8 4v8l-8 4-8-4z"/>
+   <path class="truck-package-fold" d="m16 15 8 4 8-4m-8 4v8"/>
+   <path class="truck-package-tape" d="m22.7 11.65 2.6 0v6.7L24 19l-1.3-.65zm0 7.35h2.6v7.35L24 27l-1.3-.65z"/>
+   <path class="truck-cargo-stripe" d="M5 30h39"/>
+   <path class="truck-cab" d="M47 16h14q4 0 6 3l9 10v5H47z"/>
+   <path class="truck-window" d="M51 19h9q2 0 3 2l6 7H51z"/>
+   <path class="truck-window-highlight" d="M53 20h6"/>
+   <path class="truck-grille" d="M74 30v4m2-4v4"/>
+   <path class="truck-bumper" d="M74 36h5"/>
+   <path class="truck-light-beam" d="m77 27 11-5v16l-11-5z"/>
+   <circle class="truck-headlight" cx="75" cy="30" r="1.8"/>
+   <g transform="translate(18 35)">
+    <g class="truck-wheel">
+     <circle class="truck-tire" r="7.5"/>
+     <path class="truck-tread" d="M-1.6-7h3.2M-1.6 7h3.2M-7-1.6v3.2M7-1.6v3.2m-5.8-4.8 2.4 2.4m3.4 3.4 2.4 2.4m-8.2 0 2.4-2.4m3.4-3.4 2.4-2.4"/>
+     <circle class="truck-sidewall" r="5.9"/>
+     <circle class="truck-rim" r="4.8"/>
+     <circle class="truck-rim-face" r="3.85"/>
+     <g class="truck-spokes">
+      <path d="M-.72-3.5h1.44l.65 2.35-.65.55h-1.44l-.65-.55z"/>
+      <path transform="rotate(72)" d="M-.72-3.5h1.44l.65 2.35-.65.55h-1.44l-.65-.55z"/>
+      <path transform="rotate(144)" d="M-.72-3.5h1.44l.65 2.35-.65.55h-1.44l-.65-.55z"/>
+      <path transform="rotate(216)" d="M-.72-3.5h1.44l.65 2.35-.65.55h-1.44l-.65-.55z"/>
+      <path transform="rotate(288)" d="M-.72-3.5h1.44l.65 2.35-.65.55h-1.44l-.65-.55z"/>
+     </g>
+     <g class="truck-lugs">
+      <circle cx="0" cy="-2.55" r=".38"/><circle cx="2.43" cy="-.79" r=".38"/>
+      <circle cx="1.5" cy="2.06" r=".38"/><circle cx="-1.5" cy="2.06" r=".38"/>
+      <circle cx="-2.43" cy="-.79" r=".38"/>
+     </g>
+     <circle class="truck-hub-ring" r="1.45"/>
+     <circle class="truck-hub" r=".85"/>
+    </g>
+   </g>
+   <g transform="translate(64 35)">
+    <g class="truck-wheel">
+     <circle class="truck-tire" r="7.5"/>
+     <path class="truck-tread" d="M-1.6-7h3.2M-1.6 7h3.2M-7-1.6v3.2M7-1.6v3.2m-5.8-4.8 2.4 2.4m3.4 3.4 2.4 2.4m-8.2 0 2.4-2.4m3.4-3.4 2.4-2.4"/>
+     <circle class="truck-sidewall" r="5.9"/>
+     <circle class="truck-rim" r="4.8"/>
+     <circle class="truck-rim-face" r="3.85"/>
+     <g class="truck-spokes">
+      <path d="M-.72-3.5h1.44l.65 2.35-.65.55h-1.44l-.65-.55z"/>
+      <path transform="rotate(72)" d="M-.72-3.5h1.44l.65 2.35-.65.55h-1.44l-.65-.55z"/>
+      <path transform="rotate(144)" d="M-.72-3.5h1.44l.65 2.35-.65.55h-1.44l-.65-.55z"/>
+      <path transform="rotate(216)" d="M-.72-3.5h1.44l.65 2.35-.65.55h-1.44l-.65-.55z"/>
+      <path transform="rotate(288)" d="M-.72-3.5h1.44l.65 2.35-.65.55h-1.44l-.65-.55z"/>
+     </g>
+     <g class="truck-lugs">
+      <circle cx="0" cy="-2.55" r=".38"/><circle cx="2.43" cy="-.79" r=".38"/>
+      <circle cx="1.5" cy="2.06" r=".38"/><circle cx="-1.5" cy="2.06" r=".38"/>
+      <circle cx="-2.43" cy="-.79" r=".38"/>
+     </g>
+     <circle class="truck-hub-ring" r="1.45"/>
+     <circle class="truck-hub" r=".85"/>
+    </g>
+   </g>
+  </svg></div>
+ </div></div>
+ <footer class="foot">
+  <div class="foot-brand"><svg aria-hidden="true"><use href="#logo"/></svg><div><strong class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUT</span><svg class="wordmark-wheel" aria-hidden="true"><use href="#wordmark-wheel"/></svg></strong><span data-i="foot"></span></div></div>
+  <div class="foot-meta"><span class="foot-credit" data-i="creator"></span><span class="foot-rights">© <span data-current-year>2026</span> RUTO. <span data-i="rights"></span></span></div>
+ </footer>
 </section>
 
 <!-- LOCATION GATE -->
@@ -69,12 +225,22 @@
 
 <!-- APP -->
 <section id="app" hidden>
- <div class="top"><div class="brand"><svg><use href="#logo"/></svg>RUTO</div>
-  <div class="tabs"><button class="btn on" data-v="plan" data-i="plan"></button><button class="btn" data-v="hist" data-i="hist"></button></div><div class="sp"></div>
-  <span id="who" class="muted" style="color:#cfd8ea"></span>
-  <select class="lang" aria-label="Language"><option value="0">English</option><option value="1">Tagalog</option><option value="2">Taglish</option></select>
-  <button class="ib th" aria-label="Theme"><svg class="i"><use href="#moon"/></svg></button>
-  <button class="btn" id="out" data-i="logout"></button></div>
+ <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+ <aside class="app-sidebar" id="sidebar" aria-label="Main menu" role="dialog" aria-modal="true" hidden>
+  <div class="sidebar-head"><div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUT</span><svg class="wordmark-wheel" aria-hidden="true"><use href="#wordmark-wheel"/></svg></span></div><button class="ib" type="button" id="sidebarClose" aria-label="Close menu">×</button></div>
+  <nav class="sidebar-nav" id="sidebarNav" aria-label="Main menu">
+   <button type="button" class="sidebar-link on" data-v="plan"><svg class="i"><use href="#g-route"/></svg><span data-i="plan"></span></button>
+   <button type="button" class="sidebar-link" data-v="cal"><svg class="i"><use href="#g-cal"/></svg><span data-i="calendar"></span></button>
+   <button type="button" class="sidebar-link" data-v="hist"><svg class="i"><use href="#g-clock"/></svg><span data-i="hist"></span></button>
+   <button type="button" class="sidebar-link" id="profileNav" data-v="profile"><svg class="i"><use href="#edit"/></svg><span data-i="profileSettings"></span></button>
+  </nav>
+  <div class="sidebar-footer"><div class="sidebar-user"><button type="button" class="avatar" id="profileShortcut" aria-label="Profile settings"><img id="whoPhoto" alt="" hidden><span id="whoInitials">R</span></button><span id="who"></span></div><button type="button" class="sidebar-link logout-link" id="out" data-i="logout"></button></div>
+ </aside>
+ <div class="top"><button class="ib menu-toggle" type="button" id="menuToggle" aria-controls="sidebar" aria-expanded="false" aria-label="Open menu"><span aria-hidden="true">☰</span></button>
+  <div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUT</span><svg class="wordmark-wheel" aria-hidden="true"><use href="#wordmark-wheel"/></svg></span></div><div class="sp"></div>
+  <span class="locale-control"><svg class="i" aria-hidden="true"><use href="#g-globe"/></svg><select class="lang" aria-label="Language"><option value="0">English</option><option value="1">Tagalog</option><option value="2">Taglish</option></select></span>
+  <button class="ib th" aria-label="Theme"><svg class="i"><use href="#sun"/></svg></button>
+ </div>
 
  <div class="wrap" id="v_plan">
  <aside>
@@ -85,37 +251,115 @@
    <div class="row" style="margin-top:8px"><button class="btn" id="gps" data-i="gps"></button><button class="btn" id="clear" data-i="clear"></button></div>
    <p class="muted" data-i="clickHint"></p></div>
   <div class="card"><h2 data-i="stops"></h2><div id="stops"></div><p id="nostop" class="muted" data-i="nostop"></p></div>
-  <div class="card"><h2 data-i="when"></h2>
+  <div class="card"><h2 data-i="when"></h2><p class="note" id="editnote" hidden></p>
    <div class="row"><div style="flex:1"><label for="date" data-i="date"></label><input type="date" id="date"></div><div style="flex:1"><label for="time" data-i="time"></label><input type="time" id="time" value="08:00"></div></div>
    <label><input type="checkbox" id="round" checked style="width:auto"> <span data-i="round"></span></label>
    <label for="pri" data-i="prio"></label>
    <select id="pri"><option value="balanced" data-i="pBal"></option><option value="cheap" data-i="pCheap"></option><option value="fast" data-i="pFast"></option><option value="easy" data-i="pEasy"></option></select>
-   <button class="btn p" id="save" style="width:100%;margin-top:12px" data-i="save"></button></div>
-  <div class="card"><h2 data-i="fuelH"></h2><div class="fuel" id="fuel"></div>
+   <label for="tmode" data-i="travel"></label>
+   <select id="tmode"><option value="auto" data-i="mAuto"></option><option value="land" data-i="mLand"></option><option value="water" data-i="mWater"></option></select>
+   <button class="btn p wide" id="save" data-i="save"></button>
+   <button class="btn wide" id="sched"><svg class="i"><use href="#g-cal"/></svg> <span data-i="addSched"></span></button></div>
+  <div class="card"><h2 data-i="fuelH"></h2><p class="muted fuel-hint" data-i="fuelEditHint"></p><div class="fuel" id="fuel"></div>
    <div class="row" style="margin-top:8px"><button class="btn" id="fuelbtn"><svg class="i"><use href="#refresh"/></svg> <span data-i="refresh"></span></button></div>
-   <p class="muted" id="fuelnote"></p></div>
+   <p class="muted" id="fuelbusy" role="status"></p><div id="fuelai"></div><p class="muted" id="fuelnote"></p></div>
  </aside>
  <main>
   <div id="map"></div>
   <p id="empty" class="card muted" data-i="empty"></p>
+  <p id="loading" class="card muted" data-i="routing" role="status" hidden></p>
   <div id="res" hidden>
    <div class="best" id="best"></div>
+   <div class="card" id="traffic"></div>
+   <div class="card notes" id="notes" hidden></div>
    <div class="card"><h2 data-i="tipsH"></h2><ul class="tips" id="tips"></ul></div>
-   <div class="card"><h2 data-i="vehH"></h2><div class="grid" id="cards"></div></div>
+   <div class="card"><h2 data-i="vehH"></h2><div id="cards"></div></div>
    <div class="card"><h2 data-i="etaH"></h2><button class="btn" id="play" style="margin-bottom:8px"><svg class="i"><use href="#g-play"/></svg> <span data-i="play"></span></button><div class="scroll" id="eta"></div></div>
    <div class="card"><h2 data-i="cmpH"></h2><div class="scroll" id="cmp"></div></div>
    <div class="charts"><div class="card"><h2 data-i="c1H"></h2><div class="ch"><canvas id="c1"></canvas></div></div><div class="card"><h2 data-i="c2H"></h2><div class="ch"><canvas id="c2"></canvas></div></div></div>
   </div>
  </main></div>
 
- <div class="wrap" id="v_hist" hidden style="grid-template-columns:1fr;max-width:900px"><div class="card"><h2 data-i="histH"></h2><div id="hlist"></div></div></div>
+ <div class="wrap one" id="v_cal" hidden>
+  <div class="card"><div class="calhead"><button class="ib" id="calprev" aria-label="Previous month">‹</button><h2 id="caltitle"></h2><button class="ib" id="calnext" aria-label="Next month">›</button><div class="sp"></div><button class="btn" id="caltoday" data-i="today"></button><button class="btn" id="calexport" data-i="exportCal"></button></div>
+   <div class="calgrid" id="calgrid"></div></div>
+  <div class="card"><div class="calhead"><h2 id="daytitle"></h2><div class="sp"></div><button class="btn p" id="caladd"><svg class="i"><use href="#plus"/></svg> <span data-i="addSched"></span></button></div><div id="daylist"></div></div>
+ </div>
+
+ <div class="wrap one" id="v_hist" hidden><div class="card"><h2 data-i="histH"></h2><div id="hlist"></div></div></div>
+ <div class="wrap one" id="v_profile" hidden>
+  <div class="card profile-card">
+   <h2 data-i="profileTitle"></h2><p class="muted" data-i="profileHelp"></p>
+   <form id="profileForm">
+    <div class="profile-photo-row"><div class="profile-avatar"><img id="profilePhoto" alt="" hidden><span id="profileInitials">R</span></div><div><label for="profilePhotoInput" data-i="profilePhoto"></label><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp"><p class="muted" data-i="profilePhotoHelp"></p></div></div>
+    <label for="profileName" data-i="name"></label><input id="profileName" maxlength="120" required>
+    <div id="profileCompanyWrap" hidden><label for="profileCompanyName" data-i="companyName"></label><input id="profileCompanyName" maxlength="160"></div>
+    <div class="team-preview" id="companyTeamPreview" hidden><h3 data-i="teamPreviewTitle"></h3><p data-i="teamPreviewText"></p><strong data-i="teamPreviewPrice"></strong></div>
+    <label for="profileEmail" data-i="email"></label><input id="profileEmail" type="email" readonly>
+    <label for="profileAccountType" data-i="accountType"></label><input id="profileAccountType" readonly>
+    <div class="row profile-actions"><button class="btn p" type="submit" data-i="profileSave"></button><button class="btn" type="button" id="profileCancel" data-i="cancel"></button></div>
+    <p class="profile-status" id="profileStatus" role="status" aria-live="polite"></p>
+   </form>
+   <form id="passwordChangeForm" class="profile-password" hidden>
+    <h3 data-i="changePassword"></h3><p class="muted" data-i="passwordChangeHelp"></p>
+    <label for="currentPassword" data-i="currentPassword"></label><input id="currentPassword" type="password" autocomplete="current-password" required>
+    <label for="newProfilePassword" data-i="newProfilePassword"></label><input id="newProfilePassword" type="password" autocomplete="new-password" minlength="6" required>
+    <label for="confirmProfilePassword" data-i="confirmNewPassword"></label><input id="confirmProfilePassword" type="password" autocomplete="new-password" minlength="6" required>
+    <button class="btn p" type="submit" data-i="saveNewPassword"></button>
+    <p id="passwordStatus" class="profile-status" role="status" aria-live="polite"></p>
+   </form>
+   <p id="passwordProviderHelp" class="profile-password muted" data-i="passwordProviderHelp" hidden></p>
+  </div>
+ </div>
 </section>
+
+<!-- NAVIGATION -->
+<div id="nav" hidden>
+ <div class="navtop" aria-live="polite"><div id="navarrow"></div><div><strong id="navmain"></strong><span id="navsub"></span></div></div>
+ <div id="navmap"></div>
+ <button class="btn p" id="nvCenter" data-i="recenter" hidden></button>
+ <div class="navbot">
+  <div id="navalts"></div>
+  <p id="navinfo"></p>
+  <div class="row"><button class="btn p" id="nvArrive"></button><button class="btn" id="nvAI"><svg class="i"><use href="#g-mic"/></svg> <span data-i="askAI"></span></button><button class="ib" id="nvMute" title="Mute" aria-label="Mute voice"><svg class="i"><use href="#g-sound"/></svg></button><button class="btn" id="nvSim" data-i="simulate"></button><button class="btn" id="nvG">Google Maps</button><button class="btn" id="nvW">Waze</button><button class="btn danger" id="nvEnd" data-i="endNav"></button></div>
+ </div>
+</div>
+
+<!-- ASSISTANT -->
+<button id="fab" class="fab" hidden aria-label="RUTO assistant" title="RUTO Assistant" aria-expanded="false"><svg class="i"><use href="#g-chat"/></svg></button>
+<div id="ai" hidden role="dialog" aria-label="RUTO assistant">
+ <div class="aihead"><strong data-i="aiTitle"></strong><div class="sp"></div><button class="ib" id="aitts" title="Voice replies" aria-label="Voice replies"><svg class="i"><use href="#g-sound"/></svg></button><button class="ib" id="aiclose" aria-label="Close">✕</button></div>
+ <div id="aimsgs" aria-live="polite"></div>
+ <div id="voiceask" hidden><p data-i="voiceAsk"></p><div class="row"><button class="btn p" id="voiceallow" data-i="voiceAllow"></button><button class="btn" id="voiceno" data-i="notNow"></button></div></div>
+ <div id="aichips"></div>
+ <form id="aiform"><button type="button" class="ib" id="aimic" title="Speak" aria-label="Speak"><svg class="i"><use href="#g-mic"/></svg></button><input id="aiin" autocomplete="off"><button class="ib" aria-label="Send"><svg class="i"><use href="#g-arrow"/></svg></button></form>
+</div>
+
+<dialog id="dlg"></dialog>
+<dialog id="installGuide">
+ <h2 data-i="installGuideTitle"></h2>
+ <p id="installGuideIos" class="muted" data-i="installGuideIos" hidden></p>
+ <p id="installGuideOther" class="muted" data-i="installGuideOther" hidden></p>
+ <button class="btn p" id="installGuideClose" type="button" data-i="installGuideClose"></button>
+</dialog>
+<div id="toasts" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
+<script src="js/routing.js"></script>
+<script src="js/store.js"></script>
+<script src="js/fuel.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/assistant.js"></script>
+<script src="js/main.js"></script>
+<script src="js/pwa.js"></script>
 </body>
 </html>

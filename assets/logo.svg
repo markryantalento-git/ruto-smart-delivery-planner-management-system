@@ -1,11 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="256" height="256">
- <rect width="64" height="64" rx="15" fill="#12264A"/>
- <path d="M21 6c-5.5 0-10 4.3-10 9.7C11 23 21 32 21 32s10-9 10-16.300C31 10.300 26.500 6 21 6z" fill="#FFB020"/><circle cx="21" cy="15.500" r="3.800" fill="#12264A"/>
- <path d="M44 8c-3.700 0-6.700 2.800-6.700 6.400 0 4.900 6.700 10.600 6.700 10.600s6.700-5.700 6.700-10.600C50.700 10.800 47.700 8 44 8z" fill="#fff"/><circle cx="44" cy="14.400" r="2.400" fill="#12264A"/>
- <path d="M24 30c8 2 12 2 17-4" stroke="#FFB020" stroke-width="2" stroke-dasharray="3 3" fill="none" stroke-linecap="round"/>
- <rect x="7" y="35" width="30" height="16" rx="2.500" fill="#fff"/>
- <rect x="10" y="38" width="10" height="10" rx="1" fill="#FFB020"/><path d="M15 38v10M10 43h10" stroke="#12264A" stroke-width="1.200"/>
- <rect x="22" y="42" width="12" height="6" rx="1" fill="#FFB020"/><path d="M28 42v6" stroke="#12264A" stroke-width="1.200"/>
- <path d="M37 39h9l6 6.500V51H37z" fill="#FFB020"/><path d="M41 42h4l3 3.500h-7z" fill="#12264A"/>
- <circle cx="17" cy="52" r="4.500" fill="#12264A" stroke="#FFB020" stroke-width="2.500"/><circle cx="45" cy="52" r="4.500" fill="#12264A" stroke="#FFB020" stroke-width="2.500"/>
+ <style>@media(prefers-color-scheme:dark){.logo-bg{fill:#fff}.logo-mark{fill:#171717}.logo-pin{fill:#f28c00}}</style>
+ <rect class="logo-bg" width="64" height="64" rx="15" fill="#171717"/>
+ <path class="logo-pin" d="M44 5c-7.2 0-13 5.8-13 13 0 9.4 13 23 13 23s13-13.6 13-23c0-7.2-5.8-13-13-13z" fill="#F28C00"/>
+ <circle cx="44" cy="18" r="5.4" fill="#17191d" stroke="#fff" stroke-width=".8"/>
+ <circle cx="44" cy="18" r="4.45" fill="#3b424b" stroke="#0b1020" stroke-width=".5"/>
+ <circle cx="44" cy="18" r="3.65" fill="#adb4bd" stroke="#e8edf2" stroke-width=".45"/>
+ <circle cx="44" cy="18" r="3.05" fill="#273248" stroke="#656e78" stroke-width=".45"/>
+ <path d="M44 16.8v-1.9M45 17.4l1.65-1M45 18.6l1.65 1M44 19.2v1.9M43 18.6l-1.65 1M43 17.4l-1.65-1" fill="none" stroke="#d8dde3" stroke-width=".72" stroke-linecap="round"/>
+ <circle cx="44" cy="18" r="1.05" fill="#c8cfd7" stroke="#414955" stroke-width=".4"/>
+ <circle cx="44" cy="18" r=".35" fill="#343c47"/>
+ <path class="logo-mark" fill="#fff" fill-rule="evenodd" d="M7 11h12c7.5 0 12 3.7 12 10 0 4.7-2.8 7.8-8 9.1L31 45h-8l-8-14h-1v14H7z M14 18v6h5c2.4 0 3.5-1 3.5-3s-1.1-3-3.5-3z"/>
+ <path class="logo-mark" d="M32 40h14l6 6h7v7H32z" fill="#fff"/>
+ <path d="M47 43h-1v4h5z" fill="#FFB020"/>
+ <path d="M35 42h10v3H35z" fill="#FFB020"/>
+ <circle cx="39" cy="53" r="3" fill="#171717" stroke="#F28C00" stroke-width="2"/>
+ <circle cx="53" cy="53" r="3" fill="#171717" stroke="#F28C00" stroke-width="2"/>
 </svg>
