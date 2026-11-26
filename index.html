@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RUTO – Delivery Least Cost System</title>
+<title>RUTO – Transportation and Delivery Least Cost Saving Management System</title>
 <meta name="theme-color" content="#171717">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -233,6 +233,7 @@
    <button type="button" class="sidebar-link" data-v="cal"><svg class="i"><use href="#g-cal"/></svg><span data-i="calendar"></span></button>
    <button type="button" class="sidebar-link" data-v="hist"><svg class="i"><use href="#g-clock"/></svg><span data-i="hist"></span></button>
    <button type="button" class="sidebar-link" id="profileNav" data-v="profile"><svg class="i"><use href="#edit"/></svg><span data-i="profileSettings"></span></button>
+   <button type="button" class="sidebar-link" data-v="about"><svg class="i"><use href="#g-globe"/></svg><span data-i="aboutNav"></span></button>
   </nav>
   <div class="sidebar-footer"><div class="sidebar-user"><button type="button" class="avatar" id="profileShortcut" aria-label="Profile settings"><img id="whoPhoto" alt="" hidden><span id="whoInitials">R</span></button><span id="who"></span></div><button type="button" class="sidebar-link logout-link" id="out" data-i="logout"></button></div>
  </aside>
@@ -260,7 +261,7 @@
    <select id="tmode"><option value="auto" data-i="mAuto"></option><option value="land" data-i="mLand"></option><option value="water" data-i="mWater"></option></select>
    <button class="btn p wide" id="save" data-i="save"></button>
    <button class="btn wide" id="sched"><svg class="i"><use href="#g-cal"/></svg> <span data-i="addSched"></span></button></div>
-  <div class="card"><h2 data-i="fuelH"></h2><p class="muted fuel-hint" data-i="fuelEditHint"></p><div class="fuel" id="fuel"></div>
+  <div class="card"><h2 data-i="fuelH"></h2><p class="muted fuel-hint" data-i="fuelEditHint"></p><p class="muted fuel-hint" data-i="fuelCalcHint"></p><div class="fuel" id="fuel"></div>
    <div class="row" style="margin-top:8px"><button class="btn" id="fuelbtn"><svg class="i"><use href="#refresh"/></svg> <span data-i="refresh"></span></button></div>
    <p class="muted" id="fuelbusy" role="status"></p><div id="fuelai"></div><p class="muted" id="fuelnote"></p></div>
  </aside>
@@ -287,6 +288,21 @@
  </div>
 
  <div class="wrap one" id="v_hist" hidden><div class="card"><h2 data-i="histH"></h2><div id="hlist"></div></div></div>
+ <div class="wrap one" id="v_about" hidden>
+  <div class="card about-card">
+   <h2 data-i="aboutTitle"></h2>
+   <p class="muted about-intro" data-i="aboutIntro"></p>
+   <section class="about-copy">
+    <h3 data-i="aboutWhatTitle"></h3>
+    <p data-i="aboutWhatText"></p>
+    <p class="about-creator" data-i="creator"></p>
+   </section>
+   <section class="support-panel">
+    <h3 data-i="supportPrompt"></h3>
+    <img src="assets/support-qr.png" alt="InstaPay support QR code" width="472" height="469">
+   </section>
+  </div>
+ </div>
  <div class="wrap one" id="v_profile" hidden>
   <div class="card profile-card">
    <h2 data-i="profileTitle"></h2><p class="muted" data-i="profileHelp"></p>

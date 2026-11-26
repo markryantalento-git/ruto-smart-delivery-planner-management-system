@@ -24,7 +24,8 @@ function applyTheme(m){document.documentElement.dataset.theme=m;localStorage.set
 document.querySelectorAll('.th').forEach(b=>b.onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
 
 /* ============ DATA: edit vehicles here ============
- kmpl = km per liter (km per kWh for EV) · cap = kg · speed = top average km/h · hourly = driver/rental ₱/h
+ kmpl = km per liter (km per kWh for EV) · fuelLph = cruising liters per hour for boats · cap = kg
+ speed = average km/h · hourly = driver/rental ₱/h
  effort 1 (easy) to 5 (tiring) · tf = time factor compared with a car in the same traffic
  maxKm = longest practical trip · small = keep off motorways · dom = land or water */
 const V=[
@@ -34,12 +35,13 @@ const V=[
 {id:'car',name:'Four-Wheeler Car',icon:'g-car',fuel:'gas',kmpl:12,cap:300,speed:80,hourly:150,effort:2,closed:true,tf:1,dom:'land'},
 {id:'jeep',name:'Jeepney',icon:'g-bus',fuel:'diesel',kmpl:7,cap:1000,speed:40,hourly:250,effort:3,closed:false,tf:1.3,maxKm:150,dom:'land'},
 {id:'van',name:'Van / L300',icon:'g-van',fuel:'diesel',kmpl:9,cap:1200,speed:70,hourly:300,effort:2,closed:true,tf:1.08,dom:'land'},
-{id:'pickup',name:'Pick-up Truck',icon:'g-pickup',fuel:'diesel',kmpl:9,cap:1000,speed:75,hourly:300,effort:3,closed:false,tf:1.05,dom:'land'},
+{id:'pickup',name:'Pick-up Truck',icon:'g-pickup',fuel:'diesel',kmpl:8,cap:1000,speed:75,hourly:300,effort:3,closed:false,tf:1.05,dom:'land'},
 {id:'t2',name:'Truck 2 Tons',icon:'g-truck',fuel:'diesel',kmpl:6,cap:2000,speed:60,hourly:450,effort:2,closed:true,tf:1.2,dom:'land'},
 {id:'t5',name:'Truck 5 Tons (6-Wheeler)',icon:'g-truck2',fuel:'diesel',kmpl:4.5,cap:5000,speed:55,hourly:650,effort:2,closed:true,tf:1.35,dom:'land'},
 {id:'t10',name:'Wing Van 10 Tons',icon:'g-truck2',fuel:'diesel',kmpl:3,cap:10000,speed:50,hourly:900,effort:2,closed:true,tf:1.45,dom:'land'},
-{id:'bangka',name:'Bangka (Motorized Boat)',icon:'g-boat',fuel:'gas',kmpl:3,cap:500,speed:20,hourly:200,effort:4,closed:false,tf:1,maxKm:80,dom:'water'},
-{id:'cargo',name:'Cargo Boat / RoRo',icon:'g-ship',fuel:'diesel',kmpl:.8,cap:8000,speed:18,hourly:900,effort:2,closed:true,tf:1,dom:'water'}];
+{id:'bangka',name:'Bangka (Motorized Boat)',icon:'g-boat',fuel:'gas',fuelLph:1.75,cap:500,speed:20,hourly:200,effort:4,closed:false,tf:1,maxKm:80,dom:'water'},
+// Keeps the prior 0.8 km/L estimate at 18 km/h, expressed in the boat's L/h unit.
+{id:'cargo',name:'Cargo Boat / RoRo',icon:'g-ship',fuel:'diesel',fuelLph:22.5,cap:8000,speed:18,hourly:900,effort:2,closed:true,tf:1,dom:'water'}];
 const SERVICE_MIN=6,MAXTRIPS=5,PORT_MIN=20;
 /* cargo rules: max safe minutes, needs enclosed vehicle, perishable, icons */
 const MAXMIN={meat:120,cold:90,food:60,produce:240,med:180};
@@ -496,9 +498,13 @@ function evalV(v,r){
   service=(water&&r.landKm>0)?0:st.stops.length*SERVICE_MIN/60,
   km=km1*trips,driveHrs=sec1/3600,hrs=driveHrs*trips+service,
   idle=water?1:1+.35*Math.max(0,r.factor-1),
-  fuelCost=km/v.kmpl*st.fuel[v.fuel]*idle,labor=hrs*v.hourly,lvl=Math.min(5,v.effort+trips-1);
+  averageSpeed=driveHrs?km1/driveHrs:0,
+  fuelPerHour=water?v.fuelLph:averageSpeed/v.kmpl*idle,
+  fuelAmount=fuelPerHour*(water?km1/v.speed:driveHrs)*trips,
+  fuelUnit=v.fuel==='ev'?'kWh':'L',
+  fuelCost=fuelAmount*st.fuel[v.fuel],labor=hrs*v.hourly,lvl=Math.min(5,v.effort+trips-1);
   let why='';if(needC&&!v.closed)why=t('needClosed');else if(trips>MAXTRIPS)why=t('capShort')+' ('+kg+' kg)';else if(v.maxKm&&km1>v.maxKm)why=t('tooFar',{km:v.maxKm});
-  return{v,km,hrs,driveHrs,service,trips,fuelCost,labor,cost:fuelCost+labor,lvl,eff:lvl*hrs,ok:!why,why}}
+  return{v,km,hrs,driveHrs,service,trips,fuelAmount,fuelPerHour,fuelUnit,fuelCost,labor,cost:fuelCost+labor,lvl,eff:lvl*hrs,ok:!why,why}}
 const W={balanced:[.4,.35,.25],cheap:[1,0,0],fast:[0,1,0],easy:[0,0,1]};
 const lvlN=n=>t(n<=2?'L1':n<=3?'L2':'L3');
 const fmtT=m=>{const h=Math.floor(Math.round(m)/60),mm=Math.round(m)%60;return h?h+'h '+mm+'m':mm+' min'};
@@ -543,13 +549,14 @@ function renderResults(){
     return{dom,rows,ok,best,ch,m:ok.length?{cost:Math.min(...ok.map(x=>x.cost)),hrs:Math.min(...ok.map(x=>x.hrs)),eff:Math.min(...ok.map(x=>x.eff))}:{}}});
   const complete=groups.every(g=>g.ch),parts=groups.map(g=>g.ch).filter(Boolean),sum=k=>parts.reduce((a,x)=>a+x[k],0);
   const ch=st.chosen=complete?{parts,land:groups.find(g=>g.dom==='land')?.ch||null,water:groups.find(g=>g.dom==='water')?.ch||null,
-    cost:sum('cost'),fuelCost:sum('fuelCost'),hrs:sum('hrs'),km:sum('km')}:null;
+    cost:sum('cost'),fuelCost:sum('fuelCost'),fuelUse:parts.map(x=>`${x.fuelAmount.toFixed(2)} ${x.fuelUnit} (${x.fuelPerHour.toFixed(2)} ${x.fuelUnit}/h)`).join(' + '),hrs:sum('hrs'),km:sum('km')}:null;
   const isBest=complete&&groups.every(g=>g.ch===g.best);
   const worst=complete?groups.reduce((a,g)=>a+Math.max(...g.ok.map(x=>x.cost)),0):0;
   const kind=need.length>1?t('tBoth'):need[0]==='water'?t('tWater'):t('tLand');
   $('#best').innerHTML=!ch?'<strong>'+t('noOk')+'</strong>':
    `<div class="big">${ch.parts.map(x=>ic(x.v.icon)).join(' ')}</div><div><small>${t(isBest?'best':'chosen')} · ${kind}</small><strong>${ch.parts.map(x=>x.v.name).join(' + ')}</strong></div>
-   <div><small>${t('total')}</small><strong>${peso(ch.cost)}</strong></div><div><small>${t('dur')}</small><strong>${fmtT(ch.hrs*60)}</strong></div>
+   <div><small>${t('total')}</small><strong>${peso(ch.cost)}</strong></div><div><small>${t('fuelUsed')}</small><strong>${ch.fuelUse}</strong></div>
+   <div><small>${t('fuelC')}</small><strong>${peso(ch.fuelCost)}</strong></div><div><small>${t('dur')}</small><strong>${fmtT(ch.hrs*60)}</strong></div>
    <div><small>${t('dist')}</small><strong>${ch.km.toFixed(1)} km</strong></div><div><small>${t('saved')}</small><strong>${peso(worst-ch.cost)}</strong></div>`;
   trafficUI(r,ch);
   const notes=[];if(need.length>1)notes.push(t('nBoth'));if(r.waterKm>.05)notes.push(t('nWater'));if(r.estimate)notes.push(t('nEstimate'));if(r.offroad)notes.push(t('nOffroad'));if(r.forcedWater)notes.push(t('nForced'));
@@ -560,9 +567,9 @@ function renderResults(){
    ${x.ok?`<small>${peso(x.cost)} · ${fmtT(x.hrs*60)}</small>`:`<small class="late">${x.why}</small>`}</button>`).join('')}</div>`).join('');
   etaUI(r,ch);
   const tag=(g,x,k)=>x.ok&&x[k]===g.m[k]?`<span class="b">${t('low')}</span>`:'';
-  $('#cmp').innerHTML=`<table><tr><th>${t('vehicle')}</th><th>${ic('g-clock')}</th><th>${t('cost')}</th><th>${t('fuelC')}</th><th>${t('labor')}</th><th>${t('effort')}</th><th>${t('trips')}</th></tr>${groups.map(g=>g.rows.map(x=>x.ok?
-   `<tr><td>${ic(x.v.icon)} ${x.v.name}${x===g.best?' '+ic('g-trophy'):''}</td><td>${fmtT(x.hrs*60)}${tag(g,x,'hrs')}</td><td>${peso(x.cost)}${tag(g,x,'cost')}</td><td>${peso(x.fuelCost)}</td><td>${peso(x.labor)}</td><td>${lvlN(x.lvl)}${tag(g,x,'eff')}</td><td>${x.trips}</td></tr>`:
-   `<tr class="muted"><td>${ic(x.v.icon)} ${x.v.name}</td><td colspan="6">${x.why}</td></tr>`).join('')).join('')}</table>`;
+  $('#cmp').innerHTML=`<table><tr><th>${t('vehicle')}</th><th>${ic('g-clock')}</th><th>${t('cost')}</th><th>${t('fuelUsed')}</th><th>${t('fuelC')}</th><th>${t('labor')}</th><th>${t('effort')}</th><th>${t('trips')}</th></tr>${groups.map(g=>g.rows.map(x=>x.ok?
+   `<tr><td>${ic(x.v.icon)} ${x.v.name}${x===g.best?' '+ic('g-trophy'):''}</td><td>${fmtT(x.hrs*60)}${tag(g,x,'hrs')}</td><td>${peso(x.cost)}${tag(g,x,'cost')}</td><td>${x.fuelAmount.toFixed(2)} ${x.fuelUnit}<br><small>${x.fuelPerHour.toFixed(2)} ${x.fuelUnit}/h</small></td><td>${peso(x.fuelCost)}</td><td>${peso(x.labor)}</td><td>${lvlN(x.lvl)}${tag(g,x,'eff')}</td><td>${x.trips}</td></tr>`:
+   `<tr class="muted"><td>${ic(x.v.icon)} ${x.v.name}</td><td colspan="7">${x.why}</td></tr>`).join('')).join('')}</table>`;
   if(ch)charts(groups.flatMap(g=>g.ok),ch,r);
   drawMap(r)}
 window.pick=(dom,id)=>{st.sel[dom]=id;renderResults()};

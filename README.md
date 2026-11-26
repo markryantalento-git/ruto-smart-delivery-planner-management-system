@@ -1,4 +1,4 @@
-# RUTO - Transportation / Delivery Least Cost System
+# RUTO - Transportation and Delivery Least Cost Saving Management System
 
 ## Files
 - index.html            - the page (sign in, plan, calendar, history, navigation, assistant)
@@ -27,13 +27,17 @@
    HTTPS (or localhost while developing).
 The layout adapts to phone, tablet, and desktop viewport sizes.
 
-Inside the app, use the menu button for Plan, Calendar, History, Profile settings, and Sign out.
+Inside the app, use the menu button for Plan, Calendar, History, About, Profile settings, and Sign out.
 Click the circular avatar at the bottom of the menu to open Profile settings. Email/password
 accounts can change their password there after confirming the current password; social/phone
 accounts manage sign-in through their provider. Sign out is at the bottom of the menu.
 Open the RUTO Assistant by tapping the orange chat bubble at the bottom-right of the signed-in app.
 Fuel prices per liter are editable in the planner; changes are saved on this device and update trip
-cost estimates. During an active route, use **Simulate** to move along the route without GPS.
+cost estimates. Road fuel estimates use average speed divided by km/L, multiplied by driving time,
+with a traffic adjustment; EV energy is calculated in kWh. Boat fuel is estimated by cruising
+liters per hour: the motorized-banca preset is 1.75 L/h (the midpoint of 1–2.5 L/h), while the
+cargo-boat preset retains its existing equivalent of 22.5 L/h. The comparison shows both trip
+quantity and hourly use. During an active route, use **Simulate** to move along the route without GPS.
 After saving a delivery, choose **Start delivery** to open RUTO's in-app, Waze-style navigation.
 It follows the saved drop-off order with live location, spoken turn guidance, and rerouting while
 the app is open. GPS permission is required; external Google Maps and Waze links are also available.

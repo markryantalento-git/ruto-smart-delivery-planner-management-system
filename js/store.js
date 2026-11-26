@@ -117,7 +117,8 @@ $('#calexport').onclick=()=>{const up=st.H.filter(x=>!x.done&&startOf(x)>new Dat
 $('#caladd').onclick=()=>{if(calDay<ymd(new Date())){toast(t('pastDate'),'bad');return}clearForm();st.editSched=true;$('#date').value=calDay;showView('plan');render();toast(t('schedHint'),'ok');$('#addr').focus()};
 
 function showView(v){
-  ['plan','cal','hist','profile'].forEach(k=>$('#v_'+k).hidden=v!==k);
+  window.scrollTo(0,0);
+  ['plan','cal','hist','profile','about'].forEach(k=>$('#v_'+k).hidden=v!==k);
   $$('#sidebar [data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(v==='plan')setTimeout(()=>map.invalidateSize(),50);
   if(v==='cal')calUI()}

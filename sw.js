@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ruto-shell-v31';
+const CACHE_NAME = 'ruto-shell-v33';
 const SHELL_FILES = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const SHELL_FILES = [
   './assets/app-icon-180.png',
   './assets/app-icon-192.png',
   './assets/app-icon-512.png',
+  './assets/support-qr.png',
   './js/config.js',
   './js/i18n.js',
   './js/app.js',
