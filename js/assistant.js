@@ -153,6 +153,13 @@ async function ask(q){
   finally{wait.remove();asking=false}}
 
 function openAI(on){$('#ai').hidden=!on;$('#fab').setAttribute('aria-expanded',on);if(on){if(!$('#aimsgs').children.length)bubble('bot',t('aiHi'));$('#aiin').focus()}else{rec?.abort();window.speechSynthesis?.cancel()}}
+const aiPanel=$('#ai'),aiResize=$('#airesize');let aiResizeY=0,aiResizeHeight=0;
+function setAIHeight(height){const max=Math.max(220,window.innerHeight-120),min=Math.min(240,max);aiPanel.style.height=Math.round(Math.max(min,Math.min(max,height)))+'px'}
+aiResize.addEventListener('pointerdown',e=>{e.preventDefault();aiResizeY=e.clientY;aiResizeHeight=aiPanel.getBoundingClientRect().height;aiResize.setPointerCapture(e.pointerId)});
+aiResize.addEventListener('pointermove',e=>{if(aiResize.hasPointerCapture(e.pointerId))setAIHeight(aiResizeHeight+aiResizeY-e.clientY)});
+for(const name of['pointerup','pointercancel'])aiResize.addEventListener(name,e=>{if(aiResize.hasPointerCapture(e.pointerId))aiResize.releasePointerCapture(e.pointerId)});
+aiResize.addEventListener('keydown',e=>{if(e.key!=='ArrowUp'&&e.key!=='ArrowDown')return;e.preventDefault();setAIHeight(aiPanel.getBoundingClientRect().height+(e.key==='ArrowUp'?32:-32))});
+window.addEventListener('resize',()=>{if(aiPanel.style.height)setAIHeight(parseFloat(aiPanel.style.height))});
 function aiLang(){chat=null;$('#aiin').placeholder=t('aiPh');$('#aichips').innerHTML=['gas','market','food','repair','ice'].map(k=>`<button type="button" class="chip" data-cat="${k}">${t(CATS[k].k)}</button>`).join('');
   $$('#aichips [data-cat]').forEach(b=>b.onclick=async()=>{const k=b.dataset.cat;bubble('user',t(CATS[k].k));try{const r=await findPlaces(k);if(!r.places.length)return reply(t('aNone',{s:t(CATS[k].k)}));placeList(r);reply((r.usingGps?'':t('aNoGps')+' ')+t('aFound',{n:r.places.length,s:r.label,p:r.places[0].name,k:r.places[0].km.toFixed(1)}))}catch(e){reply(t('aErr'))}})}
 $('#fab').onclick=()=>openAI($('#ai').hidden);$('#nvAI').onclick=()=>openAI(true);$('#aiclose').onclick=()=>openAI(false);

@@ -57,7 +57,8 @@ const pad=n=>String(n).padStart(2,'0');
 const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); // local date (not UTC)
 const vById=id=>V.find(v=>v.id===id);
 const st={user:null,origin:null,stops:[],sel:{},editId:null,editSched:false,r:null,chosen:null,anim:null,me:null,H:[]};
-let accountType='personal',profileData={accountType:'personal',name:'',companyName:'',email:'',photoURL:''},profilePhotoBlob=null,profilePhotoObjectURL='';
+const PHOTO_COOLDOWN_MS=30*24*60*60*1000;
+let accountType='personal',profileData={accountType:'personal',name:'',companyName:'',email:'',photoURL:''},profilePhotoBlob=null,profilePhotoObjectURL='',profilePhotoCooldownUntil=0,profilePhotoCheck=0;
 let mode='up',map,layer,tileLayer,meMk,c1,c2;
 function toast(msg,kind=''){const d=document.createElement('div');d.className='toast '+kind;d.textContent=msg;$('#toasts').append(d);setTimeout(()=>d.remove(),6000)}
 
@@ -242,6 +243,43 @@ function applyProfileData(data={}){
   $('#profileEmail').value=profileData.email||'';
   $('#profileAccountType').value=t(profileData.accountType==='company'?'companyAccount':'personalAccount');
   paintProfilePhoto();updatePasswordUI()}
+function profilePhotoStorageError(error){
+  const code=error?.code||'';
+  if(code==='storage/unauthorized')return t('photoStorageRules');
+  if(code==='storage/quota-exceeded')return t('photoStorageBilling');
+  if(['storage/bucket-not-found','storage/no-default-bucket','storage/project-not-found'].includes(code))return t('profileStorageUnavailable');
+  if(code==='storage/unknown')return t('photoStorageUnknown');
+  return error?.message||t('profileStorageUnavailable')}
+function setProfilePhotoCooldown(lastChangedAt){
+  profilePhotoCooldownUntil=lastChangedAt?lastChangedAt+PHOTO_COOLDOWN_MS:0;
+  const remaining=profilePhotoCooldownUntil-Date.now();
+  $('#profilePhotoInput').disabled=remaining>0;
+  $('#profilePhotoCooldown').textContent=remaining>0?t('photoCooldown',{days:Math.ceil(remaining/86400000)}):t('photoChangeAvailable')}
+function recordProfilePhotoChange(uid,time=Date.now()){
+  const changes=LS('ruto_profile_photo_changes',{});
+  changes[uid]=time;SV('ruto_profile_photo_changes',changes);
+  setProfilePhotoCooldown(time)}
+async function refreshProfilePhotoCooldown(uid){
+  const input=$('#profilePhotoInput'),notice=$('#profilePhotoCooldown'),check=++profilePhotoCheck;
+  if(!auth){
+    const changedAt=Number(LS('ruto_profile_photo_changes',{})[uid]||0);
+    setProfilePhotoCooldown(changedAt);return}
+  if(!storage){input.disabled=false;notice.textContent=t('profileStorageUnavailable');return}
+  input.disabled=true;notice.textContent=t('photoChecking');
+  try{
+    const meta=await storage.ref().child('users/'+uid+'/profile.jpg').getMetadata();
+    if(check!==profilePhotoCheck||st.user!==uid)return;
+    const changedAt=Date.parse(meta.updated);
+    if(!Number.isFinite(changedAt))throw new Error(t('photoStorageUnknown'));
+    recordProfilePhotoChange(uid,changedAt);
+  }catch(error){
+    if(check!==profilePhotoCheck||st.user!==uid)return;
+    if(error.code==='storage/object-not-found'){setProfilePhotoCooldown(0);return}
+    console.warn('profile photo metadata',error.code,error.serverResponse);
+    const changedAt=Number(LS('ruto_profile_photo_changes',{})[uid]||0);
+    if(changedAt+PHOTO_COOLDOWN_MS>Date.now())setProfilePhotoCooldown(changedAt);
+    else{input.disabled=false;notice.textContent=profilePhotoStorageError(error)}}
+}
 function updatePasswordUI(){
   const local=!FB_ON&&!!LS('ruto_users',{})[st.user],remote=!!auth?.currentUser?.providerData?.some(p=>p.providerId==='password'),
     available=!!st.user&&(local||remote);
@@ -249,6 +287,7 @@ function updatePasswordUI(){
   $('#passwordProviderHelp').hidden=!st.user||available}
 function loadProfile(uid,fallback={}){
   applyProfileData(fallback);
+  refreshProfilePhotoCooldown(uid);
   getProfileRecord(uid).then(data=>{if(st.user===uid)applyProfileData({...fallback,...data})})
     .catch(e=>{console.warn('profile read',e);$('#profileStatus').textContent=t('profileLoadFail')})}
 function resizeProfilePhoto(file){
@@ -274,6 +313,8 @@ function blobDataURL(blob){
   return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error||new Error(t('photoInvalid')));reader.readAsDataURL(blob)})}
 $('#profilePhotoInput').onchange=async e=>{
   const file=e.target.files[0];if(!file)return;
+  if(profilePhotoCooldownUntil>Date.now()){
+    e.target.value='';$('#profileStatus').textContent=t('photoCooldown',{days:Math.ceil((profilePhotoCooldownUntil-Date.now())/86400000)});return}
   try{
     profilePhotoBlob=await resizeProfilePhoto(file);
     if(profilePhotoObjectURL)URL.revokeObjectURL(profilePhotoObjectURL);
@@ -288,25 +329,48 @@ $('#profileForm').onsubmit=async e=>{
     $('#profileStatus').textContent=t('errFill');return}
   button.disabled=true;$('#profileStatus').textContent=t('profileSaving');
   try{
-    let photoURL=profileData.photoURL||'';
-    if(profilePhotoBlob){
-      if(auth){
-        if(!storage)throw new Error(t('profileStorageUnavailable'));
-        const ref=storage.ref().child('users/'+st.user+'/profile.jpg');
-        await ref.put(profilePhotoBlob,{contentType:'image/jpeg'});
-        photoURL=await ref.getDownloadURL();
-      }else photoURL=await blobDataURL(profilePhotoBlob)}
-    const updated={...profileData,name,companyName:profileData.accountType==='company'?companyName:'',photoURL};
+    let updated={...profileData,name,companyName:profileData.accountType==='company'?companyName:'',photoURL:profileData.photoURL||''};
     if(auth&&db){
       const saved=await saveProfile(st.user,updated);
       if(!saved)throw new Error(t('profileCloudSaveFail'));
-      if(auth.currentUser)await auth.currentUser.updateProfile({displayName:name,photoURL:photoURL||null});
+      if(auth.currentUser)await auth.currentUser.updateProfile({displayName:name});
       cacheProfile(st.user,updated);
     }else{
       if(!cacheProfile(st.user,updated))throw new Error(t('saveFail'));
       const users=LS('ruto_users',{});
       if(users[st.user]){users[st.user].name=name;users[st.user].companyName=updated.companyName;if(!SV('ruto_users',users))throw new Error(t('saveFail'))}}
     profileData=updated;
+    applyProfileData(updated);
+    if(profilePhotoBlob){
+      if(profilePhotoCooldownUntil>Date.now()){
+        $('#profileStatus').textContent=t('photoCooldown',{days:Math.ceil((profilePhotoCooldownUntil-Date.now())/86400000)});return}
+      if(auth){
+        try{
+          if(!storage)throw Object.assign(new Error(t('profileStorageUnavailable')),{code:'storage/no-default-bucket'});
+          const ref=storage.ref().child('users/'+st.user+'/profile.jpg');
+          await ref.put(profilePhotoBlob,{contentType:'image/jpeg'});
+          const photoURL=await ref.getDownloadURL();
+          updated={...updated,photoURL};
+          if(auth&&db){
+            const saved=await saveProfile(st.user,updated);
+            if(!saved)throw new Error(t('profileCloudSaveFail'));
+            if(auth.currentUser)await auth.currentUser.updateProfile({displayName:name,photoURL});
+            cacheProfile(st.user,updated);
+          }else if(!cacheProfile(st.user,updated))throw new Error(t('saveFail'));
+          profileData=updated;applyProfileData(updated);recordProfilePhotoChange(st.user);
+          await refreshProfilePhotoCooldown(st.user);
+        }catch(photoError){
+          console.warn('profile photo upload',photoError.code,photoError.serverResponse);
+          await refreshProfilePhotoCooldown(st.user);
+          $('#profileStatus').textContent=t('photoUploadFailed',{reason:profilePhotoStorageError(photoError)});return}
+      }else{
+        const photoURL=await blobDataURL(profilePhotoBlob);
+        updated={...updated,photoURL};
+        if(!cacheProfile(st.user,updated))throw new Error(t('saveFail'));
+        const users=LS('ruto_users',{});
+        if(users[st.user]){users[st.user].photoURL=photoURL;if(!SV('ruto_users',users))throw new Error(t('saveFail'))}
+        profileData=updated;applyProfileData(updated);recordProfilePhotoChange(st.user)}
+    }
     if(profilePhotoObjectURL)URL.revokeObjectURL(profilePhotoObjectURL);
     profilePhotoObjectURL='';profilePhotoBlob=null;$('#profilePhotoInput').value='';
     applyProfileData(updated);$('#profileStatus').textContent=t(auth&&db?'profileSaved':'profileSavedLocal');

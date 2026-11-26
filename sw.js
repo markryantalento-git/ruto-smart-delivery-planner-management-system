@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ruto-shell-v29';
+const CACHE_NAME = 'ruto-shell-v31';
 const SHELL_FILES = [
   './',
   './index.html',
@@ -20,7 +20,8 @@ const SHELL_FILES = [
   './js/assistant.js',
   './js/main.js',
   './js/pwa.js',
-  './js/reset.js'
+  './js/reset.js',
+  './js/ui-guard.js'
 ];
 
 self.addEventListener('install', event => {

@@ -42,8 +42,11 @@ the app is open. GPS permission is required; external Google Maps and Waze links
 1. Firestore Database > Create database (production mode, asia-southeast1).
    Without this, deliveries are saved on the device only.
 2. Firestore > Rules > paste firestore.rules > Publish. **The rules changed in this version.**
-3. Storage > Get started, select the configured bucket, then publish the rules in storage.rules.
-   Profile photos are resized and stored under a user-scoped path protected by those rules.
+3. Storage > Get started, select the bucket matching `storageBucket` in `js/config.js`, then publish
+   `storage.rules` (or run `firebase deploy --only storage`). The default bucket requires the Blaze
+   pay-as-you-go plan under Firebase's current Storage requirements. Profile photos are resized and
+   stored under a user-scoped path; Storage rules allow replacement only after 30 days and prohibit
+   deletion to prevent bypassing the cooldown.
 4. Authentication > Sign-in method: enable Email/Password, Google (pick a support email), Apple and Phone.
    Apple sign-in also requires an Apple Developer configuration (Services ID, Team ID, key ID and private key)
    entered in Firebase Console; never put the Apple private key in browser code.
@@ -113,6 +116,11 @@ Update number 1 or 2 every Tuesday. Included values: 24 Nov 2026, from fuelprice
   service-account keys, private API secrets, or passwords in this project. A Firebase web API key is
   an identifier, not authorization; restrict it to the production website referrers and the APIs
   the app uses. Restrict any TomTom key to the deployed site as well.
+- Fixed-version CDN scripts and the Leaflet stylesheet use SHA-384 Subresource Integrity checks.
+  Update the hashes whenever those exact asset versions change. Google Fonts CSS and the Firebase AI
+  Logic modules loaded dynamically at runtime are not SRI-pinned; self-host them for stricter supply
+  chain control. The right-click and text-selection deterrent is only a UI convenience and does not
+  prevent DevTools, source downloads, screenshots, or automated scraping.
 - Firestore rules restrict each account to its own profile and delivery documents, validate their
   fields, and prohibit client writes to published fuel data. Publish `firestore.rules` after changes.
 - Firebase Hosting adds HTTPS-only transport, framing, MIME-sniffing, referrer, and browser-permission

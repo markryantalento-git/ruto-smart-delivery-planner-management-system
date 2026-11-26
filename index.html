@@ -11,10 +11,10 @@
 <link rel="apple-touch-icon" href="assets/app-icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="ui-guard">
 <aside class="install-banner" id="installBanner" aria-label="Install RUTO" hidden>
  <p data-i="installBanner"></p>
  <button class="install-action" id="installAppButton" type="button" data-i="installButton"></button>
@@ -291,7 +291,7 @@
   <div class="card profile-card">
    <h2 data-i="profileTitle"></h2><p class="muted" data-i="profileHelp"></p>
    <form id="profileForm">
-    <div class="profile-photo-row"><div class="profile-avatar"><img id="profilePhoto" alt="" hidden><span id="profileInitials">R</span></div><div><label for="profilePhotoInput" data-i="profilePhoto"></label><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp"><p class="muted" data-i="profilePhotoHelp"></p></div></div>
+    <div class="profile-photo-row"><div class="profile-avatar"><img id="profilePhoto" alt="" hidden><span id="profileInitials">R</span></div><div><label for="profilePhotoInput" data-i="profilePhoto"></label><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" disabled><p class="muted" data-i="profilePhotoHelp"></p><p class="muted" id="profilePhotoCooldown" role="status" aria-live="polite"></p></div></div>
     <label for="profileName" data-i="name"></label><input id="profileName" maxlength="120" required>
     <div id="profileCompanyWrap" hidden><label for="profileCompanyName" data-i="companyName"></label><input id="profileCompanyName" maxlength="160"></div>
     <div class="team-preview" id="companyTeamPreview" hidden><h3 data-i="teamPreviewTitle"></h3><p data-i="teamPreviewText"></p><strong data-i="teamPreviewPrice"></strong></div>
@@ -328,6 +328,7 @@
 <!-- ASSISTANT -->
 <button id="fab" class="fab" hidden aria-label="RUTO assistant" title="RUTO Assistant" aria-expanded="false"><svg class="i"><use href="#g-chat"/></svg></button>
 <div id="ai" hidden role="dialog" aria-label="RUTO assistant">
+ <button type="button" id="airesize" aria-label="Resize chat panel" title="Drag up or down to resize"></button>
  <div class="aihead"><strong data-i="aiTitle"></strong><div class="sp"></div><button class="ib" id="aitts" title="Voice replies" aria-label="Voice replies"><svg class="i"><use href="#g-sound"/></svg></button><button class="ib" id="aiclose" aria-label="Close">✕</button></div>
  <div id="aimsgs" aria-live="polite"></div>
  <div id="voiceask" hidden><p data-i="voiceAsk"></p><div class="row"><button class="btn p" id="voiceallow" data-i="voiceAllow"></button><button class="btn" id="voiceno" data-i="notNow"></button></div></div>
@@ -344,13 +345,13 @@
 </dialog>
 <div id="toasts" role="status" aria-live="polite"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" integrity="sha384-AQ3POAMqIhwS81FrUH95ekxqBZHeP5tG2JfEL3+7GuTtfRLWnrRh32UxwzM+//A9" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js" integrity="sha384-TnlRYaR4JYz/lpaGuaiU61PjNberSA4vjLjtF+oRC/IkohkJqnWxw5EmDSOt1vA1" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" integrity="sha384-qn4Jh88HhJA8dplNQyGjOh9OGI4izVhrfj/qIFgaKcdgOE06pXqIKGlsCILZcLAC" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js" integrity="sha384-6I0gWsz4FIAr30c0TxIxJnPQuJiZ1FfILdZrgJdjxTH3R8dgPGTvexbyqTvReV6Z" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js" integrity="sha384-E3vxFxXu8FhW5kvqdQJ5Yf8ugrV7iCJP8jgnItRH2Rk8Q08cJzJGTi/oMC3FEp3j" crossorigin="anonymous"></script>
 <script src="js/config.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
@@ -361,5 +362,6 @@
 <script src="js/assistant.js"></script>
 <script src="js/main.js"></script>
 <script src="js/pwa.js"></script>
+<script src="js/ui-guard.js"></script>
 </body>
 </html>
