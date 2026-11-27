@@ -12,11 +12,11 @@
   const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
   const pointer = { x: 0, y: 0, clientX: 0, clientY: 0, seen: false, strength: 0 };
   const highlightColors = [
-    'rgba(255,243,166,.34)',
-    'rgba(255,243,166,.48)',
-    'rgba(255,243,166,.64)',
-    'rgba(255,243,166,.80)',
-    'rgba(255,243,166,.96)'
+    'rgba(255,243,166,.82)',
+    'rgba(255,232,92,.88)',
+    'rgba(255,223,45,.94)',
+    'rgba(255,215,0,.98)',
+    'rgba(255,215,0,1)'
   ];
 
   let width = 0;
@@ -29,7 +29,7 @@
 
   function resizeCanvas() {
     width = landing.clientWidth;
-    height = landing.scrollHeight;
+    height = landing.clientHeight;
     if (!width || !height) return;
 
     const pixelRatio = Math.min(
@@ -60,7 +60,7 @@
     }
 
     context.clearRect(0, 0, width, height);
-    context.fillStyle = isDark ? 'rgba(255,215,0,.15)' : 'rgba(53,56,57,.15)';
+    context.fillStyle = isDark ? 'rgba(255,215,0,.38)' : 'rgba(53,56,57,.38)';
     context.beginPath();
 
     for (let baseY = step / 2; baseY < height; baseY += step) {
@@ -86,7 +86,7 @@
         }
 
         context.moveTo(x + 1.15, y);
-        context.arc(x, y, 1.15, 0, Math.PI * 2);
+        context.arc(x, y, 1.45, 0, Math.PI * 2);
       }
     }
 
@@ -96,12 +96,15 @@
       if (!points.length) continue;
 
       context.fillStyle = highlightColors[level];
+      context.shadowColor = 'rgba(255,215,0,.9)';
+      context.shadowBlur = 10;
       context.beginPath();
       for (let i = 0; i < points.length; i += 2) {
-        context.moveTo(points[i] + 1.8, points[i + 1]);
-        context.arc(points[i], points[i + 1], 1.8, 0, Math.PI * 2);
+        context.moveTo(points[i] + 2.1, points[i + 1]);
+        context.arc(points[i], points[i + 1], 2.1, 0, Math.PI * 2);
       }
       context.fill();
+      context.shadowBlur = 0;
     }
   }
 

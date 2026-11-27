@@ -13,7 +13,8 @@ function fuelUI(){
   $('#fuel').innerHTML=FK.map(([k,l])=>{const p=st.prev[k],a=p&&st.fuel[k]!==p?(st.fuel[k]>p?'<span class="up">▲</span>':'<span class="dn">▼</span>'):'';
     return `<div><b>${ic('g-fuel')} ${t(l)} ${a}</b><input type="number" min="0.01" step="0.01" value="${+st.fuel[k]}" onchange="setFuel('${k}',this.value)" aria-label="${t(l)}"></div>`}).join('');
   const f=st.fuel,age=(Date.now()-new Date(f.asOf+'T00:00'))/86400000;
-  $('#fuelnote').innerHTML=[f.manual?t('fManual'):t('fAsOf',{d:esc(f.asOf),s:esc(f.source)}),f.checked?t('fChecked',{t:new Date(f.checked).toLocaleString('en-PH')}):'',age>8?'<b class="late">'+t('fOld')+'</b>':'',t('fEvNote')].filter(Boolean).join('<br>')}
+  $('#fuelnote').innerHTML=[f.manual?t('fManual'):t('fAsOf',{d:esc(f.asOf),s:esc(f.source)}),f.checked?t('fChecked',{t:new Date(f.checked).toLocaleString('en-PH')}):'',age>8?'<b class="late">'+t('fOld')+'</b>':'',t('fEvNote')].filter(Boolean).join('<br>');
+  dashboardUI()}
 window.setFuel=(k,v)=>{const n=+v;if(!(n>0)){fuelUI();return}st.prev[k]=st.fuel[k];st.fuel[k]=n;if(k!=='ev'){st.fuel.manual=true;st.fuel.editedOn=ymd(new Date())}saveFuel();fuelUI();render()};
 async function publishedFuel(){
   const jobs=[getJSON('data/fuel-prices.json?t='+Date.now(),{cache:'no-store'},8000)];

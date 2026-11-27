@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "RUTO - Transportation and Delivery Least Cost Saving Management System",
+  "name": "RUTO - Smart Transportation and Delivery Planner System",
   "short_name": "RUTO",
-  "description": "RUTO helps plan deliveries and compare vehicle options, routes, estimated travel times, and trip costs.",
+  "description": "RUTO is a smart transportation and delivery planner system for comparing vehicle options, routes, estimated travel times, and trip costs.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

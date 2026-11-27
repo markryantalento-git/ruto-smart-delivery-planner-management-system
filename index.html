@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RUTO – Transportation and Delivery Least Cost Saving Management System</title>
-<meta name="description" content="RUTO is a transportation and delivery least cost saving management system for planning routes, comparing vehicles, and estimating delivery costs.">
+<title>RUTO – Smart Transportation and Delivery Planner System</title>
+<meta name="description" content="RUTO is a smart transportation and delivery planner system for planning routes, comparing vehicles, and estimating delivery costs.">
 <link rel="canonical" href="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/">
-<meta property="og:title" content="RUTO – Transportation and Delivery Least Cost Saving Management System">
+<meta property="og:title" content="RUTO – Smart Transportation and Delivery Planner System">
 <meta property="og:description" content="Plan delivery routes, compare vehicles, and estimate costs with RUTO.">
 <meta property="og:image" content="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/assets/app-icon-512.png">
 <meta property="og:image:secure_url" content="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/assets/app-icon-512.png">
@@ -17,7 +17,7 @@
 <meta property="og:image:height" content="512">
 <meta property="og:image:alt" content="RUTO logo with a delivery truck and route pin">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="RUTO – Transportation and Delivery Least Cost Saving Management System">
+<meta name="twitter:title" content="RUTO – Smart Transportation and Delivery Planner System">
 <meta name="twitter:description" content="Plan delivery routes, compare vehicles, and estimate costs with RUTO.">
 <meta name="twitter:image" content="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/assets/app-icon-512.png">
 <meta name="theme-color" content="#353839">
@@ -28,7 +28,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
-<link rel="stylesheet" href="css/style.css?v=42">
+<link rel="stylesheet" href="css/style.css?v=67">
 </head>
 <body class="ui-guard">
 <aside class="install-banner" id="installBanner" aria-label="Install RUTO" hidden>
@@ -47,6 +47,20 @@
  <stop offset=".45" stop-color="#737E88"/>
  <stop offset="1" stop-color="#343C45"/>
 </linearGradient>
+<linearGradient id="rubot-shell-gradient" x1="0" y1="0" x2="1" y2="1">
+ <stop stop-color="#FFF1A8"/>
+ <stop offset=".32" stop-color="#FFD700"/>
+ <stop offset=".72" stop-color="#D1A600"/>
+ <stop offset="1" stop-color="#806200"/>
+</linearGradient>
+<linearGradient id="rubot-screen-gradient" x1="0" y1="0" x2="0" y2="1">
+ <stop stop-color="#30363B"/>
+ <stop offset="1" stop-color="#101214"/>
+</linearGradient>
+<radialGradient id="rubot-eye-gradient">
+ <stop stop-color="#FFF7C2"/>
+ <stop offset="1" stop-color="#FFD700"/>
+</radialGradient>
 <symbol id="logo" viewBox="0 0 64 64">
  <image href="assets/app-icon-512.png" width="64" height="64"/>
 </symbol>
@@ -57,24 +71,70 @@
 <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
 <symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.500 1.500M17.500 17.500L19 19M5 19l1.500-1.500M17.500 6.500L19 5"/></symbol>
 <symbol id="moon" viewBox="0 0 24 24"><path d="M20 14A8 8 0 0 1 10 4a8 8 0 1 0 10 10z"/></symbol>
-<symbol id="g-moto" viewBox="0 0 24 24"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l4-7h4l2 3h4M13 10l1-3h3M9 10H7"/></symbol><symbol id="g-trike" viewBox="0 0 24 24"><circle cx="5" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/><path d="M7.5 17H14.5M5 17l3-6h4l2 6M14 11h6v6h-.5"/></symbol><symbol id="g-etrike" viewBox="0 0 24 24"><circle cx="5" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/><path d="M7.5 17H14.5M5 17l3-6h2M14 11h6v6h-.5M13 3l-3 5h4l-3 5"/></symbol><symbol id="g-car" viewBox="0 0 24 24"><path d="M3 16v-4l2-5h14l2 5v4zM3 12h18"/><circle cx="7.5" cy="16.5" r="1.8"/><circle cx="16.5" cy="16.5" r="1.8"/></symbol><symbol id="g-bus" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M3 11h18M7 17v2M17 17v2"/><circle cx="7.5" cy="14" r=".7"/><circle cx="16.5" cy="14" r=".7"/></symbol><symbol id="g-van" viewBox="0 0 24 24"><path d="M2 16V7h12v9M14 10h4l4 3v3h-8"/><circle cx="6.5" cy="17" r="2"/><circle cx="17.5" cy="17" r="2"/></symbol><symbol id="g-pickup" viewBox="0 0 24 24"><path d="M2 16v-6h9V7h6l5 5v4M11 10v6"/><circle cx="7" cy="17" r="2"/><circle cx="18" cy="17" r="2"/></symbol><symbol id="g-truck" viewBox="0 0 24 24"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l4 4v3h-8"/><circle cx="6" cy="17.5" r="2"/><circle cx="18" cy="17.5" r="2"/></symbol><symbol id="g-truck2" viewBox="0 0 24 24"><rect x="1" y="5" width="14" height="11" rx="1"/><path d="M15 9h3l4 4v3h-7"/><circle cx="5" cy="17.5" r="2"/><circle cx="11" cy="17.5" r="2"/><circle cx="19" cy="17.5" r="2"/></symbol><symbol id="g-boat" viewBox="0 0 24 24"><path d="M2 14h20l-3 5H5zM12 4v8M12 5l5 6h-5M7 10l5-6"/></symbol><symbol id="g-ship" viewBox="0 0 24 24"><path d="M3 16l2 4h14l2-4zM6 16V9h12v7M9 9V5h6v4M9 12h6"/></symbol><symbol id="g-pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol><symbol id="g-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a3 3 0 0 0 0-6H8a3 3 0 0 1 0-6h8"/></symbol><symbol id="g-fuel" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M4 21h10M4 10h10M14 8h2a2 2 0 0 1 2 2v7a1.5 1.5 0 0 0 3 0V9l-3-3"/></symbol><symbol id="g-snow" viewBox="0 0 24 24"><path d="M12 2v20M4.5 7l15 10M19.5 7l-15 10M9 4l3 2 3-2M9 20l3-2 3 2"/></symbol><symbol id="g-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/></symbol><symbol id="g-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M10 17h4"/></symbol><symbol id="g-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="g-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"/></symbol><symbol id="g-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol><symbol id="g-warehouse" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M7 21v-7h10v7M7 17h10"/></symbol><symbol id="g-meat" viewBox="0 0 24 24"><path d="M14 4a5 5 0 0 1 6 6c-1 2-4 3-6 3l-4 4a2.5 2.5 0 1 1-3-3l4-4c0-2 1-5 3-6z"/></symbol><symbol id="g-food" viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-2 6 0 8v10"/></symbol><symbol id="g-leaf" viewBox="0 0 24 24"><path d="M5 19C5 9 11 4 20 4c0 9-5 15-15 15zM5 19l8-8"/></symbol><symbol id="g-pill" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="4" transform="rotate(-35 12 12)"/><path d="M9 15l6-6"/></symbol><symbol id="g-laptop" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1"/><path d="M2 20h20"/></symbol><symbol id="g-glass" viewBox="0 0 24 24"><path d="M7 3h10l-1 7a4 4 0 0 1-8 0zM12 14v7M8 21h8"/></symbol><symbol id="g-weight" viewBox="0 0 24 24"><path d="M5 9h14l2 12H3z"/><circle cx="12" cy="6" r="3"/></symbol><symbol id="g-return" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol><symbol id="g-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol><symbol id="g-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol><symbol id="g-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="g-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></symbol><symbol id="g-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></symbol><symbol id="g-sound" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM17 9a4 4 0 0 1 0 6M19.500 6.500a8 8 0 0 1 0 11"/></symbol></defs></svg>
+<symbol id="g-moto" viewBox="0 0 24 24"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l4-7h4l2 3h4M13 10l1-3h3M9 10H7"/></symbol><symbol id="g-trike" viewBox="0 0 24 24"><circle cx="5" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/><path d="M7.5 17H14.5M5 17l3-6h4l2 6M14 11h6v6h-.5"/></symbol><symbol id="g-etrike" viewBox="0 0 24 24"><circle cx="5" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/><path d="M7.5 17H14.5M5 17l3-6h2M14 11h6v6h-.5M13 3l-3 5h4l-3 5"/></symbol><symbol id="g-car" viewBox="0 0 24 24"><path d="M3 16v-4l2-5h14l2 5v4zM3 12h18"/><circle cx="7.5" cy="16.5" r="1.8"/><circle cx="16.5" cy="16.5" r="1.8"/></symbol><symbol id="g-bus" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M3 11h18M7 17v2M17 17v2"/><circle cx="7.5" cy="14" r=".7"/><circle cx="16.5" cy="14" r=".7"/></symbol><symbol id="g-van" viewBox="0 0 24 24"><path d="M2 16V7h12v9M14 10h4l4 3v3h-8"/><circle cx="6.5" cy="17" r="2"/><circle cx="17.5" cy="17" r="2"/></symbol><symbol id="g-pickup" viewBox="0 0 24 24"><path d="M2 16v-6h9V7h6l5 5v4M11 10v6"/><circle cx="7" cy="17" r="2"/><circle cx="18" cy="17" r="2"/></symbol><symbol id="g-truck" viewBox="0 0 24 24"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l4 4v3h-8"/><circle cx="6" cy="17.5" r="2"/><circle cx="18" cy="17.5" r="2"/></symbol><symbol id="g-truck2" viewBox="0 0 24 24"><rect x="1" y="5" width="14" height="11" rx="1"/><path d="M15 9h3l4 4v3h-7"/><circle cx="5" cy="17.5" r="2"/><circle cx="11" cy="17.5" r="2"/><circle cx="19" cy="17.5" r="2"/></symbol><symbol id="g-boat" viewBox="0 0 24 24"><path d="M2 14h20l-3 5H5zM12 4v8M12 5l5 6h-5M7 10l5-6"/></symbol><symbol id="g-ship" viewBox="0 0 24 24"><path d="M3 16l2 4h14l2-4zM6 16V9h12v7M9 9V5h6v4M9 12h6"/></symbol><symbol id="g-pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol><symbol id="g-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a3 3 0 0 0 0-6H8a3 3 0 0 1 0-6h8"/></symbol><symbol id="g-fuel" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M4 21h10M4 10h10M14 8h2a2 2 0 0 1 2 2v7a1.5 1.5 0 0 0 3 0V9l-3-3"/></symbol><symbol id="g-snow" viewBox="0 0 24 24"><path d="M12 2v20M4.5 7l15 10M19.5 7l-15 10M9 4l3 2 3-2M9 20l3-2 3 2"/></symbol><symbol id="g-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/></symbol><symbol id="g-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 21h8M10 17h4"/></symbol><symbol id="g-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="g-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx=".5"/><rect x="13" y="8" width="3" height="10" rx=".5"/><rect x="19" y="5" width="3" height="13" rx=".5"/></symbol><symbol id="g-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"/></symbol><symbol id="g-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol><symbol id="g-warehouse" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M7 21v-7h10v7M7 17h10"/></symbol><symbol id="g-meat" viewBox="0 0 24 24"><path d="M14 4a5 5 0 0 1 6 6c-1 2-4 3-6 3l-4 4a2.5 2.5 0 1 1-3-3l4-4c0-2 1-5 3-6z"/></symbol><symbol id="g-food" viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-2 6 0 8v10"/></symbol><symbol id="g-leaf" viewBox="0 0 24 24"><path d="M5 19C5 9 11 4 20 4c0 9-5 15-15 15zM5 19l8-8"/></symbol><symbol id="g-pill" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="4" transform="rotate(-35 12 12)"/><path d="M9 15l6-6"/></symbol><symbol id="g-laptop" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1"/><path d="M2 20h20"/></symbol><symbol id="g-glass" viewBox="0 0 24 24"><path d="M7 3h10l-1 7a4 4 0 0 1-8 0zM12 14v7M8 21h8"/></symbol><symbol id="g-weight" viewBox="0 0 24 24"><path d="M5 9h14l2 12H3z"/><circle cx="12" cy="6" r="3"/></symbol><symbol id="g-return" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol><symbol id="g-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol><symbol id="g-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol><symbol id="g-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="g-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></symbol><symbol id="g-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></symbol><symbol id="g-sound" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM17 9a4 4 0 0 1 0 6M19.500 6.500a8 8 0 0 1 0 11"/></symbol></defs></svg>
 
 <!-- LANDING + SIGN IN/UP -->
 <section id="land">
  <canvas class="wave-canvas" id="landingWaves" aria-hidden="true"></canvas>
  <div class="top"><div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUTO</span></span></div><div class="sp"></div>
+  <button class="btn landing-signin" id="openSignIn" type="button" data-i="signin"></button>
   <span class="locale-control"><svg class="i" aria-hidden="true"><use href="#g-globe"/></svg><select class="lang" aria-label="Language"><option value="0">English</option><option value="1">Tagalog</option><option value="2">Taglish</option></select></span>
   <button class="ib th" aria-label="Theme"><svg class="i"><use href="#sun"/></svg></button></div>
  <div class="hero">
   <div class="copy"><span class="pill"><i class="dot"></i><span data-i="pill"></span></span><h1 data-i="hero"></h1><p data-i="heroP"></p>
    <div class="vrow" aria-hidden="true"><span class="vchip" style="--i:0"><svg class="i"><use href="#g-moto"/></svg></span><span class="vchip" style="--i:1"><svg class="i"><use href="#g-trike"/></svg></span><span class="vchip" style="--i:2"><svg class="i"><use href="#g-car"/></svg></span><span class="vchip" style="--i:3"><svg class="i"><use href="#g-bus"/></svg></span><span class="vchip" style="--i:4"><svg class="i"><use href="#g-van"/></svg></span><span class="vchip" style="--i:5"><svg class="i"><use href="#g-truck"/></svg></span><span class="vchip" style="--i:6"><svg class="i"><use href="#g-truck2"/></svg></span><span class="vchip" style="--i:7"><svg class="i"><use href="#g-boat"/></svg></span><span class="vchip" style="--i:8"><svg class="i"><use href="#g-ship"/></svg></span></div>
    <div class="stats"><span class="sb"><svg class="i s1"><use href="#g-truck"/></svg><span data-i="stV"></span></span><span class="sb"><svg class="i s2"><use href="#g-globe"/></svg><span data-i="stL"></span></span><span class="sb"><svg class="i s3"><use href="#g-snow"/></svg><span data-i="stC"></span></span></div>
-   <svg class="art" viewBox="0 0 420 230" role="img" aria-label="Route preview"><rect width="420" height="230" rx="16" style="fill:var(--card);stroke:var(--line)"/>
-    <path d="M0 60H420M0 120H420M0 180H420M80 0V230M170 0V230M260 0V230M350 0V230" style="stroke:var(--line);fill:none"/>
-    <path class="flow" d="M40 180L120 110L210 150L290 70L380 100" fill="none" stroke="#FFD700" stroke-width="5" stroke-dasharray="2 10" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="40" cy="180" r="13" fill="none" stroke="#FFD700" stroke-width="2"><animate attributeName="r" values="13;32" dur="2.4s" begin="0s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="2.4s" begin="0s" repeatCount="indefinite"/></circle><circle cx="380" cy="100" r="13" fill="none" stroke="#FFD700" stroke-width="2"><animate attributeName="r" values="13;32" dur="2.4s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></circle><g class="pp"><circle cx="40" cy="180" r="13" style="fill:#353839;stroke:#FFD700;stroke-width:3"/><use class="ui" href="#g-warehouse" x="32" y="172" width="16" height="16" style="color:#fff"/></g><g class="pp"><circle cx="120" cy="110" r="13" style="fill:#353839;stroke:#FFD700;stroke-width:3"/><text x="120" y="114" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">1</text></g><g class="pp"><circle cx="210" cy="150" r="13" style="fill:#353839;stroke:#FFD700;stroke-width:3"/><text x="210" y="154" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">2</text></g><g class="pp"><circle cx="290" cy="70" r="13" style="fill:#353839;stroke:#FFD700;stroke-width:3"/><text x="290" y="74" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">3</text></g><g class="pp"><circle cx="380" cy="100" r="13" style="fill:#353839;stroke:#FFD700;stroke-width:3"/><text x="380" y="104" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">4</text></g><rect x="14" y="14" width="168" height="28" rx="14" style="fill:#353839"/><use class="ui" href="#g-clock" x="24" y="21" width="14" height="14" style="color:#FFD700"/><text x="44" y="33" style="fill:#FFD700;font-size:13px;font-weight:700">₱1,240 · 2h 10m</text>
-    <g><circle r="17" style="fill:#FFD700;stroke:#fff;stroke-width:2"/><use class="ui" href="#g-truck" x="-11" y="-11" width="22" height="22" style="color:#353839"/><animateMotion dur="9s" repeatCount="indefinite" path="M40 180 L120 110 L210 150 L290 70 L380 100 L290 70 L210 150 L120 110 L40 180"/></g></svg></div>
-  <form class="auth" id="auth">
+   <div class="hero-actions"><button class="btn p hero-start" id="startNow" type="button"><span data-i="ctaB"></span><svg class="i arr"><use href="#g-arrow"/></svg></button><span class="hero-note" data-i="heroTrust"></span></div>
+  </div>
+  <div class="hero-visual" aria-label="Delivery planning illustration" role="img">
+   <div class="visual-orbit visual-orbit-one"></div><div class="visual-orbit visual-orbit-two"></div>
+   <svg class="delivery-scene" viewBox="0 0 560 440" aria-hidden="true">
+    <defs>
+     <linearGradient id="scene-road" x1="0" x2="1"><stop stop-color="#FFD700" stop-opacity=".12"/><stop offset=".5" stop-color="#FFD700" stop-opacity=".72"/><stop offset="1" stop-color="#FFD700" stop-opacity=".12"/></linearGradient>
+     <linearGradient id="scene-van" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFE56A"/><stop offset="1" stop-color="#FFD700"/></linearGradient>
+     <filter id="scene-shadow" x="-.3" y="-.3" width="1.6" height="1.8"><feDropShadow dx="0" dy="14" stdDeviation="12" flood-color="#111" flood-opacity=".18"/></filter>
+    </defs>
+    <circle cx="284" cy="218" r="177" fill="var(--card)" opacity=".46"/>
+    <circle cx="284" cy="218" r="153" fill="none" stroke="var(--line)" stroke-dasharray="3 9" opacity=".8"/>
+    <path d="M77 303c42-94 94-124 160-75s92 44 131-4 67-35 111-75" fill="none" stroke="url(#scene-road)" stroke-width="13" stroke-linecap="round"/>
+    <path d="M77 303c42-94 94-124 160-75s92 44 131-4 67-35 111-75" fill="none" stroke="#FFD700" stroke-width="2" stroke-dasharray="5 9" stroke-linecap="round"/>
+    <g class="scene-pin" transform="translate(475 145)"><path d="M0 31S-22 8-22-7a22 22 0 1 1 44 0C22 8 0 31 0 31Z" fill="#FFD700"/><circle cy="-7" r="7" fill="#353839"/></g>
+    <g class="scene-warehouse" transform="translate(58 196)">
+     <path d="M0 41 54 7l54 34v91H0z" fill="#FFF2B3" stroke="#B38B00" stroke-width="3"/>
+     <path d="M-5 43 54 4l59 39" fill="none" stroke="#FFD700" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M20 70h28v62H20zm43 0h28v62H63z" fill="#FFD700" stroke="#B38B00" stroke-width="2"/>
+     <path d="M17 57h18v13H17zm27 0h18v13H44z" fill="#C9874A"/>
+    </g>
+    <g transform="translate(359 80)"><g class="scene-box scene-box-one"><path d="m0 12 23-12 23 12v28L23 52 0 40z" fill="#C9874A" stroke="#75451F" stroke-width="2"/><path d="m0 12 23 13 23-13M23 25v27" fill="none" stroke="#FFE5A3" stroke-width="3"/></g></g>
+    <g transform="translate(415 271) scale(.72)"><g class="scene-box scene-box-two"><path d="m0 12 23-12 23 12v28L23 52 0 40z" fill="#C9874A" stroke="#75451F" stroke-width="2"/><path d="m0 12 23 13 23-13M23 25v27" fill="none" stroke="#FFE5A3" stroke-width="3"/></g></g>
+    <g transform="translate(394 198)"><g class="scene-person">
+     <circle cx="0" cy="0" r="12" fill="#D99A70"/><path d="M-11-2a11 11 0 0 1 22 0q-4-3-7-5-5 4-15 5z" fill="#60452D"/><path d="M-7 5q7 8 14 0l-2 5q-5 5-10 0z" fill="#8A5E3C"/>
+     <path d="M-11 13q11-8 22 0l8 49h-38z" fill="#FFD700" stroke="#A47C00" stroke-width="1.5"/><path d="m-5 14 5 7 5-7" fill="#FFF2B3" stroke="#A47C00" stroke-width="1.5"/>
+     <path d="m-8 28-17 22" fill="none" stroke="#D99A70" stroke-width="7" stroke-linecap="round"/><g class="scene-person-wave-arm"><path d="M26 28 40 45" fill="none" stroke="#D99A70" stroke-width="7" stroke-linecap="round"/></g>
+     <path d="m-9 61-4 27m20-27 4 27" fill="none" stroke="#A47C00" stroke-width="8" stroke-linecap="round"/>
+    </g></g>
+    <g transform="translate(178 271)" filter="url(#scene-shadow)"><g class="scene-van">
+     <path d="M4 23q0-12 13-12h111q10 0 16 9l21 32v33H4z" fill="url(#scene-van)" stroke="#353839" stroke-width="4" stroke-linejoin="round"/>
+     <path d="M128 19h-35v32h55z" fill="#353839"/><path d="M134 25h-29v20h42z" fill="#AFC6CE"/><path d="M17 24h72v31H17z" fill="#353839"/>
+     <path d="M26 31h52v5H26zm0 11h37v4H26z" fill="#FFD700"/>
+     <path d="M160 57h9v12h-9z" fill="#FFF1B8"/><path d="M4 67h165" stroke="#353839" stroke-width="4"/>
+     <circle cx="43" cy="85" r="16" fill="#252829"/><circle cx="43" cy="85" r="7" fill="#AEB7C0"/><circle cx="137" cy="85" r="16" fill="#252829"/><circle cx="137" cy="85" r="7" fill="#AEB7C0"/>
+    </g></g>
+    <g class="scene-route-card" transform="translate(332 334)">
+     <rect class="scene-route-card-bg" width="174" height="54" rx="15" fill="var(--card)" stroke="var(--line)" filter="url(#scene-shadow)"/>
+     <circle class="scene-route-icon-bg" cx="27" cy="27" r="15" fill="rgba(255,215,0,.2)"/><path class="scene-route-icon-check" d="m20 27 5 5 10-11" fill="none" stroke="#8A7000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+     <text class="scene-route-title" x="51" y="24" fill="var(--ink)" font-size="12" font-weight="700">ROUTE OPTIMIZED</text><text class="scene-route-subtitle" x="51" y="40" fill="var(--mut)" font-size="11">Ready for delivery</text>
+    </g>
+   </svg>
+   <div class="visual-float visual-float-top"><span class="visual-float-icon route-icon"><svg class="i"><use href="#g-route"/></svg></span><span><strong>Smart routes</strong><small>Plan every stop</small></span></div>
+   <div class="visual-float visual-float-bottom"><span class="visual-float-icon secured-icon"><svg class="i"><use href="#g-box"/></svg></span><span><strong>Goods secured</strong><small>Ready to deliver</small></span></div>
+  </div>
+ </div>
+ <div class="auth-modal" id="authModal" hidden>
+  <button class="auth-backdrop" id="authBackdrop" type="button" aria-label="Close sign-in dialog"></button>
+  <div class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="authHeading">
+   <button class="auth-close" id="authClose" type="button" aria-label="Close sign-in dialog">×</button>
+   <form class="auth" id="auth">
    <h1 class="auth-title" id="authHeading"></h1>
    <p class="auth-intro" data-i="authIntro"></p>
    <div class="tabs"><button type="button" class="btn" data-m="in" data-i="signin"></button><button type="button" class="btn on" data-m="up" data-i="signup"></button></div>
@@ -107,7 +167,8 @@
    <button class="btn p" style="width:100%" id="sub"></button>
    <p class="auth-policy" id="signupRule" data-i="signupRule" hidden></p>
    <button type="button" class="btn soc auth-phone-button" id="pbtn"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><span data-i="phoneBtn"></span></button>
-  </form>
+   </form>
+  </div>
  </div>
  <div class="sec"><h2 data-i="featH"></h2><div class="feat"><div class="fc"><div class="fi"><svg class="i"><use href="#g-route"/></svg></div><h3 data-i="f1t"></h3><p data-i="f1p"></p></div><div class="fc"><div class="fi"><svg class="i"><use href="#g-truck"/></svg></div><h3 data-i="f2t"></h3><p data-i="f2p"></p></div><div class="fc"><div class="fi"><svg class="i"><use href="#g-fuel"/></svg></div><h3 data-i="f3t"></h3><p data-i="f3p"></p></div><div class="fc"><div class="fi"><svg class="i"><use href="#g-snow"/></svg></div><h3 data-i="f4t"></h3><p data-i="f4p"></p></div></div></div>
  <div class="sec"><h2 data-i="howH"></h2><div class="steps"><div class="st"><b>1</b><span data-i="s1"></span><svg class="i sico"><use href="#g-pin"/></svg></div><div class="st"><b>2</b><span data-i="s2"></span><svg class="i sico"><use href="#g-box"/></svg></div><div class="st"><b>3</b><span data-i="s3"></span><svg class="i sico"><use href="#g-trophy"/></svg></div></div></div>
@@ -208,9 +269,18 @@
    </g>
   </svg></div>
  </div></div>
+  <details class="sec faq" id="faq">
+   <summary class="faq-toggle" data-i="faqH"></summary>
+   <div class="faq-list">
+    <details class="faq-item"><summary data-i="faqQ1"></summary><p data-i="faqA1"></p></details>
+    <details class="faq-item"><summary data-i="faqQ2"></summary><p data-i="faqA2"></p></details>
+    <details class="faq-item"><summary data-i="faqQ3"></summary><p data-i="faqA3"></p></details>
+    <details class="faq-item"><summary data-i="faqQ4"></summary><p data-i="faqA4"></p></details>
+   </div>
+  </details>
  <footer class="foot">
   <div class="foot-brand"><svg aria-hidden="true"><use href="#logo"/></svg><div><strong class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUTO</span></strong><span data-i="foot"></span></div></div>
-  <div class="foot-meta"><span class="foot-credit" data-i="creator"></span><span class="foot-rights">© <span data-current-year>2026</span> RUTO. <span data-i="rights"></span></span></div>
+  <div class="foot-meta"><span class="foot-credit" data-i="creator"></span><button class="support-link" id="supportOpen" type="button" data-i="supportMe"></button><button class="cookie-settings" id="cookieSettings" type="button"><svg class="i cookie-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20.5 12.5A3.5 3.5 0 0 1 16 8.7 3.5 3.5 0 0 1 12 4 9 9 0 1 0 20.5 12.5Z"/><circle cx="8" cy="11" r="1"/><circle cx="12" cy="17" r="1"/><circle cx="8" cy="17" r=".7"/></svg><span data-i="cookieSettings"></span></button><span class="foot-rights">© <span data-current-year>2026</span> RUTO. <span data-i="rights"></span></span></div>
  </footer>
 </section>
 
@@ -223,6 +293,19 @@
  <div class="brand-intro-content">
   <img class="brand-intro-logo" src="assets/app-icon-512.png" alt="">
   <strong class="brand-intro-title">RUTO</strong>
+  <svg class="brand-intro-wheel" viewBox="0 0 100 100" aria-hidden="true">
+   <circle class="brand-intro-wheel-tire" cx="50" cy="50" r="43"/>
+   <circle class="brand-intro-wheel-sidewall" cx="50" cy="50" r="35"/>
+   <g class="brand-intro-wheel-spinning">
+    <path d="M50 18v64M18 50h64M27.4 27.4l45.2 45.2m0-45.2L27.4 72.6"/>
+    <circle cx="50" cy="50" r="22"/>
+    <circle cx="50" cy="50" r="8"/>
+    <circle cx="50" cy="26" r="2"/><circle cx="50" cy="74" r="2"/>
+    <circle cx="26" cy="50" r="2"/><circle cx="74" cy="50" r="2"/>
+    <circle cx="33" cy="33" r="2"/><circle cx="67" cy="67" r="2"/>
+    <circle cx="67" cy="33" r="2"/><circle cx="33" cy="67" r="2"/>
+   </g>
+  </svg>
   <span class="brand-intro-status" data-i="appLoading"></span>
   <span class="brand-intro-loader" aria-hidden="true"></span>
  </div>
@@ -234,6 +317,7 @@
  <aside class="app-sidebar" id="sidebar" aria-label="Main menu" role="dialog" aria-modal="true" hidden>
   <div class="sidebar-head"><div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUTO</span></span></div><button class="ib" type="button" id="sidebarClose" aria-label="Close menu">×</button></div>
   <nav class="sidebar-nav" id="sidebarNav" aria-label="Main menu">
+   <button type="button" class="sidebar-link" data-v="dash"><svg class="i"><use href="#g-clock"/></svg><span data-i="dashboard"></span></button>
    <button type="button" class="sidebar-link on" data-v="plan"><svg class="i"><use href="#g-route"/></svg><span data-i="plan"></span></button>
    <button type="button" class="sidebar-link" data-v="cal"><svg class="i"><use href="#g-cal"/></svg><span data-i="calendar"></span></button>
    <button type="button" class="sidebar-link" data-v="hist"><svg class="i"><use href="#g-clock"/></svg><span data-i="hist"></span></button>
@@ -250,9 +334,19 @@
 
  <div class="wrap" id="v_plan">
  <aside>
+  <details class="card fuel-card" id="fuelPanel" open>
+   <summary class="fuel-summary"><span><svg class="i"><use href="#g-fuel"/></svg><span data-i="fuelH"></span></span></summary>
+   <div class="fuel-content"><p class="muted fuel-hint" data-i="fuelEditHint"></p><p class="muted fuel-hint" data-i="fuelCalcHint"></p><div class="fuel" id="fuel"></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="fuelbtn"><svg class="i"><use href="#refresh"/></svg> <span data-i="refresh"></span></button></div>
+    <p class="muted" id="fuelbusy" role="status"></p><div id="fuelai"></div><p class="muted" id="fuelnote"></p></div>
+  </details>
   <div class="card"><h2 data-i="locs"></h2>
    <label for="addr" data-i="addrL"></label>
-   <input id="addr" data-ip="addrPh">
+   <div class="location-autocomplete">
+    <input id="addr" data-ip="addrPh" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="addrSuggestions" aria-expanded="false" autocomplete="off">
+    <div class="location-suggestions" id="addrSuggestions" role="listbox" hidden></div>
+    <p class="location-search-status muted" id="addrSuggestionStatus" role="status" aria-live="polite" hidden></p>
+   </div>
    <div class="row" style="margin-top:8px"><button class="btn p" id="addDrop"><svg class="i"><use href="#plus"/></svg> <span data-i="addDrop"></span></button><button class="btn" id="addOrg" data-i="addOrg"></button></div>
    <div class="row" style="margin-top:8px"><button class="btn" id="gps" data-i="gps"></button><button class="btn" id="clear" data-i="clear"></button></div>
    <p class="muted" data-i="clickHint"></p></div>
@@ -264,11 +358,11 @@
    <select id="pri"><option value="balanced" data-i="pBal"></option><option value="cheap" data-i="pCheap"></option><option value="fast" data-i="pFast"></option><option value="easy" data-i="pEasy"></option></select>
    <label for="tmode" data-i="travel"></label>
    <select id="tmode"><option value="auto" data-i="mAuto"></option><option value="land" data-i="mLand"></option><option value="water" data-i="mWater"></option></select>
+   <label for="budget" data-i="budget"></label>
+   <input id="budget" type="number" min="0" step="0.01" inputmode="decimal" data-ip="budgetPh" aria-describedby="budgetHint">
+   <p class="muted budget-hint" id="budgetHint" data-i="budgetHint"></p>
    <button class="btn p wide" id="save" data-i="save"></button>
    <button class="btn wide" id="sched"><svg class="i"><use href="#g-cal"/></svg> <span data-i="addSched"></span></button></div>
-  <div class="card"><h2 data-i="fuelH"></h2><p class="muted fuel-hint" data-i="fuelEditHint"></p><p class="muted fuel-hint" data-i="fuelCalcHint"></p><div class="fuel" id="fuel"></div>
-   <div class="row" style="margin-top:8px"><button class="btn" id="fuelbtn"><svg class="i"><use href="#refresh"/></svg> <span data-i="refresh"></span></button></div>
-   <p class="muted" id="fuelbusy" role="status"></p><div id="fuelai"></div><p class="muted" id="fuelnote"></p></div>
  </aside>
  <main>
   <div id="map"></div>
@@ -285,6 +379,26 @@
    <div class="charts"><div class="card"><h2 data-i="c1H"></h2><div class="ch"><canvas id="c1"></canvas></div></div><div class="card"><h2 data-i="c2H"></h2><div class="ch"><canvas id="c2"></canvas></div></div></div>
   </div>
  </main></div>
+
+ <div class="wrap one dashboard-view" id="v_dash" hidden>
+  <header class="dashboard-heading"><div><h1><svg class="i" aria-hidden="true"><use href="#g-chart"/></svg><span data-i="dashboard"></span></h1><p class="muted" data-i="dashboardHint"></p></div></header>
+  <div class="dashboard-grid">
+   <article class="card dashboard-clock"><h2 class="dash-card-title"><svg class="i" aria-hidden="true"><use href="#g-clock"/></svg><span data-i="dashDateTime"></span></h2><strong id="dashTime">--:--:--</strong><p id="dashDate"></p><small data-i="dashTimezone"></small></article>
+   <article class="card dashboard-weather"><div class="dashboard-card-head"><h2 class="dash-card-title"><svg class="i" aria-hidden="true"><use href="#sun"/></svg><span data-i="dashWeather"></span></h2><button class="ib" id="dashWeatherRefresh" type="button" aria-label="Refresh weather"><svg class="i"><use href="#refresh"/></svg></button></div><strong id="dashWeatherValue" data-i="weatherLoading"></strong><p id="dashWeatherLocation" data-i="weatherManila"></p><p id="dashWeatherDetails" class="muted"></p><small id="dashWeatherUpdated"></small><a class="weather-source" href="https://open-meteo.com/" target="_blank" rel="noopener" data-i="weatherSource"></a></article>
+   <article class="card dashboard-fuel"><h2 class="dash-card-title"><svg class="i" aria-hidden="true"><use href="#g-fuel"/></svg><span data-i="dashFuel"></span></h2><div id="dashFuel"></div><p class="muted" id="dashFuelAsOf"></p><div class="row"><button class="btn" id="dashFuelRefresh" type="button"><svg class="i"><use href="#refresh"/></svg> <span data-i="refresh"></span></button><button class="btn" id="dashFuelEdit" type="button"><svg class="i"><use href="#edit"/></svg> <span data-i="dashEditFuel"></span></button></div></article>
+  </div>
+  <section class="card dashboard-calendar" aria-labelledby="dashCalHeading">
+   <div class="calhead"><h2 class="dash-card-title" id="dashCalHeading"><svg class="i" aria-hidden="true"><use href="#g-cal"/></svg><span data-i="dashCalendar"></span></h2><div class="sp"></div><button class="ib" id="dashCalPrev" type="button" aria-label="Previous month">‹</button><h3 id="dashCalTitle"></h3><button class="ib" id="dashCalNext" type="button" aria-label="Next month">›</button></div>
+   <div class="calgrid dash-cal-grid" id="dashCalGrid"></div>
+   <div class="calhead dashboard-cal-events"><h3 id="dashCalDayTitle"></h3><button class="btn p" id="dashCalAdd" type="button"><svg class="i"><use href="#plus"/></svg> <span data-i="addSched"></span></button></div>
+   <div id="dashCalList"></div>
+  </section>
+  <p class="card muted" id="dashboardChartsEmpty" data-i="dashNoHistory" hidden></p>
+  <div class="dashboard-charts" id="dashboardCharts" hidden>
+   <article class="card"><h2 class="dash-card-title"><svg class="i" aria-hidden="true"><use href="#g-chart"/></svg><span data-i="dashCosts"></span></h2><div class="ch"><canvas id="dashCostChart"></canvas></div></article>
+   <article class="card"><h2 class="dash-card-title"><svg class="i" aria-hidden="true"><use href="#g-route"/></svg><span data-i="dashDistance"></span></h2><div class="ch"><canvas id="dashDistanceChart"></canvas></div></article>
+  </div>
+ </div>
 
  <div class="wrap one" id="v_cal" hidden>
   <div class="card"><div class="calhead"><button class="ib" id="calprev" aria-label="Previous month">‹</button><h2 id="caltitle"></h2><button class="ib" id="calnext" aria-label="Next month">›</button><div class="sp"></div><button class="btn" id="caltoday" data-i="today"></button><button class="btn" id="calexport" data-i="exportCal"></button></div>
@@ -347,10 +461,28 @@
 </div>
 
 <!-- ASSISTANT -->
-<button id="fab" class="fab" hidden aria-label="RuBot assistant" title="RuBot" aria-expanded="false"><svg class="i"><use href="#g-bot"/></svg></button>
+<button id="fab" class="fab" hidden aria-label="RuBot assistant" title="RuBot" aria-expanded="false">
+ <svg class="i rubot-character" viewBox="0 0 72 64" aria-hidden="true">
+  <ellipse class="rubot-shadow" cx="34" cy="58" rx="19" ry="3"/>
+  <g class="rubot-motion">
+   <g class="rubot-wave"><path class="rubot-arm" d="M52 36Q58 31 60 23"/><path class="rubot-hand" d="M59 24 61 14Q62 12 64 13L64 19 66 11Q68 10 69 12L67 21 70 16Q72 15 71 18L68 27Q66 31 61 32Z"/></g>
+   <path class="rubot-antenna" d="M32 11V7"/>
+   <circle class="rubot-antenna-tip" cx="32" cy="5" r="2.5"/>
+   <rect class="rubot-ear" x="7" y="27" width="8" height="13" rx="4"/>
+   <rect class="rubot-ear" x="51" y="27" width="8" height="13" rx="4"/>
+   <rect class="rubot-shell" x="10" y="11" width="46" height="44" rx="14"/>
+   <path class="rubot-highlight" d="M19 14Q32 8 45 14"/>
+   <rect class="rubot-screen" x="15" y="17" width="36" height="29" rx="9"/>
+   <path class="rubot-screen-glint" d="M19 21Q24 18 29 19"/>
+   <g class="rubot-eyes"><ellipse cx="25" cy="30" rx="3.3" ry="4"/><ellipse cx="41" cy="30" rx="3.3" ry="4"/></g>
+   <g class="rubot-look"><circle cx="25" cy="30" r="1.25"/><circle cx="41" cy="30" r="1.25"/></g>
+   <path class="rubot-mouth" d="M26 39Q33 45 40 39"/>
+  </g>
+ </svg>
+</button>
 <div id="ai" hidden role="dialog" aria-label="RuBot assistant">
  <button type="button" id="airesize" aria-label="Resize chat panel" title="Drag up or down to resize"></button>
- <div class="aihead"><span class="ai-bot-icon"><svg class="i"><use href="#g-bot"/></svg></span><strong data-i="aiTitle"></strong><div class="sp"></div><button class="ib" id="aitts" title="Voice replies" aria-label="Voice replies"><svg class="i"><use href="#g-sound"/></svg></button><button class="ib" id="aiclose" aria-label="Close">✕</button></div>
+ <div class="aihead"><span class="ai-bot-icon"><svg class="i rubot-character" viewBox="0 0 72 64" aria-hidden="true"><ellipse class="rubot-shadow" cx="34" cy="58" rx="19" ry="3"/><g class="rubot-motion"><g class="rubot-wave"><path class="rubot-arm" d="M52 36Q58 31 60 23"/><path class="rubot-hand" d="M59 24 61 14Q62 12 64 13L64 19 66 11Q68 10 69 12L67 21 70 16Q72 15 71 18L68 27Q66 31 61 32Z"/></g><path class="rubot-antenna" d="M32 11V7"/><circle class="rubot-antenna-tip" cx="32" cy="5" r="2.5"/><rect class="rubot-ear" x="7" y="27" width="8" height="13" rx="4"/><rect class="rubot-ear" x="51" y="27" width="8" height="13" rx="4"/><rect class="rubot-shell" x="10" y="11" width="46" height="44" rx="14"/><path class="rubot-highlight" d="M19 14Q32 8 45 14"/><rect class="rubot-screen" x="15" y="17" width="36" height="29" rx="9"/><path class="rubot-screen-glint" d="M19 21Q24 18 29 19"/><g class="rubot-eyes"><ellipse cx="25" cy="30" rx="3.3" ry="4"/><ellipse cx="41" cy="30" rx="3.3" ry="4"/></g><g class="rubot-look"><circle cx="25" cy="30" r="1.25"/><circle cx="41" cy="30" r="1.25"/></g><path class="rubot-mouth" d="M26 39Q33 45 40 39"/></g></svg></span><strong data-i="aiTitle"></strong><div class="sp"></div><select id="aiStyle" aria-label="AI response style"><option value="brief" data-i="aiBrief"></option><option value="detailed" data-i="aiDetailed"></option></select><button class="ib" id="aitts" title="Voice replies" aria-label="Voice replies"><svg class="i"><use href="#g-sound"/></svg></button><button class="ib" id="aiclose" aria-label="Close">✕</button></div>
  <div id="aimsgs" aria-live="polite"></div>
  <div id="voiceask" hidden><p data-i="voiceAsk"></p><div class="row"><button class="btn p" id="voiceallow" data-i="voiceAllow"></button><button class="btn" id="voiceno" data-i="notNow"></button></div></div>
  <div id="aichips"></div>
@@ -364,6 +496,16 @@
  <p id="installGuideOther" class="muted" data-i="installGuideOther" hidden></p>
  <button class="btn p" id="installGuideClose" type="button" data-i="installGuideClose"></button>
 </dialog>
+<dialog id="supportDialog" class="support-dialog" aria-labelledby="supportDialogTitle">
+ <h2 id="supportDialogTitle" data-i="supportMe"></h2>
+ <p data-i="supportPrompt"></p>
+ <img src="assets/support-qr.png" alt="Support QR code" width="472" height="469">
+ <button class="btn p" id="supportDialogClose" type="button" data-i="supportClose"></button>
+</dialog>
+<aside class="cookie-notice" id="cookieNotice" role="region" aria-labelledby="cookieTitle" aria-describedby="cookieDescription" hidden>
+ <div class="cookie-copy"><div class="cookie-title"><svg class="i cookie-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20.5 12.5A3.5 3.5 0 0 1 16 8.7 3.5 3.5 0 0 1 12 4 9 9 0 1 0 20.5 12.5Z"/><circle cx="8" cy="11" r="1"/><circle cx="12" cy="17" r="1"/><circle cx="8" cy="17" r=".7"/></svg><strong id="cookieTitle" data-i="cookieTitle"></strong></div><p id="cookieDescription" data-i="cookieDescription"></p><p id="cookieStatus" class="cookie-status" role="status" aria-live="polite"></p></div>
+ <div class="cookie-actions"><button class="btn p" id="cookieAllow" type="button" data-i="cookieAllow"></button><button class="btn" id="cookieEssential" type="button" data-i="cookieEssential"></button></div>
+</aside>
 <div id="toasts" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous"></script>
@@ -374,16 +516,16 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js" integrity="sha384-6I0gWsz4FIAr30c0TxIxJnPQuJiZ1FfILdZrgJdjxTH3R8dgPGTvexbyqTvReV6Z" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js" integrity="sha384-E3vxFxXu8FhW5kvqdQJ5Yf8ugrV7iCJP8jgnItRH2Rk8Q08cJzJGTi/oMC3FEp3j" crossorigin="anonymous"></script>
 <script src="js/config.js"></script>
-<script src="js/i18n.js?v=38"></script>
-<script src="js/app.js"></script>
+<script src="js/i18n.js?v=53"></script>
+<script src="js/app.js?v=54"></script>
 <script src="js/routing.js"></script>
-<script src="js/store.js"></script>
+<script src="js/store.js?v=4"></script>
 <script src="js/fuel.js"></script>
 <script src="js/nav.js"></script>
-<script src="js/assistant.js?v=38"></script>
-<script src="js/main.js"></script>
+<script src="js/assistant.js?v=45"></script>
+<script src="js/main.js?v=50"></script>
 <script src="js/pwa.js"></script>
-<script src="js/waves.js?v=42"></script>
+<script src="js/waves.js?v=45"></script>
 <script src="js/ui-guard.js"></script>
 </body>
 </html>

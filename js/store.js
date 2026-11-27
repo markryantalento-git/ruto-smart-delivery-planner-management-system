@@ -15,7 +15,11 @@ function saveDelivery(scheduled){
   if(!st.stops.length){toast(t('needStop'),'bad');return}
   if(!$('#date').value||!$('#time').value){toast(t('needDate'),'bad');return}
   if(!st.r){toast(t('stillRouting'),'bad');return}
+  const budgetInput=$('#budget');
+  if(!budgetInput.checkValidity()){st.chosen=null;toast(t('budgetInvalid'),'bad');return}
   if(!st.chosen){toast(t('noOk'),'bad');return}
+  const budget=budgetInput.value===''?null:budgetInput.valueAsNumber;
+  if(budget!==null&&st.chosen.cost>budget+1e-7){renderResults();return}
   if(scheduled&&depart()<new Date()){toast(t('pastDate'),'bad');return}
   const old=st.H.find(x=>x.id===st.editId),ch=st.chosen,r=st.r;
   const e=clean({id:old?old.id:Date.now(),ts:Date.now(),seq:old?(old.seq||0)+1:0,date:$('#date').value,time:$('#time').value,
@@ -68,7 +72,7 @@ function itemHTML(x){const v=vById(x.veh)||V[0],names=[x.veh,x.veh2].filter(Bool
    <div class="acts"><button class="btn p" data-a="nav" data-id="${+x.id}">${ic('g-route')} ${t('navigate')}</button><button class="ib" title="${t('addCalQ')}" aria-label="${t('addCalQ')}" data-a="cal" data-id="${+x.id}">${ic('g-cal')}</button><button class="ib" title="Edit" aria-label="Edit" data-a="edit" data-id="${+x.id}">${ic('edit')}</button><button class="ib d" title="Delete" aria-label="Delete" data-a="del" data-id="${+x.id}">${ic('trash')}</button></div></div>`}
 document.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b)return;const x=st.H.find(q=>q.id===+b.dataset.id);if(!x)return;
   ({nav:()=>NAV.start(x),cal:()=>calDialog(x),edit:()=>loadH(x),del:()=>delH(x)})[b.dataset.a]()});
-function histUI(){$('#hlist').innerHTML=st.H.length?st.H.map(itemHTML).join(''):`<p class="muted">${t('noHist')}</p>`}
+function histUI(){$('#hlist').innerHTML=st.H.length?st.H.map(itemHTML).join(''):`<p class="muted">${t('noHist')}</p>`;dashboardUI()}
 function loadH(e){const x=clean(e);st.origin=x.origin;st.stops=x.stops;st.sel={};[x.veh,x.veh2].filter(Boolean).forEach(id=>{const v=vById(id);if(v)st.sel[v.dom]=id});st.editId=x.id;st.editSched=!!x.scheduled;
   $('#date').value=x.date;$('#time').value=x.time;$('#round').checked=x.round!==false;$('#pri').value=x.pri||'balanced';$('#tmode').value=x.tmode||'auto';editNote();showView('plan');render()}
 function delH(x){
@@ -109,18 +113,44 @@ function calUI(){
   $$('#calgrid [data-day]').forEach(b=>b.onclick=()=>{calDay=b.dataset.day;calUI()});
   const list=(by[calDay]||[]).sort((a,b)=>a.time.localeCompare(b.time));
   $('#daytitle').textContent=new Date(calDay+'T00:00').toLocaleDateString(loc,{weekday:'long',month:'long',day:'numeric'});
-  $('#daylist').innerHTML=list.length?list.map(itemHTML).join(''):`<p class="muted">${t('noDay')}</p>`}
+  $('#daylist').innerHTML=list.length?list.map(itemHTML).join(''):`<p class="muted">${t('noDay')}</p>`;
+  dashboardCalendarUI()}
+function dashboardCalendarUI(){
+  const grid=$('#dashCalGrid');if(!grid)return;
+  const y=calMonth.getFullYear(),m=calMonth.getMonth(),first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),loc=lang?'fil-PH':'en-PH',
+    scheduled=st.H.filter(x=>x.scheduled),counts=Object.create(null);
+  scheduled.forEach(x=>{counts[x.date]=(counts[x.date]||0)+1});
+  $('#dashCalTitle').textContent=calMonth.toLocaleDateString(loc,{month:'long',year:'numeric'});
+  let html=[0,1,2,3,4,5,6].map(i=>`<div class="dow">${new Date(2026,10,1+i).toLocaleDateString(loc,{weekday:'short'})}</div>`).join('')+'<div></div>'.repeat(first);
+  for(let day=1;day<=days;day++){
+    const key=y+'-'+pad(m+1)+'-'+pad(day),count=counts[key]||0,dateLabel=new Date(key+'T00:00').toLocaleDateString(loc,{weekday:'long',month:'long',day:'numeric'});
+    html+=`<button type="button" class="day ${key===calDay?'sel':''} ${key===ymd(new Date())?'today':''}" data-dash-day="${key}" aria-label="${dateLabel}${count?`, ${t('dashScheduledCount',{n:count,unit:count===1?'delivery':'deliveries'})}`:''}"><b>${day}</b>${count?`<span class="dash-cal-count" aria-hidden="true">${count}</span>`:''}</button>`
+  }
+  grid.innerHTML=html;
+  $$('#dashCalGrid [data-dash-day]').forEach(button=>button.onclick=()=>{calDay=button.dataset.dashDay;calUI()});
+  const selected=new Date(calDay+'T00:00');
+  $('#dashCalDayTitle').textContent=selected.toLocaleDateString(loc,{weekday:'long',month:'long',day:'numeric'});
+  const events=scheduled.filter(x=>x.date===calDay).sort((a,b)=>a.time.localeCompare(b.time));
+  $('#dashCalList').innerHTML=events.length?events.map(x=>`<div class="dash-calendar-event"><time>${esc(x.time)}</time><span class="dash-calendar-route">${esc((x.stops||[]).map(s=>s.name).join(' → '))}</span>${x.done?`<span class="b">✓ ${t('delivered')}</span>`:''}</div>`).join(''):`<p class="muted">${t('noDay')}</p>`
+}
 const shift=n=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+n,1);calUI()};
 $('#calprev').onclick=()=>shift(-1);$('#calnext').onclick=()=>shift(1);
 $('#caltoday').onclick=()=>{calMonth=new Date();calDay=ymd(new Date());calUI()};
 $('#calexport').onclick=()=>{const up=st.H.filter(x=>!x.done&&startOf(x)>new Date());if(!up.length){toast(t('noUpcoming'),'bad');return}download(icsText(up));toast(t('icsDone'),'ok')};
-$('#caladd').onclick=()=>{if(calDay<ymd(new Date())){toast(t('pastDate'),'bad');return}clearForm();st.editSched=true;$('#date').value=calDay;showView('plan');render();toast(t('schedHint'),'ok');$('#addr').focus()};
+function scheduleForDay(day){
+  if(day<ymd(new Date())){toast(t('pastDate'),'bad');return}
+  clearForm();st.editSched=true;$('#date').value=day;showView('plan');render();toast(t('schedHint'),'ok');$('#addr').focus()}
+$('#caladd').onclick=()=>scheduleForDay(calDay);
+$('#dashCalAdd').onclick=()=>scheduleForDay(calDay);
+$('#dashCalPrev').onclick=()=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);calDay=ymd(calMonth);calUI()};
+$('#dashCalNext').onclick=()=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);calDay=ymd(calMonth);calUI()};
 
 function showView(v){
   window.scrollTo(0,0);
-  ['plan','cal','hist','profile','about'].forEach(k=>$('#v_'+k).hidden=v!==k);
+  ['dash','plan','cal','hist','profile','about'].forEach(k=>$('#v_'+k).hidden=v!==k);
   $$('#sidebar [data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(v==='plan')setTimeout(()=>map.invalidateSize(),50);
+  if(v==='dash'){dashboardUI();refreshDashboardWeather()}
   if(v==='cal')calUI()}
 $$('#sidebar [data-v]').forEach(b=>b.onclick=()=>{showView(b.dataset.v);setSidebar(false)});
 $('#profileShortcut').onclick=()=>{showView('profile');setSidebar(false)};

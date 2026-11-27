@@ -1,4 +1,4 @@
-# RUTO - Transportation and Delivery Least Cost Saving Management System
+# RUTO - Smart Transportation and Delivery Planner System
 
 ## Files
 - index.html            - the page (sign in, plan, calendar, history, navigation, assistant)

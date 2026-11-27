@@ -1,5 +1,19 @@
 /* ============ LANGUAGE (translations are in i18n.js) ============ */
 let lang=+localStorage.getItem('ruto_lang')||0;
+const rutoCookiePath=location.pathname.replace(/[^/]*$/,'')||'/';
+const getRutoCookie=name=>{const entry=document.cookie.split(';').map(x=>x.trim()).find(x=>x.startsWith(name+'='));return entry?entry.slice(name.length+1):null};
+function writeRutoCookie(name,value){
+  const secure=location.protocol==='https:'?'; Secure':'';
+  document.cookie=`${name}=${value}; Path=${rutoCookiePath}; Max-Age=15552000; SameSite=Lax${secure}`;
+  return getRutoCookie(name)===value
+}
+function removeRutoCookie(name){
+  const secure=location.protocol==='https:'?'; Secure':'';
+  document.cookie=`${name}=; Path=${rutoCookiePath}; Max-Age=0; SameSite=Lax${secure}`;
+  return getRutoCookie(name)===null
+}
+let personalizationAllowed=getRutoCookie('ruto_cookie_consent')==='personalization';
+let chatStyle=personalizationAllowed&&getRutoCookie('ruto_chat_style')==='detailed'?'detailed':'brief';
 let phoneCodeSent=false;
 const t=(k,v)=>{let s=(D[k]||k).split('|')[lang]||(D[k]||k).split('|')[0];if(v)for(const p in v)s=s.replaceAll('{'+p+'}',()=>v[p]);return s};
 const tip=k=>TIPS[k].split('|')[lang?1:0];
@@ -13,10 +27,35 @@ function applyLang(){
   $('#profileShortcut').setAttribute('aria-label',t('profileSettings'));
   $('#sidebar').setAttribute('aria-label',t('mainMenu'));
   $('#sidebarNav').setAttribute('aria-label',t('mainMenu'));
+  $('#aiStyle').setAttribute('aria-label',t('aiStyleLabel'));
+  $('#aiStyle').value=chatStyle;
   $('#phsend').textContent=t(phoneCodeSent?'resendCode':'sendCode');
-  authMode(mode);if(st.user){$('#profileAccountType').value=t(profileData.accountType==='company'?'companyAccount':'personalAccount');fuelUI();histUI();calUI();render();aiLang()}
+  authMode(mode);if(st.user){$('#profileAccountType').value=t(profileData.accountType==='company'?'companyAccount':'personalAccount');editNote();fuelUI();histUI();calUI();render();aiLang()}
 }
 document.querySelectorAll('.lang').forEach(s=>s.onchange=e=>{lang=+e.target.value;localStorage.setItem('ruto_lang',lang);applyLang()});
+
+function initCookieNotice(){
+  const consent=getRutoCookie('ruto_cookie_consent');
+  personalizationAllowed=consent==='personalization';
+  chatStyle=personalizationAllowed&&getRutoCookie('ruto_chat_style')==='detailed'?'detailed':'brief';
+  $('#aiStyle').value=chatStyle;
+  $('#cookieNotice').hidden=consent==='personalization'||consent==='essential';
+}
+function saveCookieConsent(allow){
+  if(allow){
+    if(!writeRutoCookie('ruto_chat_style',chatStyle))return false;
+    if(!writeRutoCookie('ruto_cookie_consent','personalization')){removeRutoCookie('ruto_chat_style');return false}
+    personalizationAllowed=true;
+    return true
+  }
+  if(!removeRutoCookie('ruto_chat_style'))return false;
+  personalizationAllowed=false;
+  return writeRutoCookie('ruto_cookie_consent','essential')
+}
+function setChatStyle(value){
+  chatStyle=value==='detailed'?'detailed':'brief';
+  if(personalizationAllowed&&!writeRutoCookie('ruto_chat_style',chatStyle))toast(t('cookieUnavailable'),'bad')
+}
 
 /* ============ THEME ============ */
 function applyTheme(m){document.documentElement.dataset.theme=m;localStorage.setItem('ruto_theme',m);
@@ -58,7 +97,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const pad=n=>String(n).padStart(2,'0');
 const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); // local date (not UTC)
 const vById=id=>V.find(v=>v.id===id);
-const st={user:null,origin:null,stops:[],sel:{},editId:null,editSched:false,r:null,chosen:null,anim:null,me:null,H:[]};
+const st={user:null,origin:null,stops:[],sel:{},lastPick:null,editId:null,editSched:false,r:null,chosen:null,anim:null,me:null,H:[]};
 const PHOTO_COOLDOWN_MS=30*24*60*60*1000;
 let accountType='personal',profileData={accountType:'personal',name:'',companyName:'',email:'',photoURL:''},profilePhotoBlob=null,profilePhotoObjectURL='',profilePhotoCooldownUntil=0,profilePhotoCheck=0;
 let mode='up',map,layer,tileLayer,meMk,c1,c2;
@@ -171,12 +210,12 @@ $('#gbtn').onclick=googleIn;
 async function appleIn(){
   if(!auth){$('#err').textContent=t('needFb');return}
   const pr=new firebase.auth.OAuthProvider('apple.com');
-  try{busy=true;const c=await auth.signInWithPopup(pr),u=c.user;
-    if(c.additionalUserInfo?.isNewUser)saveProfile(u.uid,{name:u.displayName||'',email:u.email||'',provider:'apple'});
-    enter(u.uid,u.displayName||u.email||'User');busy=false}
-  catch(x){busy=false;
-    if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(x.code))return auth.signInWithRedirect(pr).catch(y=>$('#err').textContent=fbErr(y));
-    if(!['auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(x.code))$('#err').textContent=fbErr(x)}}
+  pr.addScope('email');pr.addScope('name');
+  try{busy=true;auth.languageCode=lang?'fil':'en';await auth.signInWithRedirect(pr)}
+  catch(x){
+    busy=false;
+    $('#err').textContent=['auth/operation-not-allowed','auth/invalid-oauth-client'].includes(x.code)
+      ?t('appleSetupError'):fbErr(x)}}
 $('#abtn').onclick=appleIn;
 
 /* ============ PHONE NUMBER SIGN-IN (SMS code) ============ */
@@ -195,7 +234,11 @@ async function sendCode(){
     confirmRes=await auth.signInWithPhoneNumber(n,captcha);
     phoneCodeSent=true;b.textContent=t('resendCode');
     $('#phcode').hidden=false;$('#otp').value='';$('#otp').focus();toast(t('codeSent',{n}),'ok')}
-  catch(x){$('#err').textContent=fbErr(x);try{captcha.clear()}catch(e){}captcha=null;$('#recaptcha').innerHTML=''}
+  catch(x){
+    const message=x.message||'';
+    $('#err').textContent=x.code==='auth/operation-not-allowed'&&/sms/i.test(message)&&/region/i.test(message)
+      ?t('smsRegionError'):fbErr(x);
+    try{captcha.clear()}catch(e){}captcha=null;$('#recaptcha').innerHTML=''}
   b.disabled=false}
 async function verifyCode(){
   const code=$('#otp').value.trim();if(!confirmRes||!/^\d{6}$/.test(code)){$('#err').textContent=t('errCode');return}
@@ -208,7 +251,37 @@ $('#pbtn').onclick=()=>phonePanel(true);$('#phback').onclick=()=>phonePanel(fals
 $('#phsend').onclick=sendCode;$('#phok').onclick=verifyCode;
 
 /* ============ LANDING ============ */
-$('#cta').onclick=()=>{$('#auth').scrollIntoView({behavior:'smooth',block:'center'});($('#mailBox').hidden?$('#ph'):$('#em')).focus()};
+let authOpener=null;
+function openAuth(formMode,opener){
+  authOpener=opener;
+  if(!$('#phoneBox').hidden)phonePanel(false);
+  authMode(formMode);
+  $('#authModal').hidden=false;
+  document.body.classList.add('auth-modal-open');
+  requestAnimationFrame(()=>$(formMode==='up'?'#nm':'#em').focus());
+}
+function closeAuth(){
+  if($('#authModal').hidden)return;
+  $('#authModal').hidden=true;
+  document.body.classList.remove('auth-modal-open');
+  if(authOpener?.isConnected)authOpener.focus();
+}
+$('#startNow').onclick=event=>openAuth('up',event.currentTarget);
+$('#cta').onclick=event=>openAuth('up',event.currentTarget);
+$('#openSignIn').onclick=event=>openAuth('in',event.currentTarget);
+$('#authClose').onclick=closeAuth;
+$('#authBackdrop').onclick=closeAuth;
+document.addEventListener('keydown',event=>{
+  if($('#authModal').hidden)return;
+  if(event.key==='Escape'){event.preventDefault();closeAuth();return}
+  if(event.key==='Tab'){
+    const items=$$('#authModal button:not(:disabled),#authModal input:not(:disabled),#authModal a[href]')
+      .filter(element=>!element.hidden&&element.offsetParent!==null);
+    const first=items[0],last=items[items.length-1];
+    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+  }
+});
 function setSidebar(open){
   $('#sidebar').hidden=$('#sidebarBackdrop').hidden=!open;
   $('#menuToggle').setAttribute('aria-expanded',String(open));
@@ -428,7 +501,7 @@ function enter(uid,name,details={}){
       intro.hidden=true;intro.classList.remove('is-leaving');intro.setAttribute('aria-hidden','true');
       askLoc();
     },reduceMotion?0:450);
-  },reduceMotion?300:1000)}
+  },reduceMotion?300:2400)}
 function askLoc(){
   if(!navigator.geolocation){$('#gate').hidden=false;return}
   navigator.geolocation.getCurrentPosition(p=>{$('#gate').hidden=true;track(p)},()=>{$('#gate').hidden=false;$('#locP').textContent=t('locDenied')},{enableHighAccuracy:true,timeout:15000});
@@ -477,6 +550,95 @@ function drawMap(r){
   if(pts.length>1)map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lng])),{padding:[40,40]});
   else if(pts.length===1)map.setView(pts[0],14)}
 
+/* ============ LOCATION SUGGESTIONS ============ */
+const addrInput=$('#addr'),addrMenu=$('#addrSuggestions'),addrStatus=$('#addrSuggestionStatus');
+let addrSearchTimer,addrSearchSequence=0,addrLastSearchAt=0,addrFeatures=[],addrActiveIndex=-1,selectedAddress=null;
+function setAddrStatus(key){
+  addrStatus.textContent=key?t(key):'';
+  addrStatus.hidden=!key
+}
+function closeAddrSuggestions(){
+  addrMenu.hidden=true;addrInput.setAttribute('aria-expanded','false');
+  addrInput.removeAttribute('aria-activedescendant');addrActiveIndex=-1
+}
+function addrFeatureLabel(feature){
+  const p=feature.properties||{},street=[p.housenumber,p.street].filter(Boolean).join(' ');
+  return [...new Set([p.name,street,p.district,p.city,p.state,p.country].filter(Boolean))].join(', ')
+}
+function renderAddrSuggestions(features){
+  addrFeatures=features;addrActiveIndex=-1;
+  addrMenu.innerHTML=features.map((feature,index)=>{
+    const p=feature.properties||{},label=addrFeatureLabel(feature),secondary=[p.city,p.state,p.country].filter(Boolean).join(', ');
+    return `<button type="button" class="location-suggestion" id="addrOption${index}" role="option" aria-selected="false" data-place-index="${index}"><span class="location-suggestion-title">${esc(p.name||p.street||label)}</span>${secondary?`<span class="location-suggestion-detail">${esc(secondary)}</span>`:''}</button>`
+  }).join('')+`<div class="location-suggestion-credit" role="presentation">${esc(t('placesCredit'))}</div>`;
+  addrMenu.hidden=false;addrInput.setAttribute('aria-expanded','true')
+}
+function activateAddrSuggestion(index){
+  const options=addrMenu.querySelectorAll('[role="option"]');
+  if(!options.length)return;
+  addrActiveIndex=(index+options.length)%options.length;
+  options.forEach((option,i)=>option.setAttribute('aria-selected',String(i===addrActiveIndex)));
+  addrInput.setAttribute('aria-activedescendant',options[addrActiveIndex].id)
+}
+function selectAddrSuggestion(index){
+  const feature=addrFeatures[index],coordinates=feature?.geometry?.coordinates;
+  if(!Array.isArray(coordinates)||coordinates.length<2)return;
+  const [lng,lat]=coordinates.map(Number),label=addrFeatureLabel(feature);
+  if(!label||!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return;
+  selectedAddress={lat,lng,label};addrInput.value=label;
+  closeAddrSuggestions();setAddrStatus('placeSelected')
+}
+async function searchAddrSuggestions(query,sequence){
+  const wait=Math.max(0,1000-(Date.now()-addrLastSearchAt));
+  if(wait)await new Promise(resolve=>setTimeout(resolve,wait));
+  if(sequence!==addrSearchSequence||query!==addrInput.value.trim())return;
+  addrLastSearchAt=Date.now();
+  // Photon supports autocomplete; the public Nominatim service does not.
+  const url=new URL('https://photon.komoot.io/api/');
+  url.searchParams.set('q',query);url.searchParams.set('limit','8');url.searchParams.set('lang','en');
+  url.searchParams.set('bbox','116.9,4.6,126.6,21.2');
+  try{
+    const response=await fetch(url);
+    if(!response.ok)throw new Error(`Photon returned ${response.status}`);
+    const data=await response.json();
+    if(sequence!==addrSearchSequence||query!==addrInput.value.trim())return;
+    if(!Array.isArray(data.features))throw new Error('Photon returned an invalid response');
+    const features=data.features.filter(feature=>{
+      const country=feature.properties?.countrycode,coordinates=feature.geometry?.coordinates;
+      if(country&&String(country).toUpperCase()!=='PH')return false;
+      if(!Array.isArray(coordinates)||coordinates.length<2||!addrFeatureLabel(feature))return false;
+      const lng=Number(coordinates[0]),lat=Number(coordinates[1]);
+      return Number.isFinite(lng)&&Number.isFinite(lat)&&Math.abs(lat)<=90&&Math.abs(lng)<=180
+    }).slice(0,5);
+    if(!features.length){closeAddrSuggestions();setAddrStatus('placesNone');return}
+    renderAddrSuggestions(features);setAddrStatus(null)
+  }catch(error){
+    if(sequence!==addrSearchSequence)return;
+    console.warn('Location suggestions are unavailable.',error);
+    closeAddrSuggestions();setAddrStatus('placesError')
+  }
+}
+addrInput.addEventListener('input',()=>{
+  selectedAddress=null;closeAddrSuggestions();setAddrStatus(null);clearTimeout(addrSearchTimer);
+  const query=addrInput.value.trim(),sequence=++addrSearchSequence;
+  if(query.length<3)return;
+  setAddrStatus('placesSearching');
+  addrSearchTimer=setTimeout(()=>searchAddrSuggestions(query,sequence),800)
+});
+addrMenu.addEventListener('mousedown',event=>event.preventDefault());
+addrMenu.addEventListener('click',event=>{
+  const option=event.target.closest('[data-place-index]');
+  if(option)selectAddrSuggestion(Number(option.dataset.placeIndex))
+});
+addrInput.addEventListener('keydown',event=>{
+  if(event.key==='ArrowDown'&& !addrMenu.hidden){event.preventDefault();activateAddrSuggestion(addrActiveIndex+1)}
+  else if(event.key==='ArrowUp'&&!addrMenu.hidden){event.preventDefault();activateAddrSuggestion(addrActiveIndex<0?addrFeatures.length-1:addrActiveIndex-1)}
+  else if(event.key==='Escape'&&!addrMenu.hidden){event.preventDefault();closeAddrSuggestions();setAddrStatus(null)}
+});
+document.addEventListener('pointerdown',event=>{
+  if(!event.target.closest('.location-autocomplete'))closeAddrSuggestions()
+});
+
 /* ============ GEOCODING (manual add) ============ */
 async function geocode(q){
   const validPoint=p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180;
@@ -487,17 +649,25 @@ async function geocode(q){
     const p={lat:+d[0].lat,lng:+d[0].lon};return validPoint(p)?p:null}catch(e){return null}}
 async function addByText(asOrigin){
   const q=$('#addr').value.trim();if(!q)return;
-  const p=await geocode(q);if(!p){toast(t('notFound'),'bad');return}
-  $('#addr').value='';addPoint(p.lat,p.lng,q,asOrigin);map.setView(p,15)}
+  const place=selectedAddress&&selectedAddress.label===q?selectedAddress:null;
+  const p=place||await geocode(q);if(!p){toast(t('notFound'),'bad');return}
+  selectedAddress=null;$('#addr').value='';closeAddrSuggestions();setAddrStatus(null);
+  addPoint(p.lat,p.lng,place?place.label:q,asOrigin);map.setView(p,15)}
 $('#addDrop').onclick=()=>addByText(false);$('#addOrg').onclick=()=>addByText(true);
-$('#addr').onkeydown=e=>{if(e.key==='Enter')addByText(false)};
+addrInput.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  e.preventDefault();
+  if(!addrMenu.hidden){selectAddrSuggestion(addrActiveIndex<0?0:addrActiveIndex);return}
+  addByText(false)
+});
 $('#gps').onclick=()=>st.me?(st.origin={...st.me,name:t('myLoc')},render()):askLoc();
 function clearForm(){
-  st.origin=null;st.stops=[];st.sel={};st.editId=null;st.editSched=false;fitKey='';
-  $('#addr').value='';$('#date').value=ymd(new Date());$('#time').value='08:00';$('#round').checked=true;$('#pri').value='balanced';$('#tmode').value='auto';
+  st.origin=null;st.stops=[];st.sel={};st.lastPick=null;st.editId=null;st.editSched=false;fitKey='';
+  selectedAddress=null;addrInput.value='';closeAddrSuggestions();setAddrStatus(null);$('#date').value=ymd(new Date());$('#time').value='08:00';$('#round').checked=true;$('#pri').value='balanced';$('#tmode').value='auto';$('#budget').value='';
   editNote();render();map.setView(st.me||[14.5995,120.9842],12)}
 $('#clear').onclick=clearForm;
-function editNote(){const x=st.editId&&st.H.find(q=>q.id===st.editId);$('#editnote').hidden=!x;if(x)$('#editnote').textContent=t('editing',{d:x.date+' '+x.time})}
+$('#budget').addEventListener('change',()=>st.r?renderResults():render());
+function editNote(){const x=st.editId&&st.H.find(q=>q.id===st.editId);$('#editnote').hidden=!x;$('#save').textContent=t(x?'updateDelivery':'save');if(x)$('#editnote').textContent=t('editing',{d:x.date+' '+x.time})}
 
 /* ============ COST / TIME / EFFORT ============ */
 const depart=()=>new Date(($('#date').value||ymd(new Date()))+'T'+($('#time').value||'08:00'));
@@ -547,43 +717,86 @@ async function render(){
 
 function renderResults(){
   const r=st.r;if(!r)return;
+  const budgetInput=$('#budget');
+  if(!budgetInput.reportValidity()){
+    st.lastPick=null;st.chosen=null;
+    $('#best').innerHTML=`<strong>${esc(t('budgetInvalid'))}</strong>`;
+    $('#res').classList.add('stale');
+    return
+  }
+  $('#res').classList.remove('stale');
+  const budget=budgetInput.value===''?null:budgetInput.valueAsNumber;
   const need=[r.landKm>.05?'land':null,r.waterKm>.05?'water':null].filter(Boolean);if(!need.length)need.push('land');
   const types=[...new Set(st.stops.map(s=>s.cargo))],perish=types.some(x=>PERISH.includes(x)),pri=$('#pri').value,
     w=perish&&pri==='balanced'?[.2,.7,.1]:W[pri];
   // Only vehicles that fit this trip: land vehicles for road parts, boats for water parts
   const groups=need.map(dom=>{
     const rows=V.filter(v=>v.dom===dom).map(v=>evalV(v,r)),ok=rows.filter(x=>x.ok);
-    let best=null,ch=null;
     if(ok.length){const mn=k=>Math.max(.01,Math.min(...ok.map(x=>x[k]))),m={cost:mn('cost'),hrs:mn('hrs'),eff:mn('eff')};
       ok.forEach(x=>x.score=w[0]*x.cost/m.cost+w[1]*x.hrs/m.hrs+w[2]*x.eff/m.eff);
-      best=ok.reduce((a,b)=>b.score<a.score?b:a);ch=ok.find(x=>x.v.id===st.sel[dom])||best}
-    return{dom,rows,ok,best,ch,m:ok.length?{cost:Math.min(...ok.map(x=>x.cost)),hrs:Math.min(...ok.map(x=>x.hrs)),eff:Math.min(...ok.map(x=>x.eff))}:{}}});
+    }
+    return{dom,rows,ok,best:null,ch:null,eligible:new Set(),m:{}}
+  });
+  const allCombos=groups.reduce((combos,g)=>combos.flatMap(combo=>g.ok.map(x=>({
+    parts:[...combo.parts,x],score:combo.score+x.score,cost:combo.cost+x.cost
+  }))),[{parts:[],score:0,cost:0}]);
+  const validCombos=budget===null?allCombos:allCombos.filter(combo=>combo.cost<=budget+1e-7);
+  const bestCombo=validCombos.reduce((best,combo)=>!best||combo.score<best.score?combo:best,null);
+  const hasSelection=groups.some(g=>!!st.sel[g.dom]);
+  const matchesSelections=combo=>combo.parts.every((x,i)=>!st.sel[groups[i].dom]||x.v.id===st.sel[groups[i].dom]);
+  const selectedCombo=hasSelection?validCombos.find(matchesSelections)||null:null;
+  let chosenCombo=selectedCombo,selectionAdjusted=false;
+  if(!chosenCombo&&budget!==null&&st.lastPick){
+    const preferred=validCombos.filter(combo=>combo.parts.some((x,i)=>groups[i].dom===st.lastPick.dom&&x.v.id===st.lastPick.id));
+    chosenCombo=preferred.reduce((best,combo)=>!best||combo.score<best.score?combo:best,null);
+  }
+  if(!chosenCombo)chosenCombo=bestCombo;
+  if(budget!==null&&hasSelection&&!selectedCombo&&chosenCombo){
+    selectionAdjusted=true;
+    groups.forEach((g,i)=>{st.sel[g.dom]=chosenCombo.parts[i].v.id});
+  }
+  st.lastPick=null;
+  groups.forEach((g,i)=>{
+    g.best=bestCombo?.parts[i]||null;g.ch=chosenCombo?.parts[i]||null;
+    g.eligible=new Set(validCombos.map(combo=>combo.parts[i]));
+    const eligible=g.ok.filter(x=>g.eligible.has(x));
+    if(eligible.length)g.m={cost:Math.min(...eligible.map(x=>x.cost)),hrs:Math.min(...eligible.map(x=>x.hrs)),eff:Math.min(...eligible.map(x=>x.eff))}
+  });
   const complete=groups.every(g=>g.ch),parts=groups.map(g=>g.ch).filter(Boolean),sum=k=>parts.reduce((a,x)=>a+x[k],0);
   const ch=st.chosen=complete?{parts,land:groups.find(g=>g.dom==='land')?.ch||null,water:groups.find(g=>g.dom==='water')?.ch||null,
     cost:sum('cost'),fuelCost:sum('fuelCost'),fuelUse:parts.map(x=>`${x.fuelAmount.toFixed(2)} ${x.fuelUnit} (${x.fuelPerHour.toFixed(2)} ${x.fuelUnit}/h)`).join(' + '),hrs:sum('hrs'),km:sum('km')}:null;
   const isBest=complete&&groups.every(g=>g.ch===g.best);
-  const worst=complete?groups.reduce((a,g)=>a+Math.max(...g.ok.map(x=>x.cost)),0):0;
+  const worst=complete?Math.max(...validCombos.map(combo=>combo.cost)):0;
   const kind=need.length>1?t('tBoth'):need[0]==='water'?t('tWater'):t('tLand');
-  $('#best').innerHTML=!ch?'<strong>'+t('noOk')+'</strong>':
+  const noOption=allCombos.length&&budget!==null?t('budgetNoFit',{budget:peso(budget)}):t('noOk');
+  $('#best').innerHTML=!ch?`<strong>${esc(noOption)}</strong>`:
    `<div class="big">${ch.parts.map(x=>ic(x.v.icon)).join(' ')}</div><div><small>${t(isBest?'best':'chosen')} · ${kind}</small><strong>${ch.parts.map(x=>x.v.name).join(' + ')}</strong></div>
    <div><small>${t('total')}</small><strong>${peso(ch.cost)}</strong></div><div><small>${t('fuelUsed')}</small><strong>${ch.fuelUse}</strong></div>
    <div><small>${t('fuelC')}</small><strong>${peso(ch.fuelCost)}</strong></div><div><small>${t('dur')}</small><strong>${fmtT(ch.hrs*60)}</strong></div>
-   <div><small>${t('dist')}</small><strong>${ch.km.toFixed(1)} km</strong></div><div><small>${t('saved')}</small><strong>${peso(worst-ch.cost)}</strong></div>`;
+   <div><small>${t('dist')}</small><strong>${ch.km.toFixed(1)} km</strong></div><div><small>${t('saved')}</small><strong>${peso(worst-ch.cost)}</strong></div>
+   ${budget!==null?`<div><small>${t('budgetCap')}</small><strong>${peso(budget)}</strong></div>`:''}
+   ${selectionAdjusted?`<div class="budget-note">${esc(t('budgetAdjusted'))}</div>`:''}`;
   trafficUI(r,ch);
   const notes=[];if(need.length>1)notes.push(t('nBoth'));if(r.waterKm>.05)notes.push(t('nWater'));if(r.estimate)notes.push(t('nEstimate'));if(r.offroad)notes.push(t('nOffroad'));if(r.forcedWater)notes.push(t('nForced'));
   $('#notes').hidden=!notes.length;$('#notes').innerHTML=notes.map(x=>`<p>${ic('g-alert')} ${x}</p>`).join('');
   $('#tips').innerHTML=(perish?`<li class="g">${t('gen')}</li>`:'')+types.map(k=>`<li>${ic(CI[k])} <b>${t('c_'+k)}</b>: ${tip(k)}</li>`).join('');
-  $('#cards').innerHTML=groups.map(g=>`${need.length>1?`<h3 class="grp">${t(g.dom==='land'?'gLand':'gWater')}</h3>`:''}<div class="grid">${g.rows.map(x=>`<button class="btn vc ${x.ok?'':'off'} ${x===g.ch?'on':''}" ${x.ok?'':'disabled'} onclick="pick('${g.dom}','${x.v.id}')">
-   ${x===g.best?'<span class="tag">'+ic('g-trophy')+'</span>':''}<div class="ic">${ic(x.v.icon)}</div><b>${x.v.name}</b><small>${t('cap')} ${x.v.cap.toLocaleString()} kg</small>
-   ${x.ok?`<small>${peso(x.cost)} · ${fmtT(x.hrs*60)}</small>`:`<small class="late">${x.why}</small>`}</button>`).join('')}</div>`).join('');
+  $('#cards').innerHTML=groups.map(g=>`${need.length>1?`<h3 class="grp">${t(g.dom==='land'?'gLand':'gWater')}</h3>`:''}<div class="grid">${g.rows.map(x=>{
+    const budgetBlocked=budget!==null&&x.ok&&!g.eligible.has(x),disabled=!x.ok||budgetBlocked;
+    return `<button class="btn vc ${disabled?'off':''} ${x===g.ch?'on':''}" ${disabled?'disabled':''} onclick="pick('${g.dom}','${x.v.id}')">
+     ${x===g.best?'<span class="tag">'+ic('g-trophy')+'</span>':''}<div class="ic">${ic(x.v.icon)}</div><b>${x.v.name}</b><small>${t('cap')} ${x.v.cap.toLocaleString()} kg</small>
+     ${disabled?`<small class="late">${budgetBlocked?t('budgetBlocked'):x.why}</small>`:`<small>${peso(x.cost)} · ${fmtT(x.hrs*60)}</small>`}</button>`
+  }).join('')}</div>`).join('');
   etaUI(r,ch);
   const tag=(g,x,k)=>x.ok&&x[k]===g.m[k]?`<span class="b">${t('low')}</span>`:'';
-  $('#cmp').innerHTML=`<table><tr><th>${t('vehicle')}</th><th>${ic('g-clock')}</th><th>${t('cost')}</th><th>${t('fuelUsed')}</th><th>${t('fuelC')}</th><th>${t('labor')}</th><th>${t('effort')}</th><th>${t('trips')}</th></tr>${groups.map(g=>g.rows.map(x=>x.ok?
-   `<tr><td>${ic(x.v.icon)} ${x.v.name}${x===g.best?' '+ic('g-trophy'):''}</td><td>${fmtT(x.hrs*60)}${tag(g,x,'hrs')}</td><td>${peso(x.cost)}${tag(g,x,'cost')}</td><td>${x.fuelAmount.toFixed(2)} ${x.fuelUnit}<br><small>${x.fuelPerHour.toFixed(2)} ${x.fuelUnit}/h</small></td><td>${peso(x.fuelCost)}</td><td>${peso(x.labor)}</td><td>${lvlN(x.lvl)}${tag(g,x,'eff')}</td><td>${x.trips}</td></tr>`:
-   `<tr class="muted"><td>${ic(x.v.icon)} ${x.v.name}</td><td colspan="7">${x.why}</td></tr>`).join('')).join('')}</table>`;
-  if(ch)charts(groups.flatMap(g=>g.ok),ch,r);
+  $('#cmp').innerHTML=`<table><tr><th>${t('vehicle')}</th><th>${ic('g-clock')}</th><th>${t('cost')}</th><th>${t('fuelUsed')}</th><th>${t('fuelC')}</th><th>${t('labor')}</th><th>${t('effort')}</th><th>${t('trips')}</th></tr>${groups.map(g=>g.rows.map(x=>{
+    const budgetBlocked=budget!==null&&x.ok&&!g.eligible.has(x);
+    if(!x.ok)return `<tr class="muted"><td>${ic(x.v.icon)} ${x.v.name}</td><td colspan="7">${x.why}</td></tr>`;
+    if(budgetBlocked)return `<tr class="muted"><td>${ic(x.v.icon)} ${x.v.name}</td><td colspan="7">${t('budgetBlocked')}</td></tr>`;
+    return `<tr><td>${ic(x.v.icon)} ${x.v.name}${x===g.best?' '+ic('g-trophy'):''}</td><td>${fmtT(x.hrs*60)}${tag(g,x,'hrs')}</td><td>${peso(x.cost)}${tag(g,x,'cost')}</td><td>${x.fuelAmount.toFixed(2)} ${x.fuelUnit}<br><small>${x.fuelPerHour.toFixed(2)} ${x.fuelUnit}/h</small></td><td>${peso(x.fuelCost)}</td><td>${peso(x.labor)}</td><td>${lvlN(x.lvl)}${tag(g,x,'eff')}</td><td>${x.trips}</td></tr>`
+  }).join('')).join('')}</table>`;
+  if(ch)charts(groups.flatMap(g=>g.ok.filter(x=>g.eligible.has(x))),ch,r);
   drawMap(r)}
-window.pick=(dom,id)=>{st.sel[dom]=id;renderResults()};
+window.pick=(dom,id)=>{st.sel[dom]=id;st.lastPick={dom,id};renderResults()};
 
 function trafficUI(r,ch){
   if(r.landKm<=.05){$('#traffic').hidden=true;return}

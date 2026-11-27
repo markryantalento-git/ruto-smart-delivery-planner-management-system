@@ -16,7 +16,7 @@ window.RUTO = {
   AI: {
     enabled: true,
     models: ['gemini-3.8-flash', 'gemini-3.5-flash-lite'], // susubukan ayon sa pagkakasunod
-    appCheckSiteKey: '',                                   // reCAPTCHA Enterprise site key (App Check)
+    appCheckSiteKey: '6LdqlzQuAAAAABjz6BaAo8kXblE5D2WBtdjxRltg',                                   // reCAPTCHA Enterprise site key (App Check)
     sdk: '13.4.0'
   },
 
