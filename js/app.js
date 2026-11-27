@@ -33,6 +33,7 @@ function applyLang(){
   $('#aiStyle').value=chatStyle;
   $('#phsend').textContent=t(phoneCodeSent?'resendCode':'sendCode');
   authMode(mode);if(st.user){$('#profileAccountType').value=t(profileData.accountType==='company'?'companyAccount':'personalAccount');editNote();fuelUI();histUI();calUI();render();aiLang()}
+  if($('#tutorialDialog').open)renderTutorial()
 }
 document.querySelectorAll('.lang').forEach(s=>s.onchange=e=>{lang=+e.target.value;localStorage.setItem('ruto_lang',lang);applyLang()});
 
@@ -104,6 +105,7 @@ const PHOTO_COOLDOWN_MS=30*24*60*60*1000,PHOTO_CROP_SIZE=320,PHOTO_OUTPUT_SIZE=5
 let accountType='personal',profileData={accountType:'personal',name:'',companyName:'',email:'',photoURL:''},profilePhotoBlob=null,profilePhotoObjectURL='',profilePhotoCooldownUntil=0,profilePhotoCheck=0,
   photoCropImage=null,photoCropSourceURL='',photoCropZoom=1,photoCropX=0,photoCropY=0,photoCropPointer=null;
 let mode='up',map,layer,tileLayer,meMk,c1,c2;
+const installedAppMode=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 function toast(msg,kind=''){const d=document.createElement('div');d.className='toast '+kind;d.textContent=msg;$('#toasts').append(d);setTimeout(()=>d.remove(),6000)}
 
 /* ============ FIREBASE ============ */
@@ -117,6 +119,32 @@ if(FB_ON&&window.firebase){
   }
   auth=firebase.auth();db=firebase.firestore();storage=typeof firebase.storage==='function'?firebase.storage():null;
 }
+const RUTO_KEEP_LOGGED_IN_KEY='ruto_keep_logged_in';
+function keepBrowserLogin(){return LS(RUTO_KEEP_LOGGED_IN_KEY,false)===true}
+function setAuthPersistence(){
+  if(!auth)return Promise.resolve();
+  const persistence=installedAppMode||$('#keepLoggedIn').checked?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION;
+  return auth.setPersistence(persistence)
+}
+function rememberBrowserSession(uid){
+  try{sessionStorage.setItem('ruto_browser_session',uid)}
+  catch(error){console.warn('Could not retain the active browser session.',error)}
+}
+function hasBrowserSession(uid){
+  try{return sessionStorage.getItem('ruto_browser_session')===uid}
+  catch(error){console.warn('Could not check the active browser session.',error);return false}
+}
+function clearBrowserSession(){
+  try{sessionStorage.removeItem('ruto_browser_session')}
+  catch(error){console.warn('Could not clear the active browser session.',error)}
+}
+function persistLocalSession(uid){
+  try{
+    if(installedAppMode||$('#keepLoggedIn').checked)localStorage.setItem('ruto_session',JSON.stringify(uid));
+    else localStorage.removeItem('ruto_session');
+    return true
+  }catch(error){console.warn('Could not save the local sign-in session.',error);return false}
+}
 const fbErr=x=>{const k={'auth/email-already-in-use':'errExist','auth/invalid-credential':'errBad','auth/wrong-password':'errBad','auth/user-not-found':'errBad','auth/weak-password':'pass','auth/invalid-email':'email','auth/account-exists-with-different-credential':'errDiff','auth/unauthorized-domain':'errDomain',
   'auth/invalid-phone-number':'errPhone','auth/invalid-verification-code':'errCode','auth/code-expired':'errCodeOld','auth/too-many-requests':'errMany','auth/quota-exceeded':'errMany','auth/billing-not-enabled':'errBilling','auth/region-not-allowed':'smsRegionError','auth/operation-not-allowed':'errProvider','auth/network-request-failed':'errNet','auth/captcha-check-failed':'errCaptcha','auth/invalid-app-credential':'errCaptcha','auth/missing-app-credential':'errCaptcha'}[x.code];
   return k?t(k)+(x.code==='auth/operation-not-allowed'&&x.message?' ('+x.message+')':''):x.message};
@@ -127,10 +155,18 @@ function authMode(m){
   mode=m;$$('#auth .tabs .btn').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
   $('#nmw').hidden=m==='in';$('#forgotPassword').hidden=true;$('#signupRule').hidden=m!=='up';
   $('#pw').autocomplete=m==='in'?'current-password':'new-password';
+  $('#keepLoggedIn').checked=keepBrowserLogin();
+  const savedAccountType=LS('ruto_last_account_type','personal');
+  if(m==='in'&&['personal','company'].includes(savedAccountType))accountType=savedAccountType;
   $('#authHeading').textContent=t(m==='in'?'authSignInTitle':'authSignUpTitle');
   $('#sub').textContent=t(m==='in'?'signin':'signup');$('#err').textContent='';
   updateAccountTypeUI();RutoConsent.refresh(m==='up');
 }
+$('#keepLoggedIn').addEventListener('change',()=>{
+  if(!SV(RUTO_KEEP_LOGGED_IN_KEY,$('#keepLoggedIn').checked))$('#err').textContent=t('keepLoggedInSaveFailed');
+  else if($('#err').textContent===t('keepLoggedInSaveFailed'))$('#err').textContent=''
+});
+$('#keepLoginWrap').hidden=installedAppMode;
 function updateAccountTypeUI(){
   const company=accountType==='company',phoneOn=!$('#phoneBox').hidden;
   $$('#accountTypeChoice [data-account-type]').forEach(b=>{
@@ -180,6 +216,7 @@ async function ensureConsentProfile(user,isNewUser=false,provider=''){
 function cacheProfile(uid,data){
   const profiles=LS('ruto_profiles',{});
   profiles[uid]={...profiles[uid],...data};
+  if(['personal','company'].includes(data.accountType)&&!SV('ruto_last_account_type',data.accountType))console.warn('Could not save the last account type.');
   return SV('ruto_profiles',profiles);
 }
 async function getProfileRecord(uid){
@@ -197,7 +234,9 @@ $('#auth').onsubmit=async e=>{e.preventDefault();
   const em=$('#em').value.trim().toLowerCase(),pw=$('#pw').value,nm=$('#nm').value.trim(),companyName=$('#companyName').value.trim(),U=LS('ruto_users',{});
   if(!em||!pw||(mode==='up'&&(!nm||(accountType==='company'&&!companyName)))){$('#err').textContent=t('errFill');return}
   if(pw.length<6){$('#err').textContent=t('pass');return}
+  if(!SV(RUTO_KEEP_LOGGED_IN_KEY,$('#keepLoggedIn').checked)){console.warn('Could not save the keep-login preference.');$('#err').textContent=t('keepLoggedInSaveFailed')}
   if(FB_ON){if(!auth){$('#err').textContent=t('errNet');return}busy=true;try{
+    await setAuthPersistence();
     if(mode==='up'){
       const c=await auth.createUserWithEmailAndPassword(em,pw);
       await c.user.updateProfile({displayName:nm});
@@ -230,16 +269,16 @@ $('#auth').onsubmit=async e=>{e.preventDefault();
   if((U[em].accountType||'personal')!==accountType){$('#err').textContent=t('accountTypeMismatch');return}
   const details={name:U[em].name,email:em,accountType:U[em].accountType||'personal',companyName:U[em].companyName||'',consent:U[em].consent};
   cacheProfile(em,details);
-  if(!SV('ruto_session',em)){$('#err').textContent=t('saveFail');return}
+  if(!persistLocalSession(em)){$('#err').textContent=t('saveFail');return}
   enter(em,details.name,details)};
-$('#out').onclick=async()=>{stopLocationTracking();localStorage.removeItem('ruto_session');if(auth)await auth.signOut();location.reload()};
+$('#out').onclick=async()=>{stopLocationTracking();localStorage.removeItem('ruto_session');clearBrowserSession();if(auth)await auth.signOut();location.reload()};
 
 /* ============ GOOGLE: always shows the account chooser ============ */
 async function googleIn(){
   if(!auth){$('#err').textContent=t('needFb');return}
   if(!RutoConsent.isAccepted()){$('#err').textContent=t('consentRequired');return}
   const pr=new firebase.auth.GoogleAuthProvider();pr.setCustomParameters({prompt:'select_account'});
-  try{busy=true;const c=await auth.signInWithPopup(pr),u=c.user;
+  try{busy=true;await setAuthPersistence();const c=await auth.signInWithPopup(pr),u=c.user;
     const saved=await ensureConsentProfile(u,!!c.additionalUserInfo?.isNewUser,'google');
     if(!saved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
     RutoConsent.clearPendingRedirect();
@@ -258,7 +297,7 @@ async function facebookIn(){
   const pr=new firebase.auth.FacebookAuthProvider();
   pr.addScope('email');
   try{
-    busy=true;auth.languageCode=lang?'fil':'en';
+    busy=true;await setAuthPersistence();auth.languageCode=lang?'fil':'en';
     const c=await auth.signInWithPopup(pr),u=c.user;
     const saved=await ensureConsentProfile(u,!!c.additionalUserInfo?.isNewUser,'facebook');
     if(!saved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
@@ -287,7 +326,7 @@ async function sendCode(){
   if(!auth){$('#err').textContent=t('needFb');return}
   const n=normPhone($('#ph').value);if(!n){$('#err').textContent=t('errPhone');return}
   const b=$('#phsend');b.disabled=true;$('#err').textContent='';
-  try{auth.languageCode=lang?'fil':'en';
+  try{await setAuthPersistence();auth.languageCode=lang?'fil':'en';
     captcha=captcha||new firebase.auth.RecaptchaVerifier('recaptcha',{size:'normal'});
     confirmRes=await auth.signInWithPhoneNumber(n,captcha);
     phoneCodeSent=true;b.textContent=t('resendCode');
@@ -332,6 +371,76 @@ $('#cta').onclick=event=>openAuth('up',event.currentTarget);
 $('#openSignIn').onclick=event=>openAuth('in',event.currentTarget);
 $('#authClose').onclick=closeAuth;
 $('#authBackdrop').onclick=closeAuth;
+const RUTO_TUTORIAL_KEY='ruto_tutorial_seen_v1',RUTO_TUTORIAL_VERSION='2';
+const RUTO_TUTORIAL_TARGETS=['#menuToggle','#addr','#addDrop','#mapCategoryBar','#mapLocate','#fuelMini','#pri',()=>$('#res').hidden?'#empty':'#best','#save','#sched','#notificationButton','#fab'];
+const RUTO_TUTORIAL_ICONS=['#g-globe','#g-pin','#g-box','#g-globe','#g-pin','#g-fuel','#g-route','#g-truck','#g-box','#g-cal','#g-alert','#g-chat'];
+const RUTO_TUTORIAL_STEPS=RUTO_TUTORIAL_TARGETS.length;
+let tutorialStep=0,tutorialUid='',tutorialContinuation=null,tutorialTarget=null;
+function tutorialSeen(uid){return LS(RUTO_TUTORIAL_KEY,{})[uid]===RUTO_TUTORIAL_VERSION}
+function positionTutorial(){
+  const dialog=$('#tutorialDialog'),target=tutorialTarget,panel=$('#tutorialPanel'),spotlight=$('#tutorialSpotlight');
+  if(!dialog.open||!target?.isConnected)return;
+  const rect=target.getBoundingClientRect(),pad=7;
+  spotlight.style.left=`${Math.max(0,rect.left-pad)}px`;
+  spotlight.style.top=`${Math.max(0,rect.top-pad)}px`;
+  spotlight.style.width=`${Math.min(window.innerWidth-Math.max(0,rect.left-pad),rect.width+pad*2)}px`;
+  spotlight.style.height=`${Math.min(window.innerHeight-Math.max(0,rect.top-pad),rect.height+pad*2)}px`;
+  const spaceAbove=Math.max(0,rect.top-24),spaceBelow=Math.max(0,window.innerHeight-rect.bottom-24),placeAbove=spaceAbove>spaceBelow;
+  panel.style.maxHeight=`${Math.max(180,Math.min(760,placeAbove?spaceAbove:spaceBelow))}px`;
+  if(placeAbove){panel.style.top='12px';panel.style.bottom='auto'}
+  else{panel.style.top='auto';panel.style.bottom='12px'}
+}
+function clearTutorialTarget(){
+  tutorialTarget?.classList.remove('tutorial-focus-target');
+  tutorialTarget=null;
+  $('#tutorialSpotlight').removeAttribute('style');
+  $('#tutorialPanel').removeAttribute('style');
+}
+function renderTutorial(){
+  const count=tutorialStep+1,progress=$('#tutorialProgress')||$('#tutorialDialog .tutorial-progress');
+  $('#tutorialStepCount').textContent=t('tutorialStepCount',{current:count,total:RUTO_TUTORIAL_STEPS});
+  $('#tutorialStepTitle').textContent=t(`tutorialStep${count}Title`);
+  $('#tutorialStepBody').textContent=t(`tutorialStep${count}Body`);
+  $('#tutorialProgressFill').style.width=`${count/RUTO_TUTORIAL_STEPS*100}%`;
+  progress.setAttribute('aria-valuenow',String(count));
+  progress.setAttribute('aria-valuetext',t('tutorialStepCount',{current:count,total:RUTO_TUTORIAL_STEPS}));
+  $('#tutorialProgress').setAttribute('aria-valuemax',String(RUTO_TUTORIAL_STEPS));
+  $('#tutorialStepIcon use').setAttribute('href',RUTO_TUTORIAL_ICONS[tutorialStep]);
+  $('#tutorialBack').disabled=tutorialStep===0;
+  $('#tutorialNext').hidden=tutorialStep===RUTO_TUTORIAL_STEPS-1;
+  $('#tutorialDone').hidden=tutorialStep!==RUTO_TUTORIAL_STEPS-1;
+  const targetSelector=typeof RUTO_TUTORIAL_TARGETS[tutorialStep]==='function'?RUTO_TUTORIAL_TARGETS[tutorialStep]():RUTO_TUTORIAL_TARGETS[tutorialStep];
+  const candidate=$(targetSelector),fallback=$('#map')||$('#v_plan');
+  clearTutorialTarget();
+  tutorialTarget=candidate&&candidate.getClientRects().length?candidate:fallback;
+  tutorialTarget?.classList.add('tutorial-focus-target');
+  tutorialTarget?.scrollIntoView({block:'center',inline:'nearest',behavior:'smooth'});
+  requestAnimationFrame(positionTutorial)
+}
+function showRutoTutorial(uid,onClose){
+  if(!uid)return;
+  tutorialUid=uid;tutorialStep=0;tutorialContinuation=onClose||null;
+  renderTutorial();$('#tutorialDialog').showModal();$('#tutorialNext').focus()
+}
+function finishRutoTutorial(){
+  const seen=LS(RUTO_TUTORIAL_KEY,{});
+  seen[tutorialUid]=RUTO_TUTORIAL_VERSION;
+  if(!SV(RUTO_TUTORIAL_KEY,seen))console.warn('Could not save the RUTO tutorial completion state.');
+  clearTutorialTarget();
+  if($('#tutorialDialog').open)$('#tutorialDialog').close();
+  const continuation=tutorialContinuation;tutorialContinuation=null;
+  continuation?.()
+}
+$('#tutorialBack').onclick=()=>{if(tutorialStep>0){tutorialStep--;renderTutorial()}};
+$('#tutorialNext').onclick=()=>{if(tutorialStep<RUTO_TUTORIAL_STEPS-1){tutorialStep++;renderTutorial()}};
+$('#tutorialDone').onclick=finishRutoTutorial;
+$('#tutorialSkip').onclick=finishRutoTutorial;
+$('#tutorialClose').onclick=finishRutoTutorial;
+$('#tutorialDialog').addEventListener('cancel',event=>{event.preventDefault();finishRutoTutorial()});
+$('#tutorialDialog').addEventListener('close',clearTutorialTarget);
+document.addEventListener('scroll',positionTutorial,true);
+window.addEventListener('resize',positionTutorial);
+$('#tutorialReplay').onclick=()=>showRutoTutorial(st.user);
 document.addEventListener('keydown',event=>{
   if($('#authModal').hidden)return;
   if(event.key==='Escape'){event.preventDefault();closeAuth();return}
@@ -605,7 +714,7 @@ if(matchMedia('(prefers-reduced-motion:reduce)').matches)$$('animateMotion,anima
 
 /* ============ ENTER APP + LOCATION GATE ============ */
 function enter(uid,name,details={}){
-  if(st.user)return;st.user=uid;
+  if(st.user)return;st.user=uid;rememberBrowserSession(uid);
   window.refreshNotifications?.();
   if(LS('ruto_pending_app_update',false))SV('ruto_pending_app_update',false);
   window.checkReleaseUpdate?.(uid);
@@ -622,7 +731,8 @@ function enter(uid,name,details={}){
     intro.classList.add('is-leaving');
     setTimeout(()=>{
       intro.hidden=true;intro.classList.remove('is-leaving');intro.setAttribute('aria-hidden','true');
-      askLoc();
+      if(tutorialSeen(uid))askLoc();
+      else showRutoTutorial(uid,askLoc);
     },reduceMotion?0:450);
   },reduceMotion?300:2400)}
 let watching=false,locationWatchId=null,meAccuracy=0,meAccuracyCircle=null;

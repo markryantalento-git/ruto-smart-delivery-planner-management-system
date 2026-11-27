@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RUTO – Smart Transportation and Delivery Planner System</title>
-<meta name="description" content="RUTO is a smart transportation and delivery planner system for planning routes, comparing vehicles, and estimating delivery costs.">
+<title>RUTO – Smart Logistics/Delivery Planner Management System</title>
+<meta name="description" content="RUTO is a Smart Logistics/Delivery Planner Management System for planning routes, comparing vehicles, and estimating delivery costs.">
 <link rel="canonical" href="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/">
-<meta property="og:title" content="RUTO – Smart Transportation and Delivery Planner System">
+<meta property="og:title" content="RUTO – Smart Logistics/Delivery Planner Management System">
 <meta property="og:description" content="Plan delivery routes, compare vehicles, and estimate costs with RUTO.">
 <meta property="og:image" content="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/assets/app-icon-512.png">
 <meta property="og:image:secure_url" content="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/assets/app-icon-512.png">
@@ -17,7 +17,7 @@
 <meta property="og:image:height" content="512">
 <meta property="og:image:alt" content="RUTO logo with a delivery truck and route pin">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="RUTO – Smart Transportation and Delivery Planner System">
+<meta name="twitter:title" content="RUTO – Smart Logistics/Delivery Planner Management System">
 <meta name="twitter:description" content="Plan delivery routes, compare vehicles, and estimate costs with RUTO.">
 <meta name="twitter:image" content="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/assets/app-icon-512.png">
 <meta name="theme-color" content="#353839">
@@ -28,7 +28,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
-<link rel="stylesheet" href="css/style.css?v=76">
+<link rel="stylesheet" href="css/style.css?v=92">
 </head>
 <body class="ui-guard">
 <aside class="install-banner" id="installBanner" aria-label="Install RUTO" hidden>
@@ -180,6 +180,7 @@
     <p class="muted" data-i="smsNote"></p>
     <button type="button" class="btn auth-phone-back" id="phback" data-i="useEmail"></button>
    </div>
+   <div class="keep-login" id="keepLoginWrap"><label for="keepLoggedIn"><input id="keepLoggedIn" type="checkbox"><span data-i="keepLoggedIn"></span></label></div>
    <div class="auth-consent" id="authConsent">
     <label for="consentCheck"><input id="consentCheck" type="checkbox"><span data-i="consentText"></span></label>
     <div class="auth-consent-links"><a href="terms.html" data-i="termsLink"></a><span aria-hidden="true"> · </span><a href="privacy.html" data-i="privacyLink"></a></div>
@@ -192,6 +193,18 @@
   </div>
  </div>
  <div class="sec"><h2 data-i="featH"></h2><div class="feat"><div class="fc"><div class="fi"><svg class="i"><use href="#g-route"/></svg></div><h3 data-i="f1t"></h3><p data-i="f1p"></p></div><div class="fc"><div class="fi"><svg class="i"><use href="#g-truck"/></svg></div><h3 data-i="f2t"></h3><p data-i="f2p"></p></div><div class="fc"><div class="fi"><svg class="i"><use href="#g-fuel"/></svg></div><h3 data-i="f3t"></h3><p data-i="f3p"></p></div><div class="fc"><div class="fi"><svg class="i"><use href="#g-snow"/></svg></div><h3 data-i="f4t"></h3><p data-i="f4p"></p></div></div></div>
+ <div class="sec system-overview">
+  <p class="system-overview-eyebrow" data-i="systemOverviewEyebrow"></p>
+  <h2 data-i="systemOverviewTitle"></h2>
+  <p class="system-overview-text" data-i="systemOverview"></p>
+  <div class="overview-grid">
+   <article class="overview-card"><svg class="i" aria-hidden="true"><use href="#g-pin"/></svg><h3 data-i="overviewPlanTitle"></h3><p data-i="overviewPlanText"></p></article>
+   <article class="overview-card"><svg class="i" aria-hidden="true"><use href="#g-truck"/></svg><h3 data-i="overviewCompareTitle"></h3><p data-i="overviewCompareText"></p></article>
+   <article class="overview-card"><svg class="i" aria-hidden="true"><use href="#g-market"/></svg><h3 data-i="overviewPlacesTitle"></h3><p data-i="overviewPlacesText"></p></article>
+   <article class="overview-card"><svg class="i" aria-hidden="true"><use href="#g-cal"/></svg><h3 data-i="overviewManageTitle"></h3><p data-i="overviewManageText"></p></article>
+  </div>
+  <p class="system-overview-note" data-i="systemOverviewNote"></p>
+ </div>
  <div class="sec"><h2 data-i="howH"></h2><div class="steps"><div class="st"><b>1</b><span data-i="s1"></span><svg class="i sico"><use href="#g-pin"/></svg></div><div class="st"><b>2</b><span data-i="s2"></span><svg class="i sico"><use href="#g-box"/></svg></div><div class="st"><b>3</b><span data-i="s3"></span><svg class="i sico"><use href="#g-trophy"/></svg></div></div></div>
  <div class="sec"><div class="cta"><h2 data-i="ctaH"></h2><button class="btn p" id="cta"><span data-i="ctaB"></span> <svg class="i arr"><use href="#g-arrow"/></svg></button>
   <svg class="cityscape" viewBox="0 0 900 150" preserveAspectRatio="none" aria-hidden="true">
@@ -329,7 +342,7 @@
   </svg>
   <span class="brand-intro-status" data-i="appLoading"></span>
   <span class="brand-intro-loader" aria-hidden="true"></span>
-  <span class="brand-intro-version" id="appVersion">ver.0.2.6</span>
+  <span class="brand-intro-version" id="appVersion">ver.0.2.19</span>
  </div>
 </div>
 
@@ -349,7 +362,8 @@
   <div class="sidebar-footer"><div class="sidebar-user"><button type="button" class="avatar" id="profileShortcut" aria-label="Profile settings"><img id="whoPhoto" alt="" hidden><span id="whoInitials">R</span></button><span id="who"></span></div><button type="button" class="sidebar-link logout-link" id="out" data-i="logout"></button></div>
  </aside>
  <div class="top"><button class="ib menu-toggle" type="button" id="menuToggle" aria-controls="sidebar" aria-expanded="false" aria-label="Open menu"><span aria-hidden="true">☰</span></button>
-  <div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUTO</span></span></div><div class="sp"></div>
+  <div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUTO</span></span></div>
+  <div class="top-actions">
   <span class="locale-control"><svg class="i" aria-hidden="true"><use href="#g-globe"/></svg><select class="lang" aria-label="Language"><option value="0">English</option><option value="1">Tagalog</option><option value="2">Taglish</option></select></span>
   <div class="notification-menu">
    <button class="ib notification-button" id="notificationButton" type="button" aria-controls="notificationPanel" aria-expanded="false" aria-label="Notifications" title="Notifications">
@@ -357,16 +371,29 @@
     <span class="notification-badge" id="notificationBadge" hidden></span>
    </button>
    <section class="notification-panel" id="notificationPanel" aria-labelledby="notificationTitle" hidden>
-    <header><strong id="notificationTitle" data-i="notifications"></strong><button class="notification-read" id="notificationRead" type="button" data-i="markRead"></button></header>
+    <header><strong id="notificationTitle" data-i="notifications"></strong><div class="notification-actions"><button class="notification-read" id="notificationRead" type="button" data-i="markRead"></button><button class="ib notification-close" id="notificationClose" type="button" aria-label="Close notifications" title="Close notifications">×</button></div></header>
     <div id="notificationList" role="status" aria-live="polite"></div>
    </section>
   </div>
   <button class="ib th" aria-label="Theme"><svg class="i"><use href="#sun"/></svg></button>
+  </div>
  </div>
 
  <div class="wrap" id="v_plan">
  <section class="fuel-mini-strip" id="fuelMini" role="region" aria-label="Fuel prices"></section>
  <aside>
+  <section class="card plan-guide" aria-labelledby="planGuideHeading">
+   <h2 id="planGuideHeading" data-i="planGuideTitle"></h2>
+   <p class="muted plan-guide-intro" data-i="planGuideIntro"></p>
+   <ol class="plan-guide-steps">
+    <li><span class="plan-step-number">1</span><div><strong data-i="planGuideStep1Title"></strong><p data-i="planGuideStep1Body"></p></div></li>
+    <li><span class="plan-step-number">2</span><div><strong data-i="planGuideStep2Title"></strong><p data-i="planGuideStep2Body"></p></div></li>
+    <li><span class="plan-step-number">3</span><div><strong data-i="planGuideStep3Title"></strong><p data-i="planGuideStep3Body"></p></div></li>
+    <li><span class="plan-step-number">4</span><div><strong data-i="planGuideStep4Title"></strong><p data-i="planGuideStep4Body"></p></div></li>
+    <li><span class="plan-step-number">5</span><div><strong data-i="planGuideStep5Title"></strong><p data-i="planGuideStep5Body"></p></div></li>
+    <li><span class="plan-step-number">6</span><div><strong data-i="planGuideStep6Title"></strong><p data-i="planGuideStep6Body"></p></div></li>
+   </ol>
+  </section>
   <details class="card fuel-card" id="fuelPanel">
    <summary class="fuel-summary"><span><svg class="i"><use href="#g-fuel"/></svg><span data-i="fuelH"></span></span></summary>
    <div class="fuel-content"><p class="muted fuel-hint" data-i="fuelEditHint"></p><p class="muted fuel-hint" data-i="fuelCalcHint"></p><div class="fuel" id="fuel"></div>
@@ -460,6 +487,7 @@
    <section class="about-copy">
     <h3 data-i="aboutWhatTitle"></h3>
     <p data-i="aboutWhatText"></p>
+    <button class="btn" type="button" id="tutorialReplay" data-i="tutorialReplay"></button>
     <p class="about-creator" data-i="creator"></p>
    </section>
    <section class="support-panel">
@@ -545,6 +573,22 @@
 </div>
 
 <dialog id="dlg"></dialog>
+<dialog id="tutorialDialog" aria-labelledby="tutorialTitle" aria-describedby="tutorialIntro">
+ <div class="tutorial-spotlight" id="tutorialSpotlight" aria-hidden="true"></div>
+ <div class="tutorial-panel" id="tutorialPanel">
+ <div class="tutorial-heading"><span data-i="tutorialEyebrow"></span><button class="ib" id="tutorialClose" type="button" aria-label="Close tutorial">×</button></div>
+ <h2 id="tutorialTitle" data-i="tutorialTitle"></h2>
+ <p id="tutorialIntro" class="muted" data-i="tutorialIntro"></p>
+ <div class="tutorial-progress-copy"><span id="tutorialStepCount"></span><span data-i="tutorialStepsLabel"></span></div>
+ <div class="tutorial-progress" id="tutorialProgress" role="progressbar" aria-label="Tutorial progress" aria-valuemin="1" aria-valuemax="12" aria-valuenow="1"><span id="tutorialProgressFill"></span></div>
+ <section class="tutorial-step" aria-live="polite">
+  <span class="tutorial-step-icon" id="tutorialStepIcon"><svg class="i" aria-hidden="true"><use href="#g-route"/></svg></span>
+  <h3 id="tutorialStepTitle"></h3>
+  <p id="tutorialStepBody"></p>
+ </section>
+ <div class="tutorial-actions"><button class="btn" id="tutorialBack" type="button" data-i="tutorialBack"></button><button class="btn" id="tutorialSkip" type="button" data-i="tutorialSkip"></button><span class="sp"></span><button class="btn p" id="tutorialNext" type="button" data-i="tutorialNext"></button><button class="btn p" id="tutorialDone" type="button" data-i="tutorialDone" hidden></button></div>
+ </div>
+</dialog>
 <dialog id="installGuide">
  <h2 data-i="installGuideTitle"></h2>
  <p id="installGuideIos" class="muted" data-i="installGuideIos" hidden></p>
@@ -581,17 +625,17 @@ if (['localhost', '127.0.0.1'].includes(location.hostname)) self.FIREBASE_APPCHE
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js" integrity="sha384-6I0gWsz4FIAr30c0TxIxJnPQuJiZ1FfILdZrgJdjxTH3R8dgPGTvexbyqTvReV6Z" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js" integrity="sha384-E3vxFxXu8FhW5kvqdQJ5Yf8ugrV7iCJP8jgnItRH2Rk8Q08cJzJGTi/oMC3FEp3j" crossorigin="anonymous"></script>
 <script src="js/config.js?v=1"></script>
-<script src="js/i18n.js?v=64"></script>
+<script src="js/i18n.js?v=69"></script>
 <script src="js/auth-consent.js?v=3"></script>
-<script src="js/app.js?v=65"></script>
+<script src="js/app.js?v=71"></script>
 <script src="js/routing.js"></script>
 <script src="js/store.js?v=5"></script>
-<script src="js/notifications.js?v=3"></script>
+<script src="js/notifications.js?v=4"></script>
 <script src="js/updates.js?v=1"></script>
 <script src="js/fuel.js?v=2"></script>
 <script src="js/nav.js"></script>
 <script src="js/assistant.js?v=51"></script>
-<script src="js/main.js?v=55"></script>
+<script src="js/main.js?v=57"></script>
 <script src="js/pwa.js?v=3"></script>
 <script src="js/waves.js?v=45"></script>
 <script src="js/ui-guard.js"></script>

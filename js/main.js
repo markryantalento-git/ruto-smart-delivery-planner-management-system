@@ -93,8 +93,11 @@ if(copyrightYear)copyrightYear.textContent=new Date().getFullYear();
 applyTheme(localStorage.getItem('ruto_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));
 applyLang();
 initCookieNotice();
-const installedAppMode=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 if(auth){
+  const hasKnownAccount=()=>!!LS('ruto_session',null)||Object.keys(LS('ruto_profiles',{})).length>0||Object.keys(LS('ruto_users',{})).length>0,
+    shouldRestoreSession=user=>installedAppMode||keepBrowserLogin()||hasBrowserSession(user.uid),
+    showReturningSignIn=()=>{if(!st.user&&hasKnownAccount()&&$('#authModal').hidden)openAuth('in',$('#openSignIn'))};
+  let restoringUid=null;
   const consentRedirect=RutoConsent.hasPendingRedirect();
   const showConsentGate=async message=>{
     try{await auth.signOut()}
@@ -102,8 +105,9 @@ if(auth){
     busy=false;openAuth('in',$('#openSignIn'));$('#err').textContent=t(message)
   };
   const restoreAuthenticatedSession=async user=>{
-    if(!installedAppMode){busy=false;openAuth('in',$('#openSignIn'));return}
-    busy=true;
+    if(restoringUid===user.uid)return;
+    if(!shouldRestoreSession(user)){busy=false;openAuth('in',$('#openSignIn'));return}
+    restoringUid=user.uid;busy=true;
     try{
       const snapshot=await db.collection('users').doc(user.uid).get(),
         profile=snapshot.exists?snapshot.data():{};
@@ -116,6 +120,9 @@ if(auth){
     }catch(error){
       console.warn('Could not verify consent for the returning account.',error);
       await showConsentGate('consentProfileLoadFailed')
+    }finally{
+      if(restoringUid===user.uid)restoringUid=null;
+      busy=false
     }
   };
   auth.getRedirectResult().then(async c=>{
@@ -128,7 +135,13 @@ if(auth){
         if(!saved){await auth.signOut();$('#err').textContent=t('consentSaveFailed')}
         else if(!st.user)enter(user.uid,user.displayName||user.email||'User',LS('ruto_profiles',{})[user.uid]||{})
       }
-      busy=false;return
+      if(restoringUid)return;
+      busy=false;
+      if(!st.user&&auth.currentUser){
+        if(shouldRestoreSession(auth.currentUser))await restoreAuthenticatedSession(auth.currentUser);
+        else openAuth('in',$('#openSignIn'))
+      }else showReturningSignIn();
+      return
     }
     const user=c.user,accepted=RutoConsent.consumeRedirect();
     if(!accepted||!RutoConsent.isAccepted()){
@@ -145,18 +158,21 @@ if(auth){
     RutoConsent.clearPendingRedirect();busy=false;
     console.warn('RUTO provider redirect sign-in failed.',error);
     if(auth.currentUser&&!st.user)await restoreAuthenticatedSession(auth.currentUser);
-    else $('#err').textContent=fbErr(error)
+    else{showReturningSignIn();if(!$('#authModal').hidden)$('#err').textContent=fbErr(error)}
   });
   // Returning sessions must have a consent record before the app is opened.
   auth.onAuthStateChanged(u=>{
-    if(!u||st.user||busy)return;
-    if(installedAppMode)restoreAuthenticatedSession(u);
+    if(st.user||busy)return;
+    if(!u){showReturningSignIn();return}
+    if(shouldRestoreSession(u))restoreAuthenticatedSession(u);
     else openAuth('in',$('#openSignIn'))
   })}
 else if(!FB_ON){
-  const ses=LS('ruto_session',null),U0=LS('ruto_users',{});
-  if(ses&&U0[ses]){
-    if(installedAppMode)enter(ses,U0[ses].name);
-    else openAuth('in',$('#openSignIn'))
-  }
+  const ses=LS('ruto_session',null),U0=LS('ruto_users',{}),
+    browserSession=Object.keys(U0).find(uid=>hasBrowserSession(uid)),
+    keepSession=keepBrowserLogin()&&U0[ses]?ses:null,
+    installedSession=installedAppMode&&U0[ses]?ses:null,
+    user=browserSession||keepSession||installedSession;
+  if(user)enter(user,U0[user].name);
+  else if(Object.keys(U0).length)openAuth('in',$('#openSignIn'))
 }

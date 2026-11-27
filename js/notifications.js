@@ -89,12 +89,25 @@ window.addAppNotification=addAppNotification;
 window.refreshNotifications=renderNotifications;
 
 const notificationButton=$('#notificationButton'),notificationPanel=$('#notificationPanel'),notificationMenu=$('.notification-menu');
+function positionNotificationPanel(){
+  const trigger=notificationButton.getBoundingClientRect(),
+    width=Math.min(360,Math.max(0,document.documentElement.clientWidth-24)),
+    height=Math.max(120,window.innerHeight-trigger.bottom-20);
+  notificationPanel.style.width=`${width}px`;
+  notificationPanel.style.top=`${trigger.bottom+10}px`;
+  notificationPanel.style.maxHeight=`min(520px,${height}px)`
+}
 function toggleNotificationPanel(show){
   notificationPanel.hidden=!show;
   notificationButton.setAttribute('aria-expanded',String(show));
-  if(show)renderNotifications()
+  if(show){positionNotificationPanel();renderNotifications()}
 }
 notificationButton.addEventListener('click',()=>toggleNotificationPanel(notificationPanel.hidden));
+window.addEventListener('resize',()=>{if(!notificationPanel.hidden)positionNotificationPanel()});
+$('#notificationClose').addEventListener('click',()=>{
+  toggleNotificationPanel(false);
+  notificationButton.focus()
+});
 $('#notificationRead').addEventListener('click',()=>{
   loadNotifications();
   notificationItems=notificationItems.map(item=>({...item,read:true}));
@@ -110,7 +123,9 @@ document.addEventListener('keydown',event=>{
 });
 function notificationLang(){
   notificationButton.setAttribute('aria-label',t('notifications'));
-  notificationButton.title=t('notifications')
+  notificationButton.title=t('notifications');
+  $('#notificationClose').setAttribute('aria-label',t('closeNotifications'));
+  $('#notificationClose').title=t('closeNotifications')
 }
 $$('.lang').forEach(select=>select.addEventListener('change',notificationLang));
 notificationLang();

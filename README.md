@@ -1,4 +1,4 @@
-# RUTO - Smart Transportation and Delivery Planner System
+# RUTO - Smart Logistics/Delivery Planner Management System
 
 RUTO is currently free to use: there are no subscriptions, free trials, or payment walls.
 Network, carrier SMS, and infrastructure charges charged by third parties may still apply.
@@ -18,6 +18,23 @@ Network, carrier SMS, and infrastructure charges charged by third parties may st
 - data/fuel-prices.json - published nationwide fuel prices
 - firestore.rules, storage.rules, firebase.json
 
+## What RUTO is for
+RUTO is a free Smart Logistics/Delivery Planner Management System for individuals and small
+businesses that need to plan deliveries with one pickup and multiple stops.
+The planner lets users search for places or select them on the map, enter cargo and scheduling
+details, choose priorities and land/water travel preferences, and compare suitable vehicles.
+
+The comparison estimates trip distance, time, fuel or energy use, and cost, and can indicate when
+the load may require multiple vehicles or trips. Map categories help users find nearby useful
+places such as gas stations, food stops, and repair services to add as stop-overs. Saved plans can
+be reviewed in History, arranged on the calendar, or followed with the in-app navigation while
+location access is allowed. RuBot can answer questions about RUTO and help users find nearby places.
+
+RUTO is a planning aid, not a dispatch service or a source of guaranteed live traffic, prices, ETAs,
+or delivery results. Actual vehicle capacity, road conditions, fuel prices, and delivery requirements
+should be checked before departure. The app is currently free to users with no subscription or
+payment wall; third-party service, carrier, or infrastructure charges may still apply.
+
 ## Run it
 1. Open this folder in Visual Studio Code, install "Live Server".
 2. Right-click index.html > Open with Live Server, then use http://localhost:5500
@@ -29,16 +46,26 @@ Network, carrier SMS, and infrastructure charges charged by third parties may st
    open the site in Safari, tap Share, then choose Add to Home Screen. Installation requires
    HTTPS (or localhost while developing).
 5. When launched as an installed standalone app, RUTO restores a saved signed-in session and
-   opens the intro/dashboard instead of the landing page. Opening the site in a regular browser
-   requires sign-in again if a session is still saved. Browsers do not provide a reliable
-   uninstall event, so deleting the home-screen icon itself cannot be detected or used to clear
-   account data; clearing site data also clears locally stored app data.
+   opens the intro/dashboard instead of the landing page. In a regular browser, a returning
+   account opens the sign-in form. Select **Keep me logged in on this device** during sign-in or
+   sign-up to restore the app automatically on future browser visits; otherwise browser sign-in
+   lasts only for the current session. Standalone apps retain their sign-in regardless of this
+   browser preference. Browsers do not provide a reliable uninstall event, so
+   deleting the home-screen icon itself cannot be detected or used to clear account data;
+   clearing site data also clears locally stored app data.
 The layout adapts to phone, tablet, and desktop viewport sizes.
+The Plan page includes a six-step guide for adding drop-offs, setting a pickup, entering cargo,
+choosing delivery preferences, reviewing estimates, and saving or scheduling the plan.
 
 Inside the app, use the menu button for Plan, Calendar, History, About, Profile settings, and Sign out.
 Click the circular avatar at the bottom of the menu to open Profile settings. Email/password
 accounts can change their password there after confirming the current password; social/phone
 accounts manage sign-in through their provider. Sign out is at the bottom of the menu.
+On the first sign-in for each account on a browser or installed device, RUTO opens a guided,
+step-by-step tour that highlights the menu, pickup and stop controls, nearby places, map location,
+fuel estimates, delivery preferences, route comparisons, saving, scheduling, notifications, and
+RuBot. Choose **Skip tutorial** to continue immediately, or reopen it later from
+**About > Show the quick-start tutorial**.
 Open the RUTO Assistant by tapping the orange chat bubble at the bottom-right of the signed-in app.
 Fuel prices per liter are editable in the planner; changes are saved on this device and update trip
 cost estimates. Road fuel estimates use average speed divided by km/L, multiplied by driving time,

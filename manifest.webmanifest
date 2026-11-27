@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "RUTO - Smart Transportation and Delivery Planner System",
+  "name": "RUTO - Smart Logistics/Delivery Planner Management System",
   "short_name": "RUTO",
-  "description": "RUTO is a smart transportation and delivery planner system for comparing vehicle options, routes, estimated travel times, and trip costs.",
+  "description": "RUTO is a Smart Logistics/Delivery Planner Management System for comparing vehicle options, routes, estimated travel times, and trip costs.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

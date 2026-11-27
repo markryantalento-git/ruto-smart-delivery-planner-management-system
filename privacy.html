@@ -37,7 +37,7 @@
    <li><strong>Consent and account record:</strong> whether you accepted this policy version and the time Firebase recorded that consent, along with account creation and app-version information.</li>
    <li><strong>Delivery and route information:</strong> pickup and saved GPS coordinates, place names, delivery stops, schedules, cargo details, vehicle choices, route preferences, and estimated costs saved in Cloud Firestore when signed in. Some information may also be kept in your browser's local storage.</li>
    <li><strong>Location:</strong> when you grant browser permission, the app may use the device's current coordinates to center nearby-place searches, set an origin, or support live navigation while the app is open. Location permission can be denied or revoked in your device or browser settings.</li>
-   <li><strong>Preferences and technical data:</strong> settings such as theme and language, session state, and locally cached app data needed for the service to work. RUTO does not intentionally collect precise location in the background.</li>
+   <li><strong>Preferences and technical data:</strong> settings such as theme and language, session state, whether you selected “Keep me logged in on this device,” and locally cached app data needed for the service to work. In a regular browser, selecting this option keeps your Firebase sign-in on this device until you sign out or clear its site data; leaving it unselected limits sign-in to the current browser session. Installed standalone apps retain sign-in so they can open directly into RUTO until you sign out or clear site data. RUTO does not intentionally collect precise location in the background.</li>
   </ul>
  </section>
  <section>
@@ -54,7 +54,7 @@
  </section>
  <section>
   <h2>5. Storage, security, and retention</h2>
-  <p>Signed-in account and delivery records are stored in Firebase services. The browser may also retain session, preferences, and locally saved planning data. We use access controls and Firebase Security Rules intended to limit cloud access to the account owner. No internet transmission or storage method is completely secure.</p>
+  <p>Signed-in account and delivery records are stored in Firebase services. The browser may also retain session, preferences, and locally saved planning data. In a regular browser, selecting “Keep me logged in on this device” uses persistent Firebase Authentication storage until you sign out or clear site data; leaving it unselected uses session-only sign-in. Installed standalone apps retain authentication for direct app startup regardless of this browser preference. We use access controls and Firebase Security Rules intended to limit cloud access to the account owner. No internet transmission or storage method is completely secure.</p>
   <p>We keep account and route records while needed to provide RUTO and until you request deletion, unless a longer period is required by law or needed to resolve a dispute. Local copies remain on your device until you clear the browser's site data. External providers have their own retention practices.</p>
  </section>
  <section>
