@@ -7,14 +7,37 @@ const FUEL_DEFAULT={gas:67.96,diesel:83.99,kero:109.10,ev:12,asOf:'2026-11-24',s
 const validFuel=d=>d&&/^\d{4}-\d{2}-\d{2}$/.test(d.asOf||'')&&['gas','diesel'].every(k=>+d[k]>20&&+d[k]<250)&&(d.kero==null||(+d.kero>20&&+d.kero<300))&&d.asOf<=ymd(new Date(Date.now()+86400000));
 const saveFuel=()=>{SV('ruto_fuel3',st.fuel);SV('ruto_fuelprev',st.prev)};
 function applyFuel(d){
-  ['gas','diesel','kero','ev'].forEach(k=>{if(d[k]!=null&&+d[k]>0&&+d[k]!==st.fuel[k]){st.prev[k]=st.fuel[k];st.fuel[k]=+d[k]}});
-  st.fuel.asOf=d.asOf;st.fuel.source=String(d.source||'').slice(0,80);st.fuel.manual=false;saveFuel()}
+  const changes=[];
+  ['gas','diesel','kero','ev'].forEach(k=>{if(d[k]!=null&&+d[k]>0&&+d[k]!==st.fuel[k]){const previous=st.fuel[k];st.prev[k]=previous;st.fuel[k]=+d[k];changes.push({key:k,previous,current:+d[k]})}});
+  st.fuel.asOf=d.asOf;st.fuel.source=String(d.source||'').slice(0,80);st.fuel.manual=false;saveFuel();
+  if(changes.length&&st.user&&window.addAppNotification){
+    const body=changes.map(change=>{
+      const label=FK.find(([key])=>key===change.key)?.[1]||change.key,unit=change.key==='ev'?'/kWh':'/L',delta=change.current-change.previous;
+      return`${t(label)}: ${t(delta>0?'fuelIncreased':'fuelDecreased',{amount:`₱${Math.abs(delta).toFixed(2)}${unit}`})}`
+    }).join(' · ');
+    window.addAppNotification(t('notificationFuel'),body,`fuel:${d.asOf}:${changes.map(change=>change.key+'-'+change.current).join('|')}`)
+  }}
+function fuelMovement(key){
+  const current=Number(st.fuel[key]),previous=Number(st.prev[key]),change=Math.round((current-previous)*100)/100,unit=key==='ev'?'/kWh':'/L';
+  if(!(previous>0))return{direction:'neutral',label:t('fuelNoPrevious'),change:0};
+  if(change===0)return{direction:'neutral',label:t('fuelNoChange'),change:0};
+  return{direction:change>0?'is-up':'is-down',label:t(change>0?'fuelIncreased':'fuelDecreased',{amount:`₱${Math.abs(change).toFixed(2)}${unit}`}),change}
+}
+function fuelMiniUI(){
+  const strip=$('#fuelMini');if(!strip)return;
+  strip.setAttribute('aria-label',t('fuelH'));
+  strip.innerHTML=`<div class="fuel-mini-head"><span>${ic('g-fuel')}<strong>${t('fuelH')}</strong></span><button class="btn fuel-mini-edit" id="fuelMiniEdit" type="button">${ic('edit')} ${t('fuelEditPrices')}</button></div><div class="fuel-mini-prices">`+
+    FK.map(([key,label])=>{const movement=fuelMovement(key),unit=key==='ev'?'/kWh':'/L';
+      return`<div class="fuel-mini-price"><span>${t(label)}</span><strong>₱${Number(st.fuel[key]).toFixed(2)}<small>${unit}</small></strong><small class="dash-price-trend ${movement.direction}">${movement.change>0?'▲ ':movement.change<0?'▼ ':''}${movement.label}</small></div>`
+    }).join('')+'</div>';
+  $('#fuelMiniEdit').onclick=()=>{$('#fuelPanel').open=true;$('#fuelPanel').scrollIntoView({behavior:'smooth',block:'nearest'})}
+}
 function fuelUI(){
   $('#fuel').innerHTML=FK.map(([k,l])=>{const p=st.prev[k],a=p&&st.fuel[k]!==p?(st.fuel[k]>p?'<span class="up">▲</span>':'<span class="dn">▼</span>'):'';
     return `<div><b>${ic('g-fuel')} ${t(l)} ${a}</b><input type="number" min="0.01" step="0.01" value="${+st.fuel[k]}" onchange="setFuel('${k}',this.value)" aria-label="${t(l)}"></div>`}).join('');
   const f=st.fuel,age=(Date.now()-new Date(f.asOf+'T00:00'))/86400000;
   $('#fuelnote').innerHTML=[f.manual?t('fManual'):t('fAsOf',{d:esc(f.asOf),s:esc(f.source)}),f.checked?t('fChecked',{t:new Date(f.checked).toLocaleString('en-PH')}):'',age>8?'<b class="late">'+t('fOld')+'</b>':'',t('fEvNote')].filter(Boolean).join('<br>');
-  dashboardUI()}
+  fuelMiniUI();dashboardUI()}
 window.setFuel=(k,v)=>{const n=+v;if(!(n>0)){fuelUI();return}st.prev[k]=st.fuel[k];st.fuel[k]=n;if(k!=='ev'){st.fuel.manual=true;st.fuel.editedOn=ymd(new Date())}saveFuel();fuelUI();render()};
 async function publishedFuel(){
   const jobs=[getJSON('data/fuel-prices.json?t='+Date.now(),{cache:'no-store'},8000)];

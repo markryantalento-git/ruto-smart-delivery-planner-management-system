@@ -27,6 +27,8 @@ function applyLang(){
   $('#profileShortcut').setAttribute('aria-label',t('profileSettings'));
   $('#sidebar').setAttribute('aria-label',t('mainMenu'));
   $('#sidebarNav').setAttribute('aria-label',t('mainMenu'));
+  $('#mapLocate').setAttribute('aria-label',t('locateMe'));
+  $('#mapLocate').title=t('locateMe');
   $('#aiStyle').setAttribute('aria-label',t('aiStyleLabel'));
   $('#aiStyle').value=chatStyle;
   $('#phsend').textContent=t(phoneCodeSent?'resendCode':'sendCode');
@@ -98,13 +100,14 @@ const pad=n=>String(n).padStart(2,'0');
 const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); // local date (not UTC)
 const vById=id=>V.find(v=>v.id===id);
 const st={user:null,origin:null,stops:[],sel:{},lastPick:null,editId:null,editSched:false,r:null,chosen:null,anim:null,me:null,H:[]};
-const PHOTO_COOLDOWN_MS=30*24*60*60*1000;
-let accountType='personal',profileData={accountType:'personal',name:'',companyName:'',email:'',photoURL:''},profilePhotoBlob=null,profilePhotoObjectURL='',profilePhotoCooldownUntil=0,profilePhotoCheck=0;
+const PHOTO_COOLDOWN_MS=30*24*60*60*1000,PHOTO_CROP_SIZE=320,PHOTO_OUTPUT_SIZE=512;
+let accountType='personal',profileData={accountType:'personal',name:'',companyName:'',email:'',photoURL:''},profilePhotoBlob=null,profilePhotoObjectURL='',profilePhotoCooldownUntil=0,profilePhotoCheck=0,
+  photoCropImage=null,photoCropSourceURL='',photoCropZoom=1,photoCropX=0,photoCropY=0,photoCropPointer=null;
 let mode='up',map,layer,tileLayer,meMk,c1,c2;
 function toast(msg,kind=''){const d=document.createElement('div');d.className='toast '+kind;d.textContent=msg;$('#toasts').append(d);setTimeout(()=>d.remove(),6000)}
 
 /* ============ FIREBASE ============ */
-const FB_ON=!!RUTO.FIREBASE.apiKey&&!RUTO.FIREBASE.apiKey.startsWith('PASTE');let auth,db,storage,busy=false;
+const FB_ON=!!RUTO.FIREBASE.apiKey&&!RUTO.FIREBASE.apiKey.startsWith('PASTE');let auth,db,storage,busy=RutoConsent.hasPendingRedirect();
 if(FB_ON&&window.firebase){
   const fbApp=firebase.initializeApp(RUTO.FIREBASE);
   if(RUTO.AI.appCheckSiteKey){
@@ -115,7 +118,7 @@ if(FB_ON&&window.firebase){
   auth=firebase.auth();db=firebase.firestore();storage=typeof firebase.storage==='function'?firebase.storage():null;
 }
 const fbErr=x=>{const k={'auth/email-already-in-use':'errExist','auth/invalid-credential':'errBad','auth/wrong-password':'errBad','auth/user-not-found':'errBad','auth/weak-password':'pass','auth/invalid-email':'email','auth/account-exists-with-different-credential':'errDiff','auth/unauthorized-domain':'errDomain',
-  'auth/invalid-phone-number':'errPhone','auth/invalid-verification-code':'errCode','auth/code-expired':'errCodeOld','auth/too-many-requests':'errMany','auth/billing-not-enabled':'errBilling','auth/operation-not-allowed':'errProvider','auth/network-request-failed':'errNet','auth/captcha-check-failed':'errCaptcha'}[x.code];
+  'auth/invalid-phone-number':'errPhone','auth/invalid-verification-code':'errCode','auth/code-expired':'errCodeOld','auth/too-many-requests':'errMany','auth/quota-exceeded':'errMany','auth/billing-not-enabled':'errBilling','auth/region-not-allowed':'smsRegionError','auth/operation-not-allowed':'errProvider','auth/network-request-failed':'errNet','auth/captcha-check-failed':'errCaptcha','auth/invalid-app-credential':'errCaptcha','auth/missing-app-credential':'errCaptcha'}[x.code];
   return k?t(k)+(x.code==='auth/operation-not-allowed'&&x.message?' ('+x.message+')':''):x.message};
 
 /* ============ AUTH: email ============ */
@@ -126,7 +129,7 @@ function authMode(m){
   $('#pw').autocomplete=m==='in'?'current-password':'new-password';
   $('#authHeading').textContent=t(m==='in'?'authSignInTitle':'authSignUpTitle');
   $('#sub').textContent=t(m==='in'?'signin':'signup');$('#err').textContent='';
-  updateAccountTypeUI();
+  updateAccountTypeUI();RutoConsent.refresh(m==='up');
 }
 function updateAccountTypeUI(){
   const company=accountType==='company',phoneOn=!$('#phoneBox').hidden;
@@ -146,8 +149,34 @@ $$('#accountTypeChoice [data-account-type]').forEach(b=>b.onclick=()=>{
 $$('#auth .tabs .btn').forEach(b=>b.onclick=()=>authMode(b.dataset.m));
 ['#em','#pw'].forEach(selector=>$(selector).addEventListener('input',()=>$('#forgotPassword').hidden=true));
 const isCredentialFailure=code=>['auth/invalid-credential','auth/wrong-password','auth/user-not-found'].includes(code);
-// Profile write never blocks sign in (a missing Firestore database would otherwise freeze it)
-const saveProfile=(uid,data)=>{if(!db)return Promise.resolve(false);return db.collection('users').doc(uid).set({...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).then(()=>true).catch(e=>{console.warn('profile',e);return false})};
+// Profile updates merge existing consent and creation metadata instead of replacing them.
+const saveProfile=(uid,data,{create=false}={})=>{
+  if(!db)return Promise.resolve(false);
+  const record={...data};
+  if(create)record.createdAt=firebase.firestore.FieldValue.serverTimestamp();
+  return db.collection('users').doc(uid).set(record,{merge:true}).then(()=>true).catch(e=>{console.warn('profile',e);return false})
+};
+const profileUpdateRecord=data=>{
+  const record={...data};
+  delete record.consent;delete record.createdAt;
+  return record
+};
+async function ensureConsentProfile(user,isNewUser=false,provider=''){
+  if(!RutoConsent.isAccepted())return false;
+  let existing={};
+  if(!isNewUser){
+    try{existing=await getProfileRecord(user.uid)}
+    catch(error){console.warn('Could not read the account before saving consent.',error);return false}
+  }
+  if(existing.consent?.accepted===true)return true;
+  const fields=RutoConsent.firestoreFields(user),name=existing.name||user.displayName||user.email||user.phoneNumber||'RUTO user',
+    providerName=provider||existing.provider||user.providerData?.find(item=>['password','google.com','facebook.com','apple.com','phone'].includes(item.providerId))?.providerId||'';
+  const data={...existing,...fields,name,provider:providerName};
+  if(user.phoneNumber)data.phone=user.phoneNumber;
+  const saved=await saveProfile(user.uid,data,{create:!existing.createdAt});
+  if(saved)cacheProfile(user.uid,{...data,consent:RutoConsent.localConsent()});
+  return saved
+}
 function cacheProfile(uid,data){
   const profiles=LS('ruto_profiles',{});
   profiles[uid]={...profiles[uid],...data};
@@ -163,6 +192,7 @@ async function getProfileRecord(uid){
   return cached}
 $('#auth').onsubmit=async e=>{e.preventDefault();
   if(!$('#phoneBox').hidden){$('#phcode').hidden?sendCode():verifyCode();return}
+  if(mode==='up'&&!RutoConsent.isAccepted()){$('#err').textContent=t('consentRequired');return}
   $('#forgotPassword').hidden=true;
   const em=$('#em').value.trim().toLowerCase(),pw=$('#pw').value,nm=$('#nm').value.trim(),companyName=$('#companyName').value.trim(),U=LS('ruto_users',{});
   if(!em||!pw||(mode==='up'&&(!nm||(accountType==='company'&&!companyName)))){$('#err').textContent=t('errFill');return}
@@ -171,11 +201,11 @@ $('#auth').onsubmit=async e=>{e.preventDefault();
     if(mode==='up'){
       const c=await auth.createUserWithEmailAndPassword(em,pw);
       await c.user.updateProfile({displayName:nm});
-      const data={name:nm,email:em,accountType,companyName:accountType==='company'?companyName:''};
-      cacheProfile(c.user.uid,data);
-      const saved=await saveProfile(c.user.uid,data);
-      enter(c.user.uid,nm,data);busy=false;
-      if(accountType==='company'&&!saved)toast(t('companyProfileSaveFail'),'bad');
+      const data={...RutoConsent.firestoreFields({email:em,displayName:nm}),name:nm,accountType,companyName:accountType==='company'?companyName:''};
+      const saved=await saveProfile(c.user.uid,data,{create:true});
+      if(!saved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
+      cacheProfile(c.user.uid,{...data,consent:RutoConsent.localConsent()});
+      enter(c.user.uid,nm,{...data,consent:RutoConsent.localConsent()});busy=false;
     }else{
       const c=await auth.signInWithEmailAndPassword(em,pw);let stored={};
       try{stored=await getProfileRecord(c.user.uid)}catch(x){
@@ -183,54 +213,82 @@ $('#auth').onsubmit=async e=>{e.preventDefault();
         console.warn('profile read',x)}
       if((stored.accountType||'personal')!==accountType){
         await auth.signOut();busy=false;$('#err').textContent=t('accountTypeMismatch');return}
+      if(stored.consent?.accepted!==true){
+        if(!RutoConsent.isAccepted()){
+          await auth.signOut();busy=false;$('#err').textContent=t('consentRequired');return
+        }
+        const consentSaved=await ensureConsentProfile(c.user,false,'password');
+        if(!consentSaved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
+        stored=LS('ruto_profiles',{})[c.user.uid]||stored
+      }
       enter(c.user.uid,c.user.displayName||em,stored);busy=false
     }
   }catch(x){busy=false;$('#err').textContent=fbErr(x);if(mode==='in'&&isCredentialFailure(x.code))$('#forgotPassword').hidden=false}return}
   const h=await sha(em+pw);
-  if(mode==='up'){if(U[em]){$('#err').textContent=t('errExist');return}U[em]={name:nm,h,accountType,companyName:accountType==='company'?companyName:''};if(!SV('ruto_users',U)){$('#err').textContent=t('saveFail');return}}
+  if(mode==='up'){if(U[em]){$('#err').textContent=t('errExist');return}U[em]={name:nm,h,accountType,companyName:accountType==='company'?companyName:'',consent:RutoConsent.localConsent()};if(!SV('ruto_users',U)){$('#err').textContent=t('saveFail');return}}
   else if(!U[em]||U[em].h!==h){$('#err').textContent=t('errBad');$('#forgotPassword').hidden=false;return}
   if((U[em].accountType||'personal')!==accountType){$('#err').textContent=t('accountTypeMismatch');return}
-  const details={name:U[em].name,email:em,accountType:U[em].accountType||'personal',companyName:U[em].companyName||''};
+  const details={name:U[em].name,email:em,accountType:U[em].accountType||'personal',companyName:U[em].companyName||'',consent:U[em].consent};
   cacheProfile(em,details);
   if(!SV('ruto_session',em)){$('#err').textContent=t('saveFail');return}
   enter(em,details.name,details)};
-$('#out').onclick=async()=>{localStorage.removeItem('ruto_session');if(auth)await auth.signOut();location.reload()};
+$('#out').onclick=async()=>{stopLocationTracking();localStorage.removeItem('ruto_session');if(auth)await auth.signOut();location.reload()};
 
 /* ============ GOOGLE: always shows the account chooser ============ */
 async function googleIn(){
   if(!auth){$('#err').textContent=t('needFb');return}
+  if(!RutoConsent.isAccepted()){$('#err').textContent=t('consentRequired');return}
   const pr=new firebase.auth.GoogleAuthProvider();pr.setCustomParameters({prompt:'select_account'});
   try{busy=true;const c=await auth.signInWithPopup(pr),u=c.user;
-    if(c.additionalUserInfo?.isNewUser)saveProfile(u.uid,{name:u.displayName||'',email:u.email||'',provider:'google'});
-    enter(u.uid,u.displayName||u.email||'User');busy=false}
+    const saved=await ensureConsentProfile(u,!!c.additionalUserInfo?.isNewUser,'google');
+    if(!saved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
+    RutoConsent.clearPendingRedirect();
+    enter(u.uid,u.displayName||u.email||'User',LS('ruto_profiles',{})[u.uid]||{});busy=false}
   catch(x){busy=false;
-    if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(x.code))return auth.signInWithRedirect(pr).catch(y=>$('#err').textContent=fbErr(y));
+    if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(x.code)){
+      if(!RutoConsent.rememberRedirect('google')){$('#err').textContent=t('consentStorageFailed');return}
+      return auth.signInWithRedirect(pr).catch(y=>{RutoConsent.clearPendingRedirect();$('#err').textContent=fbErr(y)})
+    }
+    RutoConsent.clearPendingRedirect();
     if(!['auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(x.code))$('#err').textContent=fbErr(x)}}
 $('#gbtn').onclick=googleIn;
-async function appleIn(){
+async function facebookIn(){
   if(!auth){$('#err').textContent=t('needFb');return}
-  const pr=new firebase.auth.OAuthProvider('apple.com');
-  pr.addScope('email');pr.addScope('name');
-  try{busy=true;auth.languageCode=lang?'fil':'en';await auth.signInWithRedirect(pr)}
-  catch(x){
+  if(!RutoConsent.isAccepted()){$('#err').textContent=t('consentRequired');return}
+  const pr=new firebase.auth.FacebookAuthProvider();
+  pr.addScope('email');
+  try{
+    busy=true;auth.languageCode=lang?'fil':'en';
+    const c=await auth.signInWithPopup(pr),u=c.user;
+    const saved=await ensureConsentProfile(u,!!c.additionalUserInfo?.isNewUser,'facebook');
+    if(!saved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
+    RutoConsent.clearPendingRedirect();
+    enter(u.uid,u.displayName||u.email||'User',LS('ruto_profiles',{})[u.uid]||{});busy=false
+  }catch(x){
     busy=false;
-    $('#err').textContent=['auth/operation-not-allowed','auth/invalid-oauth-client'].includes(x.code)
-      ?t('appleSetupError'):fbErr(x)}}
-$('#abtn').onclick=appleIn;
+    if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(x.code)){
+      if(!RutoConsent.rememberRedirect('facebook')){$('#err').textContent=t('consentStorageFailed');return}
+      return auth.signInWithRedirect(pr).catch(y=>{RutoConsent.clearPendingRedirect();$('#err').textContent=fbErr(y)})
+    }
+    RutoConsent.clearPendingRedirect();
+    if(!['auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(x.code))$('#err').textContent=fbErr(x)
+  }}
+$('#fbtn').onclick=facebookIn;
 
 /* ============ PHONE NUMBER SIGN-IN (SMS code) ============ */
 let captcha=null,confirmRes=null;
 function phonePanel(on){
   $('#phoneBox').hidden=$('#phback').hidden=!on;$('#mailBox').hidden=$('#providerBox').hidden=$('#orSocial').hidden=$('#pbtn').hidden=$('#sub').hidden=on;
   $('#auth .tabs').hidden=on;$('#signupRule').hidden=on||mode!=='up';$('#em').required=$('#pw').required=!on;
-  $('#phcode').hidden=true;confirmRes=null;phoneCodeSent=false;$('#phsend').textContent=t('sendCode');$('#err').textContent='';updateAccountTypeUI();if(on)$('#ph').focus()}
+  $('#phcode').hidden=true;confirmRes=null;phoneCodeSent=false;$('#phsend').textContent=t('sendCode');$('#err').textContent='';updateAccountTypeUI();RutoConsent.refresh();if(on)$('#ph').focus()}
 const normPhone=s=>{let n=s.replace(/[^\d+]/g,'');if(/^09\d{9}$/.test(n))n='+63'+n.slice(1);else if(/^9\d{9}$/.test(n))n='+63'+n;else if(/^639\d{9}$/.test(n))n='+'+n;return /^\+\d{10,15}$/.test(n)?n:null};
 async function sendCode(){
+  if(!RutoConsent.isAccepted()){$('#err').textContent=t('consentRequired');return}
   if(!auth){$('#err').textContent=t('needFb');return}
   const n=normPhone($('#ph').value);if(!n){$('#err').textContent=t('errPhone');return}
   const b=$('#phsend');b.disabled=true;$('#err').textContent='';
   try{auth.languageCode=lang?'fil':'en';
-    captcha=captcha||new firebase.auth.RecaptchaVerifier('recaptcha',{size:'invisible'});
+    captcha=captcha||new firebase.auth.RecaptchaVerifier('recaptcha',{size:'normal'});
     confirmRes=await auth.signInWithPhoneNumber(n,captcha);
     phoneCodeSent=true;b.textContent=t('resendCode');
     $('#phcode').hidden=false;$('#otp').value='';$('#otp').focus();toast(t('codeSent',{n}),'ok')}
@@ -238,14 +296,17 @@ async function sendCode(){
     const message=x.message||'';
     $('#err').textContent=x.code==='auth/operation-not-allowed'&&/sms/i.test(message)&&/region/i.test(message)
       ?t('smsRegionError'):fbErr(x);
-    try{captcha.clear()}catch(e){}captcha=null;$('#recaptcha').innerHTML=''}
-  b.disabled=false}
+    if(captcha){try{captcha.clear()}catch(cleanupError){console.warn('Could not reset the phone sign-in reCAPTCHA.',cleanupError)}}
+    captcha=null;$('#recaptcha').replaceChildren()}
+  b.disabled=false;RutoConsent.refresh()}
 async function verifyCode(){
+  if(!RutoConsent.isAccepted()){$('#err').textContent=t('consentRequired');return}
   const code=$('#otp').value.trim();if(!confirmRes||!/^\d{6}$/.test(code)){$('#err').textContent=t('errCode');return}
   try{busy=true;const c=await confirmRes.confirm(code),u=c.user,nm=$('#phnm').value.trim();
     if(nm&&!u.displayName)await u.updateProfile({displayName:nm});
-    if(c.additionalUserInfo?.isNewUser)saveProfile(u.uid,{name:nm,phone:u.phoneNumber,provider:'phone'});
-    enter(u.uid,u.displayName||nm||u.phoneNumber);busy=false}
+    const saved=await ensureConsentProfile(u,!!c.additionalUserInfo?.isNewUser,'phone');
+    if(!saved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
+    enter(u.uid,u.displayName||nm||u.phoneNumber,LS('ruto_profiles',{})[u.uid]||{});busy=false}
   catch(x){busy=false;$('#err').textContent=fbErr(x)}}
 $('#pbtn').onclick=()=>phonePanel(true);$('#phback').onclick=()=>phonePanel(false);
 $('#phsend').onclick=sendCode;$('#phok').onclick=verifyCode;
@@ -320,6 +381,7 @@ function applyProfileData(data={}){
   paintProfilePhoto();updatePasswordUI()}
 function profilePhotoStorageError(error){
   const code=error?.code||'';
+  if(code.startsWith('appCheck/')||/app.?check/i.test(error?.message||''))return t('photoStorageAppCheck');
   if(code==='storage/unauthorized')return t('photoStorageRules');
   if(code==='storage/quota-exceeded')return t('photoStorageBilling');
   if(['storage/bucket-not-found','storage/no-default-bucket','storage/project-not-found'].includes(code))return t('profileStorageUnavailable');
@@ -365,37 +427,95 @@ function loadProfile(uid,fallback={}){
   refreshProfilePhotoCooldown(uid);
   getProfileRecord(uid).then(data=>{if(st.user===uid)applyProfileData({...fallback,...data})})
     .catch(e=>{console.warn('profile read',e);$('#profileStatus').textContent=t('profileLoadFail')})}
-function resizeProfilePhoto(file){
+function loadPhotoCrop(file){
   if(!['image/jpeg','image/png','image/webp'].includes(file.type))return Promise.reject(new Error(t('photoInvalid')));
   if(file.size>10*1024*1024)return Promise.reject(new Error(t('photoTooLarge')));
   return new Promise((resolve,reject)=>{
-    const source=URL.createObjectURL(file),image=new Image();
+    photoCropSourceURL=URL.createObjectURL(file);
+    const image=new Image();
     image.onload=()=>{
-      try{
-        const scale=Math.min(1,512/Math.max(image.naturalWidth,image.naturalHeight)),
-          canvas=document.createElement('canvas');
-        canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
-        canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
-        const context=canvas.getContext('2d');
-        if(!context)throw new Error(t('photoInvalid'));
-        context.drawImage(image,0,0,canvas.width,canvas.height);
-        URL.revokeObjectURL(source);
-        canvas.toBlob(blob=>blob?resolve(blob):reject(new Error(t('photoInvalid'))),'image/jpeg',.82);
-      }catch(x){URL.revokeObjectURL(source);reject(x)}};
-    image.onerror=()=>{URL.revokeObjectURL(source);reject(new Error(t('photoInvalid')))};
-    image.src=source})}
+      photoCropImage=image;photoCropZoom=1;photoCropX=0;photoCropY=0;
+      $('#photoCropZoom').value='1';drawPhotoCrop();
+      $('#photoCropDialog').showModal();resolve()
+    };
+    image.onerror=()=>{clearPhotoCrop();reject(new Error(t('photoInvalid')))};
+    image.src=photoCropSourceURL
+  })
+}
+function photoCropGeometry(size){
+  const image=photoCropImage,fit=Math.max(size/image.naturalWidth,size/image.naturalHeight),scale=fit*photoCropZoom,
+    width=image.naturalWidth*scale,height=image.naturalHeight*scale,factor=size/PHOTO_CROP_SIZE;
+  photoCropX=Math.max(-Math.max(0,(width-size)/2),Math.min(Math.max(0,(width-size)/2),photoCropX*factor));
+  photoCropY=Math.max(-Math.max(0,(height-size)/2),Math.min(Math.max(0,(height-size)/2),photoCropY*factor));
+  return{x:(size-width)/2+photoCropX,y:(size-height)/2+photoCropY,width,height}
+}
+function drawPhotoCrop(){
+  if(!photoCropImage)return;
+  const canvas=$('#photoCropCanvas'),context=canvas.getContext('2d');
+  if(!context)return;
+  context.clearRect(0,0,canvas.width,canvas.height);
+  const geometry=photoCropGeometry(canvas.width);
+  context.drawImage(photoCropImage,geometry.x,geometry.y,geometry.width,geometry.height)
+}
+function clearPhotoCrop(){
+  if(photoCropSourceURL)URL.revokeObjectURL(photoCropSourceURL);
+  photoCropSourceURL='';photoCropImage=null;photoCropPointer=null;
+  $('#profilePhotoInput').value=''
+}
+function cancelPhotoCrop(){
+  if($('#photoCropDialog').open)$('#photoCropDialog').close();
+  clearPhotoCrop()
+}
+function createCroppedProfilePhoto(){
+  return new Promise((resolve,reject)=>{
+    const canvas=document.createElement('canvas');
+    canvas.width=canvas.height=PHOTO_OUTPUT_SIZE;
+    const context=canvas.getContext('2d');
+    if(!context){reject(new Error(t('photoInvalid')));return}
+    const geometry=photoCropGeometry(PHOTO_OUTPUT_SIZE);
+    context.drawImage(photoCropImage,geometry.x,geometry.y,geometry.width,geometry.height);
+    canvas.toBlob(blob=>blob?resolve(blob):reject(new Error(t('photoInvalid'))),'image/jpeg',.82)
+  })
+}
+$('#photoCropZoom').oninput=e=>{photoCropZoom=Number(e.target.value);drawPhotoCrop()};
+const photoCropCanvas=$('#photoCropCanvas');
+photoCropCanvas.addEventListener('pointerdown',event=>{
+  if(!photoCropImage)return;
+  photoCropPointer={id:event.pointerId,x:event.clientX,y:event.clientY,cropX:photoCropX,cropY:photoCropY};
+  photoCropCanvas.setPointerCapture(event.pointerId)
+});
+photoCropCanvas.addEventListener('pointermove',event=>{
+  if(!photoCropPointer||photoCropPointer.id!==event.pointerId)return;
+  const rect=photoCropCanvas.getBoundingClientRect();
+  photoCropX=photoCropPointer.cropX+(event.clientX-photoCropPointer.x)*PHOTO_CROP_SIZE/rect.width;
+  photoCropY=photoCropPointer.cropY+(event.clientY-photoCropPointer.y)*PHOTO_CROP_SIZE/rect.height;
+  drawPhotoCrop()
+});
+for(const name of['pointerup','pointercancel'])photoCropCanvas.addEventListener(name,event=>{
+  if(photoCropCanvas.hasPointerCapture(event.pointerId))photoCropCanvas.releasePointerCapture(event.pointerId);
+  if(photoCropPointer?.id===event.pointerId)photoCropPointer=null
+});
+$('#photoCropDialog').addEventListener('cancel',event=>{event.preventDefault();cancelPhotoCrop()});
+$('#photoCropCancel').onclick=cancelPhotoCrop;
+$('#photoCropUse').onclick=async()=>{
+  const button=$('#photoCropUse');button.disabled=true;
+  try{
+    const blob=await createCroppedProfilePhoto();
+    if(profilePhotoObjectURL)URL.revokeObjectURL(profilePhotoObjectURL);
+    profilePhotoBlob=blob;profilePhotoObjectURL=URL.createObjectURL(blob);
+    paintProfilePhoto();$('#profileStatus').textContent='';
+    $('#photoCropDialog').close();clearPhotoCrop()
+  }catch(error){$('#profileStatus').textContent=error.message||t('photoInvalid')}
+  finally{button.disabled=false}
+};
 function blobDataURL(blob){
   return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error||new Error(t('photoInvalid')));reader.readAsDataURL(blob)})}
 $('#profilePhotoInput').onchange=async e=>{
   const file=e.target.files[0];if(!file)return;
   if(profilePhotoCooldownUntil>Date.now()){
     e.target.value='';$('#profileStatus').textContent=t('photoCooldown',{days:Math.ceil((profilePhotoCooldownUntil-Date.now())/86400000)});return}
-  try{
-    profilePhotoBlob=await resizeProfilePhoto(file);
-    if(profilePhotoObjectURL)URL.revokeObjectURL(profilePhotoObjectURL);
-    profilePhotoObjectURL=URL.createObjectURL(profilePhotoBlob);
-    paintProfilePhoto();$('#profileStatus').textContent='';
-  }catch(x){profilePhotoBlob=null;if(profilePhotoObjectURL)URL.revokeObjectURL(profilePhotoObjectURL);profilePhotoObjectURL='';$('#profileStatus').textContent=x.message}
+  try{await loadPhotoCrop(file);$('#profileStatus').textContent=''}
+  catch(error){$('#profileStatus').textContent=error.message}
 };
 $('#profileForm').onsubmit=async e=>{
   e.preventDefault();const button=$('#profileForm button[type=submit]');
@@ -406,7 +526,7 @@ $('#profileForm').onsubmit=async e=>{
   try{
     let updated={...profileData,name,companyName:profileData.accountType==='company'?companyName:'',photoURL:profileData.photoURL||''};
     if(auth&&db){
-      const saved=await saveProfile(st.user,updated);
+      const saved=await saveProfile(st.user,profileUpdateRecord(updated));
       if(!saved)throw new Error(t('profileCloudSaveFail'));
       if(auth.currentUser)await auth.currentUser.updateProfile({displayName:name});
       cacheProfile(st.user,updated);
@@ -427,7 +547,7 @@ $('#profileForm').onsubmit=async e=>{
           const photoURL=await ref.getDownloadURL();
           updated={...updated,photoURL};
           if(auth&&db){
-            const saved=await saveProfile(st.user,updated);
+            const saved=await saveProfile(st.user,profileUpdateRecord(updated));
             if(!saved)throw new Error(t('profileCloudSaveFail'));
             if(auth.currentUser)await auth.currentUser.updateProfile({displayName:name,photoURL});
             cacheProfile(st.user,updated);
@@ -451,7 +571,7 @@ $('#profileForm').onsubmit=async e=>{
     applyProfileData(updated);$('#profileStatus').textContent=t(auth&&db?'profileSaved':'profileSavedLocal');
   }catch(x){$('#profileStatus').textContent=t('profileSaveFail')+' '+x.message}
   finally{button.disabled=false}};
-$('#profileCancel').onclick=()=>{if(profilePhotoObjectURL)URL.revokeObjectURL(profilePhotoObjectURL);profilePhotoObjectURL='';profilePhotoBlob=null;$('#profilePhotoInput').value='';applyProfileData(profileData);showView('plan')};
+$('#profileCancel').onclick=()=>{cancelPhotoCrop();if(profilePhotoObjectURL)URL.revokeObjectURL(profilePhotoObjectURL);profilePhotoObjectURL='';profilePhotoBlob=null;$('#profilePhotoInput').value='';applyProfileData(profileData);showView('plan')};
 $('#passwordChangeForm').onsubmit=async e=>{
   e.preventDefault();
   const form=e.currentTarget,button=form.querySelector('button[type=submit]'),
@@ -486,6 +606,9 @@ if(matchMedia('(prefers-reduced-motion:reduce)').matches)$$('animateMotion,anima
 /* ============ ENTER APP + LOCATION GATE ============ */
 function enter(uid,name,details={}){
   if(st.user)return;st.user=uid;
+  window.refreshNotifications?.();
+  if(LS('ruto_pending_app_update',false))SV('ruto_pending_app_update',false);
+  window.checkReleaseUpdate?.(uid);
   const intro=$('#brandIntro');
   intro.hidden=false;intro.setAttribute('aria-hidden','false');
   $('#land').hidden=true;$('#app').hidden=false;$('#fab').hidden=false;$('#who').textContent=name;
@@ -502,19 +625,53 @@ function enter(uid,name,details={}){
       askLoc();
     },reduceMotion?0:450);
   },reduceMotion?300:2400)}
-function askLoc(){
-  if(!navigator.geolocation){$('#gate').hidden=false;return}
-  navigator.geolocation.getCurrentPosition(p=>{$('#gate').hidden=true;track(p)},()=>{$('#gate').hidden=false;$('#locP').textContent=t('locDenied')},{enableHighAccuracy:true,timeout:15000});
+let watching=false,locationWatchId=null,meAccuracy=0,meAccuracyCircle=null;
+function setLocationBusy(busy){
+  ['mapLocate','locbtn'].forEach(id=>{const button=$('#'+id);button.disabled=busy;button.setAttribute('aria-busy',String(busy))});
+  const mapButton=$('#mapLocate');
+  mapButton.classList.toggle('is-locating',busy);
+  mapButton.setAttribute('aria-label',t(busy?'locatingMe':'locateMe'))
 }
-let watching=false;
-function showMe(){if(!map||!st.me)return;if(meMk)meMk.setLatLng(st.me);else meMk=L.marker(st.me,{icon:L.divIcon({className:'',html:'<div class="me"></div>',iconSize:[16,16]})}).addTo(map)}
+function showLocationError(error,setOrigin){
+  if(error.code===1){$('#gate').hidden=false;$('#locP').textContent=t('locDenied')}
+  else if(setOrigin){$('#gate').hidden=false;$('#locP').textContent=t('locUnavailable')}
+  else toast(t('locUnavailable'),'bad')
+}
+function requestCurrentLocation({setOrigin=false,recenter=true}={}){
+  if(!navigator.geolocation){
+    if(setOrigin){$('#gate').hidden=false;$('#locP').textContent=t('locUnsupported')}
+    else toast(t('locUnsupported'),'bad');
+    return
+  }
+  setLocationBusy(true);
+  navigator.geolocation.getCurrentPosition(p=>{
+    setLocationBusy(false);$('#gate').hidden=true;track(p);
+    if(setOrigin){st.origin={...st.me,name:t('myLoc')};fitKey='';render()}
+    if(recenter&&map)map.flyTo(st.me,Math.max(map.getZoom(),16),{animate:true,duration:.6})
+  },error=>{setLocationBusy(false);showLocationError(error,setOrigin)},
+  {enableHighAccuracy:true,timeout:15000,maximumAge:0})
+}
+function askLoc(){requestCurrentLocation({setOrigin:true,recenter:false})}
+function showMe(){
+  if(!map||!st.me)return;
+  if(meAccuracyCircle)meAccuracyCircle.setLatLng(st.me).setRadius(Math.max(meAccuracy,10));
+  else meAccuracyCircle=L.circle(st.me,{radius:Math.max(meAccuracy,10),color:'#4285F4',weight:1,fillColor:'#4285F4',fillOpacity:.14,interactive:false}).addTo(map);
+  if(meMk)meMk.setLatLng(st.me);else meMk=L.marker(st.me,{icon:L.divIcon({className:'',html:'<div class="me"></div>',iconSize:[16,16]})}).addTo(map)
+}
 function track(p){
-  st.me={lat:p.coords.latitude,lng:p.coords.longitude};showMe();
-  if(!st.origin&&!watching){st.origin={...st.me,name:t('myLoc')};map.setView(st.me,14);render()}
+  st.me={lat:p.coords.latitude,lng:p.coords.longitude};meAccuracy=Number(p.coords.accuracy)||0;showMe();
   if(watching)return;watching=true;
-  navigator.geolocation.watchPosition(q=>{st.me={lat:q.coords.latitude,lng:q.coords.longitude};showMe()},()=>{},{enableHighAccuracy:true});
+  locationWatchId=navigator.geolocation.watchPosition(q=>{st.me={lat:q.coords.latitude,lng:q.coords.longitude};meAccuracy=Number(q.coords.accuracy)||0;showMe()},
+    error=>{watching=false;locationWatchId=null;showLocationError(error,false)},
+    {enableHighAccuracy:true,timeout:15000,maximumAge:1000})
 }
-$('#locbtn').onclick=askLoc;$('#locskip').onclick=e=>{e.preventDefault();$('#gate').hidden=true};
+function stopLocationTracking(){
+  if(locationWatchId!==null&&navigator.geolocation)navigator.geolocation.clearWatch(locationWatchId);
+  locationWatchId=null;watching=false
+}
+$('#locbtn').onclick=()=>requestCurrentLocation({setOrigin:true,recenter:true});
+$('#locskip').onclick=e=>{e.preventDefault();$('#gate').hidden=true};
+$('#mapLocate').onclick=()=>requestCurrentLocation({recenter:true});
 
 /* ============ MAP ============ */
 const osmTiles=()=>L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap · Routing: '+(RUTO.TOMTOM_KEY?'TomTom':'OSRM')});
@@ -660,7 +817,7 @@ addrInput.addEventListener('keydown',e=>{
   if(!addrMenu.hidden){selectAddrSuggestion(addrActiveIndex<0?0:addrActiveIndex);return}
   addByText(false)
 });
-$('#gps').onclick=()=>st.me?(st.origin={...st.me,name:t('myLoc')},render()):askLoc();
+$('#gps').onclick=()=>requestCurrentLocation({setOrigin:true,recenter:true});
 function clearForm(){
   st.origin=null;st.stops=[];st.sel={};st.lastPick=null;st.editId=null;st.editSched=false;fitKey='';
   selectedAddress=null;addrInput.value='';closeAddrSuggestions();setAddrStatus(null);$('#date').value=ymd(new Date());$('#time').value='08:00';$('#round').checked=true;$('#pri').value='balanced';$('#tmode').value='auto';$('#budget').value='';
@@ -769,11 +926,13 @@ function renderResults(){
   const worst=complete?Math.max(...validCombos.map(combo=>combo.cost)):0;
   const kind=need.length>1?t('tBoth'):need[0]==='water'?t('tWater'):t('tLand');
   const noOption=allCombos.length&&budget!==null?t('budgetNoFit',{budget:peso(budget)}):t('noOk');
+  const fleetSummary=ch?.parts.map(x=>t('fleetUnits',{n:x.trips,vehicle:x.v.name})).join(' · ');
   $('#best').innerHTML=!ch?`<strong>${esc(noOption)}</strong>`:
    `<div class="big">${ch.parts.map(x=>ic(x.v.icon)).join(' ')}</div><div><small>${t(isBest?'best':'chosen')} · ${kind}</small><strong>${ch.parts.map(x=>x.v.name).join(' + ')}</strong></div>
    <div><small>${t('total')}</small><strong>${peso(ch.cost)}</strong></div><div><small>${t('fuelUsed')}</small><strong>${ch.fuelUse}</strong></div>
    <div><small>${t('fuelC')}</small><strong>${peso(ch.fuelCost)}</strong></div><div><small>${t('dur')}</small><strong>${fmtT(ch.hrs*60)}</strong></div>
    <div><small>${t('dist')}</small><strong>${ch.km.toFixed(1)} km</strong></div><div><small>${t('saved')}</small><strong>${peso(worst-ch.cost)}</strong></div>
+   <div class="fleet-note"><small>${t('fleetNeeded')}</small><strong>${esc(fleetSummary)}</strong><small>${esc(t('fleetEstimateNote'))}</small></div>
    ${budget!==null?`<div><small>${t('budgetCap')}</small><strong>${peso(budget)}</strong></div>`:''}
    ${selectionAdjusted?`<div class="budget-note">${esc(t('budgetAdjusted'))}</div>`:''}`;
   trafficUI(r,ch);

@@ -5,10 +5,11 @@ const resetCopy={
   resetPhoneOnlyIntro:['Continue by verifying the phone number linked to your password account.','Magpatuloy sa pag-verify ng numerong naka-link sa account mong may password.','Magpatuloy sa pag-verify ng number na linked sa password account mo.'],
   resetEmailTitle:['Reset by email','I-reset gamit ang email','Reset via email'],
   resetEmailNote:['We’ll email you a secure password-reset link. Firebase sends a link, not a one-time code. Open it to choose a new password.','Padadalhan ka namin ng secure na password-reset link. Link ang ipinapadala ng Firebase, hindi one-time code. Buksan ito para magtakda ng bagong password.','Mag-e-email kami ng secure password-reset link. Link ang sinisend ng Firebase, hindi OTP. Buksan ito para mag-set ng bagong password.'],
+  resetSupport:['Need help? Contact RUTO Support:','Kailangan ng tulong? Makipag-ugnayan sa RUTO Support:','Need help? I-contact ang RUTO Support:'],
   emailLabel:['Email','Email','Email'],
   sendResetLink:['Send reset link','Ipadala ang reset link','Send reset link'],
   resetPhoneTitle:['Reset by SMS','I-reset gamit ang SMS','Reset via SMS'],
-  resetPhoneNote:['SMS recovery works only if this phone number is already linked to the account that has a password.','Gagana lang ang SMS recovery kung naka-link na ang numerong ito sa account na may password.','Gagana lang ang SMS recovery kung linked na ang number sa account na may password.'],
+  resetPhoneNote:['SMS recovery works only if this number is linked to your password account. Complete the reCAPTCHA security check to request an SMS; carrier charges may apply.','Gagana lang ang SMS recovery kung naka-link ang numerong ito sa password account mo. Kumpletuhin ang reCAPTCHA security check para humiling ng SMS; maaaring may singil ang carrier.','Gagana lang ang SMS recovery kung linked ang number sa password account mo. Kumpletuhin ang reCAPTCHA security check para mag-request ng SMS; baka may carrier charge.'],
   phoneLabel:['Mobile number','Numero ng cellphone','Mobile number'],
   sendResetCode:['Send SMS code','Ipadala ang SMS code','Send SMS code'],
   resetOtpLabel:['6-digit SMS code','6-digit na code mula sa SMS','6-digit SMS code'],
@@ -23,7 +24,12 @@ const resetCopy={
   resetNoPassword:['This number does not have a password-based account to reset. Try signing in with your phone number or use email recovery.','Walang password-based na account ang numerong ito na maaaring i-reset. Subukang mag-sign in gamit ang numero o mag-recover gamit ang email.','Walang password account na puwedeng i-reset sa number na ito. Mag-sign in gamit ang phone o gamitin ang email recovery.'],
   resetPasswordsMismatch:['The passwords do not match.','Hindi magkapareho ang mga password.','Hindi match ang passwords.'],
   resetGenericError:['Could not complete the request. Check your details and try again.','Hindi makumpleto ang request. Tingnan ang inilagay mo at subukan ulit.','Hindi makumpleto ang request. Check ang details at try ulit.'],
-  resetFirebaseRequired:['Password recovery requires Firebase Authentication to be configured.','Kailangan naka-configure ang Firebase Authentication para sa password recovery.','Kailangan naka-configure ang Firebase Authentication para sa password recovery.']
+  resetFirebaseRequired:['Password recovery requires Firebase Authentication to be configured.','Kailangan naka-configure ang Firebase Authentication para sa password recovery.','Kailangan naka-configure ang Firebase Authentication para sa password recovery.'],
+  resetFirebaseBilling:['Real SMS delivery requires Firebase billing to be enabled. For safe development tests, configure a fictional phone number and code in Firebase Authentication.','Kailangan naka-enable ang billing sa Firebase para makapagpadala ng totoong SMS. Para sa ligtas na test, mag-configure ng pekeng numero at code sa Firebase Authentication.','Kailangan enabled ang Firebase billing para sa totoong SMS. Para sa safe test, mag-configure ng fictional phone number at code sa Firebase Authentication.'],
+  resetFirebaseRegion:['Firebase is blocking SMS to this region. Allow the Philippines (+63) in Authentication > Settings > SMS region policy.','Hinaharang ng Firebase ang SMS sa rehiyong ito. Payagan ang Pilipinas (+63) sa Authentication > Settings > SMS region policy.','Blocked ng Firebase ang SMS sa region na ito. I-allow ang Philippines (+63) sa Authentication > Settings > SMS region policy.'],
+  resetFirebaseDomain:['This site is not authorized for phone sign-in. Add its host in Authentication > Settings > Authorized domains; localhost cannot send real phone-auth SMS.','Hindi authorized ang site para sa phone sign-in. Idagdag ang host sa Authentication > Settings > Authorized domains; hindi makakapagpadala ng totoong phone-auth SMS ang localhost.','Hindi authorized ang site para sa phone sign-in. Add ang host sa Authentication > Settings > Authorized domains; hindi puwede ang localhost sa real SMS.'],
+  resetFirebaseCaptcha:['The security check failed. Complete the reCAPTCHA and use an authorized HTTPS site.','Bumagsak ang security check. Kumpletuhin ang reCAPTCHA at gumamit ng authorized na HTTPS site.','Failed ang security check. Kumpletuhin ang reCAPTCHA at gumamit ng authorized na HTTPS site.'],
+  resetFirebaseThrottle:['SMS requests are temporarily limited. Wait before retrying; repeated requests can extend the block.','Pansamantalang nilimitahan ang SMS requests. Maghintay bago subukan ulit; maaaring humaba ang block kapag paulit-ulit ang request.','Temporarily limited ang SMS requests. Maghintay bago mag-retry; puwedeng humaba ang block kung paulit-ulit.']
 };
 const resetLangSelect=document.querySelector('#resetLanguage');
 document.documentElement.dataset.theme=localStorage.getItem('ruto_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
@@ -42,6 +48,11 @@ function setResetStatus(message='',isError=false){
   document.querySelector('#resetError').textContent=isError?message:'';
 }
 function resetFirebaseError(error){
+  if(error.code==='auth/billing-not-enabled')return resetText('resetFirebaseBilling');
+  if(error.code==='auth/region-not-allowed'||(error.code==='auth/operation-not-allowed'&&/sms/i.test(error.message||'')&&/region/i.test(error.message||'')))return resetText('resetFirebaseRegion');
+  if(error.code==='auth/unauthorized-domain')return resetText('resetFirebaseDomain');
+  if(['auth/invalid-app-credential','auth/missing-app-credential','auth/captcha-check-failed'].includes(error.code))return resetText('resetFirebaseCaptcha');
+  if(['auth/too-many-requests','auth/quota-exceeded'].includes(error.code))return resetText('resetFirebaseThrottle');
   if(error.code==='auth/user-not-found'||error.code==='auth/invalid-email'||error.code==='auth/email-already-in-use'){
     return resetText('resetGenericError');
   }
@@ -112,7 +123,7 @@ document.querySelector('#phoneResetForm').addEventListener('submit',async event=
   button.disabled=true;
   try{
     resetAuth.languageCode=resetLang?'fil':'en';
-    resetCaptcha=resetCaptcha||new firebase.auth.RecaptchaVerifier('resetRecaptcha',{size:'invisible'});
+    resetCaptcha=resetCaptcha||new firebase.auth.RecaptchaVerifier('resetRecaptcha',{size:'normal'});
     resetConfirmation=await resetAuth.signInWithPhoneNumber(phone,resetCaptcha);
     document.querySelector('#verifyResetForm').hidden=false;
     document.querySelector('#resetOtp').value='';
@@ -120,7 +131,7 @@ document.querySelector('#phoneResetForm').addEventListener('submit',async event=
     setResetStatus(resetText('resetSmsSent'));
   }catch(error){
     setResetStatus(resetFirebaseError(error),true);
-    if(resetCaptcha)resetCaptcha.clear();
+    if(resetCaptcha){try{resetCaptcha.clear()}catch(cleanupError){console.warn('Could not reset the password-recovery reCAPTCHA.',cleanupError)}}
     resetCaptcha=null;
     document.querySelector('#resetRecaptcha').replaceChildren();
   }finally{button.disabled=false}

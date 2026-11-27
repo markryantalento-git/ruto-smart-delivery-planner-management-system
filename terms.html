@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Terms of Service | RUTO</title>
+<meta name="description" content="Terms for using the free RUTO transportation and delivery planning service.">
+<link rel="icon" href="assets/app-icon-192.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=76">
+</head>
+<body>
+<header class="top legal-top">
+ <a class="legal-brand" href="index.html"><img src="assets/app-icon-192.png" alt=""><span>RUTO</span></a>
+ <div class="sp"></div>
+ <button class="btn" id="themeToggle" type="button" aria-label="Toggle light or dark theme">Change theme</button>
+ <a class="btn p" href="index.html">Back to Ruto</a>
+</header>
+<main class="legal-document">
+ <p class="legal-eyebrow">RUTO · Terms</p>
+ <h1>Terms of Service</h1>
+ <p class="legal-lead">By accessing or using RUTO, you agree to these terms. If you do not agree, do not use the service.</p>
+ <p class="legal-updated">Effective when published. RUTO is currently free to use, with no subscriptions, free trials, or payment walls.</p>
+
+ <section>
+  <h2>1. The service</h2>
+  <p>RUTO is a transportation and delivery route-planning tool operated by Mark Ryan Talento. It helps users compare routes and vehicle options, organize delivery stops, view nearby places, and estimate travel time and cost. RUTO is currently provided free of charge. No RUTO subscription, trial, or paid plan is required to use the service.</p>
+  <p>Internet access, mobile data, SMS from a carrier, and third-party services may be subject to charges set by your provider. Those are not RUTO subscription fees.</p>
+ </section>
+ <section>
+  <h2>2. Estimates and safety</h2>
+  <p>Route distances, travel-time estimates and ETAs, fuel prices, fuel consumption, vehicle capacity, and cost calculations are estimates for planning purposes only. They may be incomplete, delayed, or inaccurate and are not guarantees, quotes, or professional transport advice. Fuel-price information may be stale or based on sources that RUTO does not control.</p>
+  <p>Always check current road, weather, traffic, vehicle, ferry, and delivery conditions. Follow traffic laws and prioritize safety. Do not use the app while driving; plan or interact with it only when safe and lawful. You remain responsible for choosing a suitable vehicle, confirming cargo limits, and completing each delivery safely.</p>
+ </section>
+ <section>
+  <h2>3. Accounts and your information</h2>
+  <p>You are responsible for keeping your sign-in credentials secure and for activity under your account. Provide accurate account information and promptly protect your account if you suspect unauthorized access. The Privacy Policy explains how account, location, and route information is handled.</p>
+ </section>
+ <section>
+  <h2>4. Acceptable use</h2>
+  <p>You may use RUTO only for lawful purposes and in a way that does not harm the service or other users. Do not:</p>
+  <ul>
+   <li>scrape, harvest, bulk-download, or systematically collect information or map results from RUTO;</li>
+   <li>spam, overload, probe, disrupt, or abuse the app, its APIs, Firebase services, or third-party providers;</li>
+   <li>attempt unauthorized access, bypass security controls, or interfere with another person's account or data;</li>
+   <li>use RUTO to violate privacy, intellectual-property, traffic, safety, or other applicable laws.</li>
+  </ul>
+  <p>We may restrict access when reasonably necessary to protect users, comply with law, or respond to abuse.</p>
+ </section>
+ <section>
+  <h2>5. Third-party services and availability</h2>
+  <p>RUTO may rely on Firebase, map and routing providers, weather data, and optional AI services. Those services may change, be unavailable, or have separate terms. RUTO does not control their availability or accuracy. The service is provided on an “as available” basis to the extent permitted by law.</p>
+ </section>
+ <section>
+  <h2>6. Intellectual property and changes</h2>
+  <p>RUTO's original name, interface, and materials are owned by or used with permission of their respective rights holders. Open map and other third-party content remains subject to its own attribution and license terms. We may update the service or these terms; material terms changes will be posted on this page.</p>
+ </section>
+ <section>
+  <h2>7. Liability and contact</h2>
+  <p>To the extent permitted by applicable law, RUTO is not responsible for losses arising from reliance on estimates, inaccurate third-party data, service interruption, or unsafe use. Nothing in these terms excludes rights or liability that cannot legally be excluded.</p>
+  <p>Questions about these terms: <a href="mailto:ruto.supportph@gmail.com">ruto.supportph@gmail.com</a>.</p>
+ </section>
+</main>
+<script>
+(()=>{const root=document.documentElement,button=document.querySelector('#themeToggle');let saved='';try{saved=localStorage.getItem('ruto_theme')||''}catch(error){console.warn('Could not read the saved theme.',error)}root.dataset.theme=saved|| (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');button.textContent=root.dataset.theme==='dark'?'Use light theme':'Use dark theme';button.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';button.textContent=root.dataset.theme==='dark'?'Use light theme':'Use dark theme';try{localStorage.setItem('ruto_theme',root.dataset.theme)}catch(error){console.warn('Could not save the selected theme.',error)}})})();
+</script>
+</body>
+</html>

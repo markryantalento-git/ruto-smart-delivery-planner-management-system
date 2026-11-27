@@ -1,0 +1,10 @@
+{
+  "version": "0.2.6",
+  "publishedAt": "2026-11-27T14:55:07.000Z",
+  "changes": [
+    "RuBot now introduces itself on greetings and identity questions, with Roo-Bot and Roo-Toh voice pronunciation.",
+    "Replaced Apple sign-in with Facebook sign-in, including consent-aware popup and redirect handling.",
+    "The sign-in panel explains that Google, Facebook, and phone sign-in require consent.",
+    "Installed app launches now restore signed-in sessions directly to the intro; browser launches require sign-in."
+  ]
+}

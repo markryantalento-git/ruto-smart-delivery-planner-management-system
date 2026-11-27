@@ -93,12 +93,70 @@ if(copyrightYear)copyrightYear.textContent=new Date().getFullYear();
 applyTheme(localStorage.getItem('ruto_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));
 applyLang();
 initCookieNotice();
+const installedAppMode=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 if(auth){
-  auth.getRedirectResult().then(c=>{
-    if(c?.user&&c.additionalUserInfo?.isNewUser){
-      const providerId=c.credential?.providerId||c.user.providerData.find(p=>p.providerId==='apple.com'||p.providerId==='google.com')?.providerId;
-      saveProfile(c.user.uid,{name:c.user.displayName||'',email:c.user.email||'',provider:providerId==='apple.com'?'apple':'google'})
-    }}).catch(e=>$('#err').textContent=fbErr(e));
-  // returning users are signed in automatically
-  auth.onAuthStateChanged(u=>{if(u&&!st.user&&!busy)enter(u.uid,u.displayName||u.email||u.phoneNumber||'User')})}
-else if(!FB_ON){const ses=LS('ruto_session',null),U0=LS('ruto_users',{});if(ses&&U0[ses])enter(ses,U0[ses].name)}
+  const consentRedirect=RutoConsent.hasPendingRedirect();
+  const showConsentGate=async message=>{
+    try{await auth.signOut()}
+    catch(error){console.warn('Could not sign out an account without verified consent.',error)}
+    busy=false;openAuth('in',$('#openSignIn'));$('#err').textContent=t(message)
+  };
+  const restoreAuthenticatedSession=async user=>{
+    if(!installedAppMode){busy=false;openAuth('in',$('#openSignIn'));return}
+    busy=true;
+    try{
+      const snapshot=await db.collection('users').doc(user.uid).get(),
+        profile=snapshot.exists?snapshot.data():{};
+      if(profile.consent?.accepted===true){
+        cacheProfile(user.uid,profile);busy=false;
+        if(!st.user)enter(user.uid,user.displayName||user.email||user.phoneNumber||'User',profile);
+        return
+      }
+      await showConsentGate('consentRequired')
+    }catch(error){
+      console.warn('Could not verify consent for the returning account.',error);
+      await showConsentGate('consentProfileLoadFailed')
+    }
+  };
+  auth.getRedirectResult().then(async c=>{
+    if(!c?.user){
+      RutoConsent.clearPendingRedirect();
+      if(consentRedirect&&auth.currentUser&&RutoConsent.isAccepted()){
+        const user=auth.currentUser,providerId=user.providerData.find(p=>['apple.com','google.com','facebook.com'].includes(p.providerId))?.providerId,
+          provider=providerId==='facebook.com'?'facebook':providerId==='apple.com'?'apple':'google',
+          saved=await ensureConsentProfile(user,false,provider);
+        if(!saved){await auth.signOut();$('#err').textContent=t('consentSaveFailed')}
+        else if(!st.user)enter(user.uid,user.displayName||user.email||'User',LS('ruto_profiles',{})[user.uid]||{})
+      }
+      busy=false;return
+    }
+    const user=c.user,accepted=RutoConsent.consumeRedirect();
+    if(!accepted||!RutoConsent.isAccepted()){
+      await auth.signOut();busy=false;$('#err').textContent=t('consentRequired');return
+    }
+    const providerId=c.credential?.providerId||user.providerData.find(p=>['apple.com','google.com','facebook.com'].includes(p.providerId))?.providerId,
+      provider=providerId==='facebook.com'?'facebook':providerId==='apple.com'?'apple':'google',
+      saved=await ensureConsentProfile(user,!!c.additionalUserInfo?.isNewUser,provider);
+    if(!saved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
+    if(!st.user)enter(user.uid,user.displayName||user.email||'User',LS('ruto_profiles',{})[user.uid]||{});
+    busy=false
+  }).catch(async error=>{
+    const redirectProvider=RutoConsent.pendingRedirectProvider();
+    RutoConsent.clearPendingRedirect();busy=false;
+    console.warn('RUTO provider redirect sign-in failed.',error);
+    if(auth.currentUser&&!st.user)await restoreAuthenticatedSession(auth.currentUser);
+    else $('#err').textContent=fbErr(error)
+  });
+  // Returning sessions must have a consent record before the app is opened.
+  auth.onAuthStateChanged(u=>{
+    if(!u||st.user||busy)return;
+    if(installedAppMode)restoreAuthenticatedSession(u);
+    else openAuth('in',$('#openSignIn'))
+  })}
+else if(!FB_ON){
+  const ses=LS('ruto_session',null),U0=LS('ruto_users',{});
+  if(ses&&U0[ses]){
+    if(installedAppMode)enter(ses,U0[ses].name);
+    else openAuth('in',$('#openSignIn'))
+  }
+}

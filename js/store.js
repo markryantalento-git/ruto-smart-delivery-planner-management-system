@@ -98,7 +98,7 @@ async function loadHist(){
   const today=st.H.filter(x=>x.scheduled&&!x.done&&x.date===ymd(new Date()));if(today.length)toast(t('todayN',{n:today.length}),'ok')}
 /* Reminder 30 minutes before a scheduled delivery while the app is open */
 const reminded=new Set();
-setInterval(()=>{if(!st.user)return;st.H.forEach(x=>{const m=(startOf(x)-Date.now())/60000;if(x.scheduled&&!x.done&&m>0&&m<=30&&!reminded.has(x.id)){reminded.add(x.id);toast(t('remind',{m:Math.ceil(m),s:x.stops[0]?.name||''}),'ok')}})},30000);
+setInterval(()=>{if(!st.user)return;st.H.forEach(x=>{const m=(startOf(x)-Date.now())/60000,key=`${x.id}:${x.date}:${x.time}`;if(x.scheduled&&!x.done&&m>0&&m<=30&&!reminded.has(key)){reminded.add(key);const body=t('remind',{m:Math.ceil(m),s:x.stops[0]?.name||''});toast(body,'ok');window.addAppNotification?.(t('notificationReminder'),body,'delivery:'+key)}})},30000);
 
 /* ---- in-app calendar ---- */
 let calMonth=new Date(),calDay=ymd(new Date());

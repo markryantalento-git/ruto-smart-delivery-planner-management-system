@@ -1,5 +1,8 @@
 # RUTO - Smart Transportation and Delivery Planner System
 
+RUTO is currently free to use: there are no subscriptions, free trials, or payment walls.
+Network, carrier SMS, and infrastructure charges charged by third parties may still apply.
+
 ## Files
 - index.html            - the page (sign in, plan, calendar, history, navigation, assistant)
 - css/style.css         - styling (light and dark)
@@ -25,6 +28,11 @@
 4. On a supported browser, use the Install banner to add RUTO to your device. On iPhone/iPad,
    open the site in Safari, tap Share, then choose Add to Home Screen. Installation requires
    HTTPS (or localhost while developing).
+5. When launched as an installed standalone app, RUTO restores a saved signed-in session and
+   opens the intro/dashboard instead of the landing page. Opening the site in a regular browser
+   requires sign-in again if a session is still saved. Browsers do not provide a reliable
+   uninstall event, so deleting the home-screen icon itself cannot be detected or used to clear
+   account data; clearing site data also clears locally stored app data.
 The layout adapts to phone, tablet, and desktop viewport sizes.
 
 Inside the app, use the menu button for Plan, Calendar, History, About, Profile settings, and Sign out.
@@ -45,15 +53,27 @@ the app is open. GPS permission is required; external Google Maps and Waze links
 ## Firebase console (project ruto-6b418)
 1. Firestore Database > Create database (production mode, asia-southeast1).
    Without this, deliveries are saved on the device only.
-2. Firestore > Rules > paste firestore.rules > Publish. **The rules changed in this version.**
+2. Firestore > Rules > paste `firestore.rules` > Publish. **The rules changed in this version.**
+   New user documents require a consent record, and the consent record cannot be edited or removed.
+   The signed-in owner can delete their own user document and delivery documents. Deleting a user
+   document does not automatically delete Firestore subcollections; handle full account erasure
+   through the privacy-request process described in `privacy.html`.
 3. Storage > Get started, select the bucket matching `storageBucket` in `js/config.js`, then publish
    `storage.rules` (or run `firebase deploy --only storage`). The default bucket requires the Blaze
-   pay-as-you-go plan under Firebase's current Storage requirements. Profile photos are resized and
-   stored under a user-scoped path; Storage rules allow replacement only after 30 days and prohibit
-   deletion to prevent bypassing the cooldown.
-4. Authentication > Sign-in method: enable Email/Password, Google (pick a support email), Apple and Phone.
-   Apple sign-in also requires an Apple Developer configuration (Services ID, Team ID, key ID and private key)
-   entered in Firebase Console; never put the Apple private key in browser code.
+   pay-as-you-go plan under Firebase's current Storage requirements. Users can crop and zoom a photo
+   before it is converted to a 512 x 512 JPEG and uploaded to `users/{uid}/profile.jpg` in Firebase
+   Storage; Firestore stores the download URL in the user's profile. Storage rules allow replacement
+   only after 30 days and prohibit deletion to prevent bypassing the cooldown.
+4. Authentication > Sign-in method: enable Email/Password, Google (pick a support email), Facebook and Phone.
+   To configure Facebook sign-in:
+   - Create a Facebook app in Meta for Developers and add the Facebook Login product.
+   - In Facebook Login > Settings, add the exact OAuth redirect URI shown by Firebase, normally
+     `https://<your-firebase-project>.firebaseapp.com/__/auth/handler`. Set the app domain to the deployed
+     host (`markryantalento-git.github.io`) and publish the Meta app when ready for public sign-in.
+   - In Firebase Console > Authentication > Sign-in method > Facebook, enter the Meta App ID and App Secret,
+     enable the provider, and confirm the Firebase callback URI. Keep the App Secret private; never commit
+     it or put it in browser code. Add the deployed host under Authentication > Settings > Authorized domains.
+   - Facebook sign-in uses Firebase's OAuth flow; configure both Meta and Firebase before testing it.
    In Authentication > Settings, keep **One account per email address** enabled. Firebase then
    rejects a second email/password account for an email already in use; the app also checks this
    in its local-only sign-in fallback when Firebase is not configured. Google and other providers
@@ -61,22 +81,28 @@ the app is open. GPS permission is required; external Google Maps and Waze links
    email-enumeration protection and use
    the strongest practical password policy in Authentication settings.
 5. Company accounts currently have a company name and an individual login; team deliveries are not
-   shared yet. A ₱199 subscription is planned, but the billing period and launch date are unconfirmed.
-   The team feature and payments remain disabled pending BIR registration. Publish the updated
-   Firestore rules so company details sync.
-6. Password recovery: the sign-in form reveals Forgot password only after an incorrect
-   email/password attempt, and opens password-reset.html?method=email. Firebase sends a secure
-   password-reset link by email (not an email OTP). Phone sign-in uses an SMS code, so a failed
-   phone-code attempt should resend/verify a code rather than show a password-recovery link. SMS
-   password recovery works only for a phone number already linked to the password-enabled account.
-   Enable Phone sign-in and configure SMS billing/regions as described below.
+   shared. RUTO has no subscription or payment wall.
+6. Password recovery: the sign-in form opens `password-reset.html?method=email`. Firebase sends
+   a secure reset link, not a one-time email code. In Authentication > Templates > Password reset,
+   set the sender display name to **RUTO Support** and the reply-to address to
+   `ruto.supportph@gmail.com`. Firebase controls the actual From address; changing it to a Gmail
+   sender cannot be done from browser code. A custom From address or email OTP needs a verified
+   email-sending service and a secure server-side integration; never put SMTP credentials in this
+   static app. SMS password recovery works only for a number already linked to a password-enabled
+   account.
 7. Phone sign-in:
-   - Real SMS needs the Blaze (pay as you go) plan; each SMS is charged.
-   - Authentication > Settings > SMS region policy: allow Philippines.
-   - Free testing: Phone > "Phone numbers for testing" (e.g. +63 900 000 0000 with code 123456).
-   - Firebase does not allow "localhost" for phone sign-in; test it on the deployed address.
-8. Authentication > Settings > Authorized domains: add your production domain and localhost only
-   for development. Remove domains that are no longer used.
+   - In Authentication > Sign-in method, enable Phone. In Authentication > Settings > SMS region
+     policy, allow the Philippines (+63).
+   - Add the deployed host (for GitHub Pages, `markryantalento-git.github.io`) under Authorized
+     domains. Real phone sign-in does not work on localhost; use the deployed HTTPS site.
+   - Complete the visible Firebase reCAPTCHA in the phone flow. This is separate from the
+     reCAPTCHA Enterprise site key used for Firebase App Check.
+   - Real verification SMS requires Firebase's Blaze pay-as-you-go plan and can incur project-owner
+     charges. RUTO itself remains free to users.
+   - For development without sending/charging real SMS, add a fictional number and verification
+     code under Authentication > Sign-in method > Phone numbers for testing, then use that pair in
+     the app. Do not hardcode test numbers in production.
+8. Authentication > Settings > Authorized domains: remove domains that are no longer used.
 9. App Check > register the web app with reCAPTCHA Enterprise, use its site key in
    AI.appCheckSiteKey in js/config.js, and monitor valid traffic before enforcing App Check for
    Cloud Firestore and Firebase AI Logic. For local development, copy the App Check debug token
@@ -111,9 +137,21 @@ There is no official live fuel price API. "Refresh prices" takes the newest of:
 Update number 1 or 2 every Tuesday. Included values: 24 Nov 2026, from fuelprice.ph.
 
 ## Put it online
+### GitHub Pages (automatic versioned deployments)
+The workflow in `.github/workflows/deploy-pages.yml` deploys each push to the repository's
+default branch (or a manual run on that branch) to GitHub Pages. Each deployment receives a
+version such as `0.2.123`, uses the commit subject as its change note, and changes the service
+worker cache name so returning users can load the new release. In the repository settings, set
+**Pages > Build and deployment > Source** to **GitHub Actions**. The project files, including
+`.github/workflows`, must be at the repository root for this workflow.
+
+### Firebase Hosting (manual deployments)
     npm install -g firebase-tools
     firebase login
     firebase deploy --project ruto-6b418
+For a manual Firebase Hosting release, update `release.json` with the next version and its
+`changes` list before deploying. Account notifications are in-app and appear the next time a
+signed-in user opens RUTO; this does not send background push notifications.
 
 ## Security notes
 - Browser code is public: users can inspect or copy JavaScript and Firebase web config. Never put
@@ -126,7 +164,8 @@ Update number 1 or 2 every Tuesday. Included values: 24 Nov 2026, from fuelprice
   chain control. The right-click and text-selection deterrent is only a UI convenience and does not
   prevent DevTools, source downloads, screenshots, or automated scraping.
 - Firestore rules restrict each account to its own profile and delivery documents, validate their
-  fields, and prohibit client writes to published fuel data. Publish `firestore.rules` after changes.
+  fields, require consent on account creation, freeze the saved consent record, and prohibit client
+  writes to published fuel data. Publish `firestore.rules` after changes.
 - Firebase Hosting adds HTTPS-only transport, framing, MIME-sniffing, referrer, and browser-permission
   headers. These apply after deployment, not when opening files locally.
 - No website can be guaranteed unhackable. Keep Firebase and dependencies updated, monitor App Check
@@ -142,3 +181,12 @@ Update number 1 or 2 every Tuesday. Included values: 24 Nov 2026, from fuelprice
   at each pin; use "Travel type" to override it.
 - Vehicle speeds, costs and range limits are assumptions: edit array V in js/app.js.
 - The free OSRM, Overpass, Nominatim and map tile servers are for light use only.
+
+## Privacy and consent
+- `privacy.html` and `terms.html` are standalone pages linked from the signup consent gate and footer.
+- Registration, Google/Facebook sign-in, and phone account creation stay gated until the user checks
+  the consent box. The first Firestore profile write stores policy version `1.0` and a server
+  timestamp. Existing users without a consent record must also accept before continuing.
+- To request access, correction, consent withdrawal, or full account/data deletion, contact
+  `ruto.supportph@gmail.com` as described in `privacy.html`. Review the legal text with qualified
+  Philippine privacy counsel before representing it as a legal compliance certification.

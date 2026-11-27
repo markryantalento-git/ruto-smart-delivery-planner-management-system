@@ -56,6 +56,17 @@ $('#installGuideClose').addEventListener('click',()=>installGuide.close());
 
 if('serviceWorker'in navigator&&window.isSecureContext){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').catch(error=>console.error('RUTO service worker registration failed:',error));
+    navigator.serviceWorker.register('./sw.js').then(registration=>{
+      registration.addEventListener('updatefound',()=>{
+        const worker=registration.installing;
+        if(!worker)return;
+        worker.addEventListener('statechange',()=>{
+          if(worker.state==='installed'&&navigator.serviceWorker.controller){
+            if(st.user)window.checkReleaseUpdate?.(st.user);
+            else SV('ruto_pending_app_update',true)
+          }
+        })
+      })
+    }).catch(error=>console.error('RUTO service worker registration failed:',error));
   });
 }
