@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RUTO – Transportation and Delivery Least Cost Saving Management System</title>
-<meta name="theme-color" content="#171717">
+<meta name="theme-color" content="#353839">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="icon" href="assets/app-icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/app-icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=39">
 </head>
 <body class="ui-guard">
 <aside class="install-banner" id="installBanner" aria-label="Install RUTO" hidden>
@@ -32,31 +32,9 @@
  <stop offset="1" stop-color="#343C45"/>
 </linearGradient>
 <symbol id="logo" viewBox="0 0 64 64">
- <rect width="64" height="64" rx="15" fill="var(--logo-bg, #171717)" stroke="var(--logo-outline, transparent)" stroke-width=".8"/>
- <path d="M44 5c-7.2 0-13 5.8-13 13 0 9.4 13 23 13 23s13-13.6 13-23c0-7.2-5.8-13-13-13z" fill="var(--logo-pin, #FFB020)"/>
- <circle cx="44" cy="18" r="5.4" fill="#17191d" stroke="#fff" stroke-width=".8"/>
- <circle cx="44" cy="18" r="4.45" fill="#3b424b" stroke="#0b1020" stroke-width=".5"/>
- <circle cx="44" cy="18" r="3.65" fill="#adb4bd" stroke="#e8edf2" stroke-width=".45"/>
- <circle cx="44" cy="18" r="3.05" fill="#273248" stroke="#656e78" stroke-width=".45"/>
- <path d="M44 16.8v-1.9M45 17.4l1.65-1M45 18.6l1.65 1M44 19.2v1.9M43 18.6l-1.65 1M43 17.4l-1.65-1" fill="none" stroke="#d8dde3" stroke-width=".72" stroke-linecap="round"/>
- <circle cx="44" cy="18" r="1.05" fill="#c8cfd7" stroke="#414955" stroke-width=".4"/>
- <circle cx="44" cy="18" r=".35" fill="#343c47"/>
- <path class="logo-mark" fill="var(--logo-mark, #fff)" fill-rule="evenodd" d="M7 11h12c7.5 0 12 3.7 12 10 0 4.7-2.8 7.8-8 9.1L31 45h-8l-8-14h-1v14H7z M14 18v6h5c2.4 0 3.5-1 3.5-3s-1.1-3-3.5-3z"/>
- <path class="logo-mark" d="M32 40h14l6 6h7v7H32z" fill="var(--logo-mark, #fff)"/>
- <path d="M47 43h-1v4h5z" fill="#FFB020"/>
- <path d="M35 42h10v3H35z" fill="#FFB020"/>
- <circle cx="39" cy="53" r="3" fill="var(--logo-bg, #171717)" stroke="#FFB020" stroke-width="2"/>
- <circle cx="53" cy="53" r="3" fill="var(--logo-bg, #171717)" stroke="#FFB020" stroke-width="2"/>
+ <image href="assets/app-icon-512.png" width="64" height="64"/>
 </symbol>
-<symbol id="wordmark-wheel" viewBox="0 0 32 32">
- <g class="wheel-spin">
-  <circle cx="16" cy="16" r="14" fill="#F28C00"/>
-  <circle cx="16" cy="16" r="11.5" fill="#202735"/>
-  <circle cx="16" cy="16" r="9.5" fill="none" stroke="#FFB020" stroke-width="1.4"/>
-  <path d="M16 7v6M22.4 9.6l-4.2 4.2M25 16h-6M22.4 22.4l-4.2-4.2M16 25v-6M9.6 22.4l4.2-4.2M7 16h6M9.6 9.6l4.2 4.2" fill="none" stroke="#FFB020" stroke-width="1.6" stroke-linecap="round"/>
-  <circle cx="16" cy="16" r="2.4" fill="#FFB020"/>
- </g>
-</symbol>
+<symbol id="g-bot" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="3"/><path d="M12 3v4M9 12h.01M15 12h.01M9 16h6M2 12v3M22 12v3"/></symbol>
 <symbol id="trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6"/></symbol>
 <symbol id="edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/></symbol>
 <symbol id="refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-4L4 9M4 4v5h5M4 13a8 8 0 0 0 14 4l2-2M20 20v-5h-5"/></symbol>
@@ -67,7 +45,7 @@
 
 <!-- LANDING + SIGN IN/UP -->
 <section id="land">
- <div class="top"><div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUT</span><svg class="wordmark-wheel" aria-hidden="true"><use href="#wordmark-wheel"/></svg></span></div><div class="sp"></div>
+ <div class="top"><div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUTO</span></span></div><div class="sp"></div>
   <span class="locale-control"><svg class="i" aria-hidden="true"><use href="#g-globe"/></svg><select class="lang" aria-label="Language"><option value="0">English</option><option value="1">Tagalog</option><option value="2">Taglish</option></select></span>
   <button class="ib th" aria-label="Theme"><svg class="i"><use href="#sun"/></svg></button></div>
  <div class="hero">
@@ -76,9 +54,9 @@
    <div class="stats"><span class="sb"><svg class="i s1"><use href="#g-truck"/></svg><span data-i="stV"></span></span><span class="sb"><svg class="i s2"><use href="#g-globe"/></svg><span data-i="stL"></span></span><span class="sb"><svg class="i s3"><use href="#g-snow"/></svg><span data-i="stC"></span></span></div>
    <svg class="art" viewBox="0 0 420 230" role="img" aria-label="Route preview"><rect width="420" height="230" rx="16" style="fill:var(--card);stroke:var(--line)"/>
     <path d="M0 60H420M0 120H420M0 180H420M80 0V230M170 0V230M260 0V230M350 0V230" style="stroke:var(--line);fill:none"/>
-    <path class="flow" d="M40 180L120 110L210 150L290 70L380 100" fill="none" stroke="#FFB020" stroke-width="5" stroke-dasharray="2 10" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="40" cy="180" r="13" fill="none" stroke="#FFB020" stroke-width="2"><animate attributeName="r" values="13;32" dur="2.4s" begin="0s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="2.4s" begin="0s" repeatCount="indefinite"/></circle><circle cx="380" cy="100" r="13" fill="none" stroke="#FFB020" stroke-width="2"><animate attributeName="r" values="13;32" dur="2.4s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></circle><g class="pp"><circle cx="40" cy="180" r="13" style="fill:#12264A;stroke:#FFB020;stroke-width:3"/><use class="ui" href="#g-warehouse" x="32" y="172" width="16" height="16" style="color:#fff"/></g><g class="pp"><circle cx="120" cy="110" r="13" style="fill:#12264A;stroke:#FFB020;stroke-width:3"/><text x="120" y="114" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">1</text></g><g class="pp"><circle cx="210" cy="150" r="13" style="fill:#12264A;stroke:#FFB020;stroke-width:3"/><text x="210" y="154" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">2</text></g><g class="pp"><circle cx="290" cy="70" r="13" style="fill:#12264A;stroke:#FFB020;stroke-width:3"/><text x="290" y="74" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">3</text></g><g class="pp"><circle cx="380" cy="100" r="13" style="fill:#12264A;stroke:#FFB020;stroke-width:3"/><text x="380" y="104" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">4</text></g><rect x="14" y="14" width="168" height="28" rx="14" style="fill:#12264A"/><use class="ui" href="#g-clock" x="24" y="21" width="14" height="14" style="color:#FFB020"/><text x="44" y="33" style="fill:#FFB020;font-size:13px;font-weight:700">₱1,240 · 2h 10m</text>
-    <g><circle r="17" style="fill:#FFB020;stroke:#fff;stroke-width:2"/><use class="ui" href="#g-truck" x="-11" y="-11" width="22" height="22" style="color:#12264A"/><animateMotion dur="9s" repeatCount="indefinite" path="M40 180 L120 110 L210 150 L290 70 L380 100 L290 70 L210 150 L120 110 L40 180"/></g></svg></div>
+    <path class="flow" d="M40 180L120 110L210 150L290 70L380 100" fill="none" stroke="#FFD700" stroke-width="5" stroke-dasharray="2 10" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="40" cy="180" r="13" fill="none" stroke="#FFD700" stroke-width="2"><animate attributeName="r" values="13;32" dur="2.4s" begin="0s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="2.4s" begin="0s" repeatCount="indefinite"/></circle><circle cx="380" cy="100" r="13" fill="none" stroke="#FFD700" stroke-width="2"><animate attributeName="r" values="13;32" dur="2.4s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></circle><g class="pp"><circle cx="40" cy="180" r="13" style="fill:#353839;stroke:#FFD700;stroke-width:3"/><use class="ui" href="#g-warehouse" x="32" y="172" width="16" height="16" style="color:#fff"/></g><g class="pp"><circle cx="120" cy="110" r="13" style="fill:#353839;stroke:#FFD700;stroke-width:3"/><text x="120" y="114" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">1</text></g><g class="pp"><circle cx="210" cy="150" r="13" style="fill:#353839;stroke:#FFD700;stroke-width:3"/><text x="210" y="154" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">2</text></g><g class="pp"><circle cx="290" cy="70" r="13" style="fill:#353839;stroke:#FFD700;stroke-width:3"/><text x="290" y="74" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">3</text></g><g class="pp"><circle cx="380" cy="100" r="13" style="fill:#353839;stroke:#FFD700;stroke-width:3"/><text x="380" y="104" text-anchor="middle" style="fill:#fff;font-size:12px;font-weight:700">4</text></g><rect x="14" y="14" width="168" height="28" rx="14" style="fill:#353839"/><use class="ui" href="#g-clock" x="24" y="21" width="14" height="14" style="color:#FFD700"/><text x="44" y="33" style="fill:#FFD700;font-size:13px;font-weight:700">₱1,240 · 2h 10m</text>
+    <g><circle r="17" style="fill:#FFD700;stroke:#fff;stroke-width:2"/><use class="ui" href="#g-truck" x="-11" y="-11" width="22" height="22" style="color:#353839"/><animateMotion dur="9s" repeatCount="indefinite" path="M40 180 L120 110 L210 150 L290 70 L380 100 L290 70 L210 150 L120 110 L40 180"/></g></svg></div>
   <form class="auth" id="auth">
    <h1 class="auth-title" id="authHeading"></h1>
    <p class="auth-intro" data-i="authIntro"></p>
@@ -214,7 +192,7 @@
   </svg></div>
  </div></div>
  <footer class="foot">
-  <div class="foot-brand"><svg aria-hidden="true"><use href="#logo"/></svg><div><strong class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUT</span><svg class="wordmark-wheel" aria-hidden="true"><use href="#wordmark-wheel"/></svg></strong><span data-i="foot"></span></div></div>
+  <div class="foot-brand"><svg aria-hidden="true"><use href="#logo"/></svg><div><strong class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUTO</span></strong><span data-i="foot"></span></div></div>
   <div class="foot-meta"><span class="foot-credit" data-i="creator"></span><span class="foot-rights">© <span data-current-year>2026</span> RUTO. <span data-i="rights"></span></span></div>
  </footer>
 </section>
@@ -227,7 +205,7 @@
 <section id="app" hidden>
  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
  <aside class="app-sidebar" id="sidebar" aria-label="Main menu" role="dialog" aria-modal="true" hidden>
-  <div class="sidebar-head"><div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUT</span><svg class="wordmark-wheel" aria-hidden="true"><use href="#wordmark-wheel"/></svg></span></div><button class="ib" type="button" id="sidebarClose" aria-label="Close menu">×</button></div>
+  <div class="sidebar-head"><div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUTO</span></span></div><button class="ib" type="button" id="sidebarClose" aria-label="Close menu">×</button></div>
   <nav class="sidebar-nav" id="sidebarNav" aria-label="Main menu">
    <button type="button" class="sidebar-link on" data-v="plan"><svg class="i"><use href="#g-route"/></svg><span data-i="plan"></span></button>
    <button type="button" class="sidebar-link" data-v="cal"><svg class="i"><use href="#g-cal"/></svg><span data-i="calendar"></span></button>
@@ -238,7 +216,7 @@
   <div class="sidebar-footer"><div class="sidebar-user"><button type="button" class="avatar" id="profileShortcut" aria-label="Profile settings"><img id="whoPhoto" alt="" hidden><span id="whoInitials">R</span></button><span id="who"></span></div><button type="button" class="sidebar-link logout-link" id="out" data-i="logout"></button></div>
  </aside>
  <div class="top"><button class="ib menu-toggle" type="button" id="menuToggle" aria-controls="sidebar" aria-expanded="false" aria-label="Open menu"><span aria-hidden="true">☰</span></button>
-  <div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUT</span><svg class="wordmark-wheel" aria-hidden="true"><use href="#wordmark-wheel"/></svg></span></div><div class="sp"></div>
+  <div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUTO</span></span></div><div class="sp"></div>
   <span class="locale-control"><svg class="i" aria-hidden="true"><use href="#g-globe"/></svg><select class="lang" aria-label="Language"><option value="0">English</option><option value="1">Tagalog</option><option value="2">Taglish</option></select></span>
   <button class="ib th" aria-label="Theme"><svg class="i"><use href="#sun"/></svg></button>
  </div>
@@ -342,10 +320,10 @@
 </div>
 
 <!-- ASSISTANT -->
-<button id="fab" class="fab" hidden aria-label="RUTO assistant" title="RUTO Assistant" aria-expanded="false"><svg class="i"><use href="#g-chat"/></svg></button>
-<div id="ai" hidden role="dialog" aria-label="RUTO assistant">
+<button id="fab" class="fab" hidden aria-label="RuBot assistant" title="RuBot" aria-expanded="false"><svg class="i"><use href="#g-bot"/></svg></button>
+<div id="ai" hidden role="dialog" aria-label="RuBot assistant">
  <button type="button" id="airesize" aria-label="Resize chat panel" title="Drag up or down to resize"></button>
- <div class="aihead"><strong data-i="aiTitle"></strong><div class="sp"></div><button class="ib" id="aitts" title="Voice replies" aria-label="Voice replies"><svg class="i"><use href="#g-sound"/></svg></button><button class="ib" id="aiclose" aria-label="Close">✕</button></div>
+ <div class="aihead"><span class="ai-bot-icon"><svg class="i"><use href="#g-bot"/></svg></span><strong data-i="aiTitle"></strong><div class="sp"></div><button class="ib" id="aitts" title="Voice replies" aria-label="Voice replies"><svg class="i"><use href="#g-sound"/></svg></button><button class="ib" id="aiclose" aria-label="Close">✕</button></div>
  <div id="aimsgs" aria-live="polite"></div>
  <div id="voiceask" hidden><p data-i="voiceAsk"></p><div class="row"><button class="btn p" id="voiceallow" data-i="voiceAllow"></button><button class="btn" id="voiceno" data-i="notNow"></button></div></div>
  <div id="aichips"></div>
@@ -369,13 +347,13 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js" integrity="sha384-6I0gWsz4FIAr30c0TxIxJnPQuJiZ1FfILdZrgJdjxTH3R8dgPGTvexbyqTvReV6Z" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js" integrity="sha384-E3vxFxXu8FhW5kvqdQJ5Yf8ugrV7iCJP8jgnItRH2Rk8Q08cJzJGTi/oMC3FEp3j" crossorigin="anonymous"></script>
 <script src="js/config.js"></script>
-<script src="js/i18n.js"></script>
+<script src="js/i18n.js?v=38"></script>
 <script src="js/app.js"></script>
 <script src="js/routing.js"></script>
 <script src="js/store.js"></script>
 <script src="js/fuel.js"></script>
 <script src="js/nav.js"></script>
-<script src="js/assistant.js"></script>
+<script src="js/assistant.js?v=38"></script>
 <script src="js/main.js"></script>
 <script src="js/pwa.js"></script>
 <script src="js/ui-guard.js"></script>

@@ -607,7 +607,7 @@ function etaUI(r,ch){
 function charts(ok,ch,r){
   if(!window.Chart)return;
   const ink=getComputedStyle(document.body).getPropertyValue('--ink').trim();Chart.defaults.color=ink;c1&&c1.destroy();c2&&c2.destroy();
-  c1=new Chart($('#c1'),{type:'bar',data:{labels:ok.map(x=>x.v.name),datasets:[{label:t('fuelC'),data:ok.map(x=>Math.round(x.fuelCost)),backgroundColor:'#F28C00'},{label:t('labor'),data:ok.map(x=>Math.round(x.labor)),backgroundColor:'#737373'}]},options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'₱'}}}}});
+  c1=new Chart($('#c1'),{type:'bar',data:{labels:ok.map(x=>x.v.name),datasets:[{label:t('fuelC'),data:ok.map(x=>Math.round(x.fuelCost)),backgroundColor:'#FFD700'},{label:t('labor'),data:ok.map(x=>Math.round(x.labor)),backgroundColor:'#737373'}]},options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'₱'}}}}});
   const lb=r.legs.map(l=>l.to==null?t('back'):st.stops[l.to].name),
   share=l=>l.segs.reduce((a,s)=>{const x=s.water?ch.water:ch.land,tot=s.water?r.waterKm:r.landKm;return a+(x&&tot?x.cost*s.km/tot:0)},0);
   c2=new Chart($('#c2'),{type:'doughnut',data:{labels:lb,datasets:[{data:r.legs.map(l=>Math.round(share(l))),backgroundColor:lb.map((_,i)=>`hsl(${(i*47+35)%360} 70% 55%)`),borderWidth:0}]},options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}})}

@@ -25,7 +25,7 @@ noOk:'No vehicle fits. Reduce the load or split the delivery.|Walang sasakyang p
 c_box:'Parcel|Parcel|Parcel',c_fragile:'Fragile|Marupok|Fragile',c_meat:'Meat and fish|Karne at isda|Meat at fish',c_cold:'Frozen goods|Frozen|Frozen goods',c_food:'Hot food|Mainit na pagkain|Hot food',c_produce:'Fruits and vegetables|Prutas at gulay|Fruits at gulay',c_elec:'Electronics|Electronics|Electronics',c_heavy:'Heavy goods|Mabibigat|Heavy goods',c_med:'Medicine|Gamot|Medicine'};
 Object.assign(D,{
 fuelCalcHint:'Road use is estimated as (average speed ÷ km/L) × driving hours, with a traffic adjustment (km/kWh for EVs). Boats use cruising liters per hour: motorized banca uses 1.75 L/h, the midpoint of 1–2.5; cargo boats keep the prior equivalent estimate of 22.5 L/h.|Tinatantiya ang konsumo sa kalsada gamit ang (karaniwang bilis ÷ km/L) × oras ng pagmamaneho, na may adjustment sa trapiko (km/kWh para sa EV). Tinatantiya ang bangka batay sa litro kada oras: 1.75 L/h ang motorized banca, gitna ng 1–2.5; nananatili sa dating katumbas na tantiya na 22.5 L/h ang cargo boat.|Road use ay tinatantiya bilang (average speed ÷ km/L) × driving hours, may traffic adjustment (km/kWh para sa EV). Boat use ay cruising liters per hour: 1.75 L/h ang motorized banca, midpoint ng 1–2.5; 22.5 L/h ang dating equivalent estimate para sa cargo boat.',
-aboutNav:'About the system / us|Tungkol sa system / sa amin|About the system / us',
+aboutNav:'About|About|About',
 aboutTitle:'About RUTO|Tungkol sa RUTO|About RUTO',
 aboutIntro:'RUTO stands for Transportation and Delivery Least Cost Saving Management System. It helps users plan deliveries by comparing vehicle options, routes, estimated travel times, and trip costs.|Ang RUTO ay nangangahulugang Transportation and Delivery Least Cost Saving Management System. Tinutulungan nitong magplano ng delivery sa pamamagitan ng paghahambing ng mga opsyon sa sasakyan, ruta, tantiyang oras ng biyahe, at gastos.|Ang RUTO ay nangangahulugang Transportation and Delivery Least Cost Saving Management System. Tinutulungan nito ang users magplano ng delivery sa pamamagitan ng pag-compare ng vehicle options, routes, estimated travel time, at trip costs.',
 aboutWhatTitle:'What RUTO does|Ano ang ginagawa ng RUTO|What RUTO does',
@@ -141,6 +141,15 @@ menuClose:'Close menu|Isara ang menu|Close menu',
 mainMenu:'Main menu|Pangunahing menu|Main menu',
 cancel:'Cancel|Kanselahin|Cancel',
 noRoad:'No road route was found between these points. Check the addresses or choose water travel if appropriate.|Walang nakitang rutang kalsada sa pagitan ng mga puntong ito. Tingnan ang mga address o piliin ang biyahe sa tubig kung angkop.|Walang road route na nakita sa pagitan ng mga puntong ito. Check ang addresses o piliin ang water travel kung bagay.'
+});
+Object.assign(D,{
+aiTitle:'RuBot|RuBot|RuBot',
+aiHi:"Hi! I'm RuBot. Ask me for the nearest gas station, market, eatery, repair shop and more. You can type or tap the mic.|Kumusta! Ako si RuBot. Magtanong tungkol sa malapit na gasolinahan, palengke, kainan, talyer at iba pa. Mag-type o pindutin ang mic.|Hi! Ako si RuBot. Ask ako ng malapit na gas station, palengke, kainan, talyer at iba pa. Type or tap the mic.",
+voiceAsk:'Allow voice? RuBot needs your microphone to hear your question. Your browser will ask for permission. Speech may be processed by your browser provider.|Payagan ang boses? Kailangan ni RuBot ang mikropono para marinig ang tanong mo. Hihingi ng pahintulot ang browser. Maaaring iproseso ng browser provider ang boses.|Allow voice? Kailangan ni RuBot ang mic para marinig ang question mo. Hihingi ng permission ang browser. Speech may be processed ng browser provider.',
+askAI:'Ask RuBot|Tanungin si RuBot|Ask RuBot',
+aiThinking:'Thinking…|Nag-iisip…|Thinking…',
+aiTakingLonger:'Sorry, this is taking longer than usual.|Paumanhin, mas matagal ito kaysa karaniwan.|Sorry, mas matagal ito kaysa usual.',
+aiCheckConnection:'Please check your internet connection. RuBot is still trying to respond.|Pakitingnan ang internet connection mo. Sinusubukan pa ring sumagot ni RuBot.|Please check ang internet connection mo. Sinusubukan pa ring sumagot ni RuBot.'
 });
 const TIPS={
 meat:'Use an insulated cooler with ice or ice packs, keep it at 4°C or colder, load it last so it comes off first, and deliver within 2 hours. Avoid midday heat and keep the cooler shut.|Gumamit ng insulated cooler na may yelo o ice pack, panatilihing 4°C pababa, ilagay sa huli para unang maibaba, at ihatid sa loob ng 2 oras. Iwasan ang tanghaling init at huwag buksan ang cooler.',
