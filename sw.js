@@ -1,10 +1,10 @@
-const CACHE_NAME = 'ruto-shell-v39';
+const CACHE_NAME = 'ruto-shell-v42';
 const SHELL_FILES = [
   './',
   './index.html',
   './password-reset.html',
   './manifest.webmanifest',
-  './css/style.css?v=39',
+  './css/style.css?v=41',
   './assets/app-icon-180.png',
   './assets/app-icon-192.png',
   './assets/app-icon-512.png',
@@ -19,6 +19,7 @@ const SHELL_FILES = [
   './js/assistant.js?v=38',
   './js/main.js',
   './js/pwa.js',
+  './js/waves.js?v=42',
   './js/reset.js',
   './js/ui-guard.js'
 ];

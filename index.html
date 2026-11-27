@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
-<link rel="stylesheet" href="css/style.css?v=39">
+<link rel="stylesheet" href="css/style.css?v=41">
 </head>
 <body class="ui-guard">
 <aside class="install-banner" id="installBanner" aria-label="Install RUTO" hidden>
@@ -45,6 +45,7 @@
 
 <!-- LANDING + SIGN IN/UP -->
 <section id="land">
+ <canvas class="wave-canvas" id="landingWaves" aria-hidden="true"></canvas>
  <div class="top"><div class="brand"><svg><use href="#logo"/></svg><span class="wordmark" aria-label="RUTO"><span class="wordmark-text">RUTO</span></span></div><div class="sp"></div>
   <span class="locale-control"><svg class="i" aria-hidden="true"><use href="#g-globe"/></svg><select class="lang" aria-label="Language"><option value="0">English</option><option value="1">Tagalog</option><option value="2">Taglish</option></select></span>
   <button class="ib th" aria-label="Theme"><svg class="i"><use href="#sun"/></svg></button></div>
@@ -356,6 +357,7 @@
 <script src="js/assistant.js?v=38"></script>
 <script src="js/main.js"></script>
 <script src="js/pwa.js"></script>
+<script src="js/waves.js?v=42"></script>
 <script src="js/ui-guard.js"></script>
 </body>
 </html>
