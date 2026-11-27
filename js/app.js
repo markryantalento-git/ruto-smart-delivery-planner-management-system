@@ -412,12 +412,23 @@ if(matchMedia('(prefers-reduced-motion:reduce)').matches)$$('animateMotion,anima
 
 /* ============ ENTER APP + LOCATION GATE ============ */
 function enter(uid,name,details={}){
-  if(st.user)return;st.user=uid;$('#land').hidden=true;$('#app').hidden=false;$('#fab').hidden=false;$('#who').textContent=name;
+  if(st.user)return;st.user=uid;
+  const intro=$('#brandIntro');
+  intro.hidden=false;intro.setAttribute('aria-hidden','false');
+  $('#land').hidden=true;$('#app').hidden=false;$('#fab').hidden=false;$('#who').textContent=name;
   profileData={accountType:'personal',name,email:auth?.currentUser?.email||(/@/.test(uid)?uid:''),photoURL:'',...details};
   applyProfileData(profileData);
   initMap();$('#date').value=ymd(new Date());fuelUI();applyLang();loadHist();
   loadProfile(uid,profileData);
-  askLoc();fetchFuel(false);setInterval(()=>fetchFuel(false),1800000)}
+  fetchFuel(false);setInterval(()=>fetchFuel(false),1800000);
+  const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(()=>{
+    intro.classList.add('is-leaving');
+    setTimeout(()=>{
+      intro.hidden=true;intro.classList.remove('is-leaving');intro.setAttribute('aria-hidden','true');
+      askLoc();
+    },reduceMotion?0:450);
+  },reduceMotion?300:1000)}
 function askLoc(){
   if(!navigator.geolocation){$('#gate').hidden=false;return}
   navigator.geolocation.getCurrentPosition(p=>{$('#gate').hidden=true;track(p)},()=>{$('#gate').hidden=false;$('#locP').textContent=t('locDenied')},{enableHighAccuracy:true,timeout:15000});

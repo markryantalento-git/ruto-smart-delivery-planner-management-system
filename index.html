@@ -4,6 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RUTO – Transportation and Delivery Least Cost Saving Management System</title>
+<meta name="description" content="RUTO is a transportation and delivery least cost saving management system for planning routes, comparing vehicles, and estimating delivery costs.">
+<link rel="canonical" href="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/">
+<meta property="og:title" content="RUTO – Transportation and Delivery Least Cost Saving Management System">
+<meta property="og:description" content="Plan delivery routes, compare vehicles, and estimate costs with RUTO.">
+<meta property="og:image" content="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/assets/app-icon-512.png">
+<meta property="og:image:secure_url" content="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/assets/app-icon-512.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:image:alt" content="RUTO logo with a delivery truck and route pin">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="RUTO – Transportation and Delivery Least Cost Saving Management System">
+<meta name="twitter:description" content="Plan delivery routes, compare vehicles, and estimate costs with RUTO.">
+<meta name="twitter:image" content="https://markryantalento-git.github.io/ruto-transpo-delivery-management-system/assets/app-icon-512.png">
 <meta name="theme-color" content="#353839">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,7 +28,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
-<link rel="stylesheet" href="css/style.css?v=41">
+<link rel="stylesheet" href="css/style.css?v=42">
 </head>
 <body class="ui-guard">
 <aside class="install-banner" id="installBanner" aria-label="Install RUTO" hidden>
@@ -201,6 +217,16 @@
 <!-- LOCATION GATE -->
 <div id="gate" hidden><div class="card"><svg style="width:64px;height:64px"><use href="#logo"/></svg><h2 data-i="locH"></h2><p class="muted" data-i="locP"></p>
  <button class="btn p" id="locbtn" data-i="locBtn"></button><p><a href="#" id="locskip" class="muted" data-i="locSkip"></a></p></div></div>
+
+<!-- BRANDED SIGN-IN INTRO -->
+<div class="brand-intro" id="brandIntro" role="status" aria-live="polite" aria-hidden="true" hidden>
+ <div class="brand-intro-content">
+  <img class="brand-intro-logo" src="assets/app-icon-512.png" alt="">
+  <strong class="brand-intro-title">RUTO</strong>
+  <span class="brand-intro-status" data-i="appLoading"></span>
+  <span class="brand-intro-loader" aria-hidden="true"></span>
+ </div>
+</div>
 
 <!-- APP -->
 <section id="app" hidden>

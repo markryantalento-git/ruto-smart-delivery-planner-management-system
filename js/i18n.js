@@ -34,6 +34,7 @@ supportPrompt:'Support me by scanning this QR code. Thank you!|Suportahan ako sa
 authSignInTitle:'Welcome back|Maligayang pagbabalik|Welcome back',
 authSignUpTitle:'Create your account|Gumawa ng account|Gumawa ng account',
 authIntro:'Free delivery planning. No subscription required.|Libreng pagpaplano ng delivery. Walang kailangang subscription.|Free na delivery planning. Walang subscription na kailangan.',
+appLoading:'Preparing your workspace…|Inihahanda ang iyong workspace…|Inihahanda ang workspace mo…',
 apple:'Continue with Apple|Magpatuloy gamit ang Apple|Continue with Apple',
 resendCode:'Resend code|Magpadala ulit ng code|Resend code',
 fFail:'Could not fetch prices.|Hindi makakuha ng presyo.|Hindi makakuha ng prices.',nameOpt:'Name (for new accounts)|Pangalan (para sa bagong account)|Name (para sa new account)',phoneL:'Mobile number|Numero ng cellphone|Mobile number',sendCode:'Send code|Magpadala ng code|Send code',otpL:'6-digit code from SMS|6-digit code mula sa SMS|6-digit code from SMS',verify:'Verify|I-verify|Verify',phoneBtn:'Continue with phone number|Magpatuloy gamit ang numero ng cellphone|Continue with phone number',useEmail:'Use email instead|Email na lang ang gamitin|Use email instead',smsNote:'We will text you a code. Standard SMS rates may apply.|Magte-text kami ng code. Maaaring may singil sa SMS.|Mag-te-text kami ng code. Baka may SMS charges.',codeSent:'Code sent to {n}|Naipadala ang code sa {n}|Code sent to {n}',
