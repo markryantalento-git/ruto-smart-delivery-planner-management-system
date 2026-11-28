@@ -28,7 +28,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
-<link rel="stylesheet" href="css/style.css?v=92">
+<link rel="stylesheet" href="css/style.css?v=96">
 </head>
 <body class="ui-guard">
 <aside class="install-banner" id="installBanner" aria-label="Install RUTO" hidden>
@@ -87,6 +87,10 @@
 <symbol id="g-bag" viewBox="0 0 24 24"><path d="M4 8h16l-1 13H5zM9 8V6a3 3 0 0 1 6 0v2M9 12v1M15 12v1"/></symbol>
 <symbol id="g-bed" viewBox="0 0 24 24"><path d="M3 20V5M3 14h18v6M6 14V9h5a3 3 0 0 1 3 3v2M14 12h7v2"/></symbol>
 <symbol id="g-coffee" viewBox="0 0 24 24"><path d="M4 8h13v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4zM17 10h2a2 2 0 0 1 0 4h-2M7 3v2M12 3v2M17 3v2"/></symbol>
+<symbol id="g-fuel-gas" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h12M4 10h10M14 8h2a2 2 0 0 1 2 2v7a1.5 1.5 0 0 0 3 0V9l-3-3"/><path d="M7 6h4"/></symbol>
+<symbol id="g-fuel-diesel" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h12M4 10h10M14 8h2a2 2 0 0 1 2 2v7a1.5 1.5 0 0 0 3 0V9l-3-3"/><path d="M9 5v4M7.5 7h3"/></symbol>
+<symbol id="g-kerosene" viewBox="0 0 24 24"><path d="M8 21h8M9 18h6l1-8H8zM10 10V7h4v3M12 7V4M10 4h4"/><path d="M12 13c-2 2-2 3 0 4 2-1 2-2 0-4z"/></symbol>
+<symbol id="g-electricity" viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 11-12h-6l1-8z"/></symbol>
 </defs></svg>
 
 <!-- LANDING + SIGN IN/UP -->
@@ -185,7 +189,8 @@
     <label for="consentCheck"><input id="consentCheck" type="checkbox"><span data-i="consentText"></span></label>
     <div class="auth-consent-links"><a href="terms.html" data-i="termsLink"></a><span aria-hidden="true"> · </span><a href="privacy.html" data-i="privacyLink"></a></div>
    </div>
-   <p class="err" id="err" role="alert"></p>
+   <p class="err" id="err" role="alert" aria-live="assertive"></p>
+   <p class="auth-status muted" id="authStatus" role="status" aria-live="polite" hidden></p>
    <button class="btn p" style="width:100%" id="sub"></button>
    <p class="auth-policy" id="signupRule" data-i="signupRule" hidden></p>
    <button type="button" class="btn soc auth-phone-button" id="pbtn"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><span data-i="phoneBtn"></span></button>
@@ -342,7 +347,7 @@
   </svg>
   <span class="brand-intro-status" data-i="appLoading"></span>
   <span class="brand-intro-loader" aria-hidden="true"></span>
-  <span class="brand-intro-version" id="appVersion">ver.0.2.19</span>
+  <span class="brand-intro-version" id="appVersion">ver.0.2.22</span>
  </div>
 </div>
 
@@ -382,8 +387,9 @@
  <div class="wrap" id="v_plan">
  <section class="fuel-mini-strip" id="fuelMini" role="region" aria-label="Fuel prices"></section>
  <aside>
-  <section class="card plan-guide" aria-labelledby="planGuideHeading">
-   <h2 id="planGuideHeading" data-i="planGuideTitle"></h2>
+ <button class="btn plan-guide-reopen" id="planGuideOpen" type="button" data-i="planGuideShow" hidden></button>
+ <section class="card plan-guide" id="planGuide" aria-labelledby="planGuideHeading">
+  <div class="plan-guide-heading"><h2 id="planGuideHeading" tabindex="-1" data-i="planGuideTitle"></h2><button class="ib plan-guide-close" id="planGuideClose" type="button" aria-label="Hide guide" title="Hide guide">×</button></div>
    <p class="muted plan-guide-intro" data-i="planGuideIntro"></p>
    <ol class="plan-guide-steps">
     <li><span class="plan-step-number">1</span><div><strong data-i="planGuideStep1Title"></strong><p data-i="planGuideStep1Body"></p></div></li>
@@ -427,18 +433,22 @@
  <main>
   <div class="map-category-wrap">
    <div class="map-category-bar" id="mapCategoryBar" role="group" aria-label="Explore nearby places"></div>
-   <div class="map-category-more" id="mapCategoryMore" hidden></div>
+   <div class="poi-search-controls">
+    <label><span id="poiAnchorLabel"></span><select id="poiAnchor"></select></label>
+    <label><span id="poiRadiusLabel"></span><select id="poiRadius"><option value="1" id="poiRadius1"></option><option value="3" id="poiRadius3" selected></option><option value="5" id="poiRadius5"></option></select></label>
+    <label><span id="poiSortLabel"></span><select id="poiSort"><option value="distance" id="poiSortDistance"></option><option value="cost" id="poiSortCost"></option><option value="eta" id="poiSortEta"></option></select></label>
+   </div>
   </div>
   <div class="map-stage">
    <div id="map"></div>
    <button id="mapLocate" class="map-locate" type="button" aria-label="Find my location" title="Find my location">
     <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
    </button>
+   <section class="map-poi-panel" id="poiPanel" aria-labelledby="poiHeading" hidden>
+    <header><div><h2 id="poiHeading"></h2><p class="muted" id="poiSummary" role="status" aria-live="polite"></p></div><button class="ib" id="poiClose" type="button" aria-label="Close places">×</button></header>
+    <div class="poi-results" id="poiResults" role="list"></div>
+   </section>
   </div>
-  <section class="map-poi-panel" id="poiPanel" aria-labelledby="poiHeading" hidden>
-   <header><div><h2 id="poiHeading"></h2><p class="muted" id="poiSummary"></p></div><button class="ib" id="poiClose" type="button" aria-label="Close places">×</button></header>
-   <div class="poi-results" id="poiResults" role="list"></div>
-  </section>
   <p id="empty" class="card muted" data-i="empty"></p>
   <p id="loading" class="card muted" data-i="routing" role="status" hidden></p>
   <div id="res" hidden>
@@ -625,17 +635,17 @@ if (['localhost', '127.0.0.1'].includes(location.hostname)) self.FIREBASE_APPCHE
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js" integrity="sha384-6I0gWsz4FIAr30c0TxIxJnPQuJiZ1FfILdZrgJdjxTH3R8dgPGTvexbyqTvReV6Z" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js" integrity="sha384-E3vxFxXu8FhW5kvqdQJ5Yf8ugrV7iCJP8jgnItRH2Rk8Q08cJzJGTi/oMC3FEp3j" crossorigin="anonymous"></script>
 <script src="js/config.js?v=1"></script>
-<script src="js/i18n.js?v=69"></script>
-<script src="js/auth-consent.js?v=3"></script>
-<script src="js/app.js?v=71"></script>
+<script src="js/i18n.js?v=72"></script>
+<script src="js/auth-consent.js?v=5"></script>
+<script src="js/app.js?v=76"></script>
 <script src="js/routing.js"></script>
-<script src="js/store.js?v=5"></script>
+<script src="js/store.js?v=6"></script>
 <script src="js/notifications.js?v=4"></script>
 <script src="js/updates.js?v=1"></script>
-<script src="js/fuel.js?v=2"></script>
+<script src="js/fuel.js?v=3"></script>
 <script src="js/nav.js"></script>
-<script src="js/assistant.js?v=51"></script>
-<script src="js/main.js?v=57"></script>
+<script src="js/assistant.js?v=53"></script>
+<script src="js/main.js?v=59"></script>
 <script src="js/pwa.js?v=3"></script>
 <script src="js/waves.js?v=45"></script>
 <script src="js/ui-guard.js"></script>

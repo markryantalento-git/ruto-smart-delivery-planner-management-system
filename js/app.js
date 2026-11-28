@@ -29,6 +29,8 @@ function applyLang(){
   $('#sidebarNav').setAttribute('aria-label',t('mainMenu'));
   $('#mapLocate').setAttribute('aria-label',t('locateMe'));
   $('#mapLocate').title=t('locateMe');
+  $('#planGuideClose').setAttribute('aria-label',t('planGuideHide'));
+  $('#planGuideClose').title=t('planGuideHide');
   $('#aiStyle').setAttribute('aria-label',t('aiStyleLabel'));
   $('#aiStyle').value=chatStyle;
   $('#phsend').textContent=t(phoneCodeSent?'resendCode':'sendCode');
@@ -106,6 +108,7 @@ let accountType='personal',profileData={accountType:'personal',name:'',companyNa
   photoCropImage=null,photoCropSourceURL='',photoCropZoom=1,photoCropX=0,photoCropY=0,photoCropPointer=null;
 let mode='up',map,layer,tileLayer,meMk,c1,c2;
 const installedAppMode=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const iosBrowser=/iPad|iPhone|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function toast(msg,kind=''){const d=document.createElement('div');d.className='toast '+kind;d.textContent=msg;$('#toasts').append(d);setTimeout(()=>d.remove(),6000)}
 
 /* ============ FIREBASE ============ */
@@ -148,6 +151,22 @@ function persistLocalSession(uid){
 const fbErr=x=>{const k={'auth/email-already-in-use':'errExist','auth/invalid-credential':'errBad','auth/wrong-password':'errBad','auth/user-not-found':'errBad','auth/weak-password':'pass','auth/invalid-email':'email','auth/account-exists-with-different-credential':'errDiff','auth/unauthorized-domain':'errDomain',
   'auth/invalid-phone-number':'errPhone','auth/invalid-verification-code':'errCode','auth/code-expired':'errCodeOld','auth/too-many-requests':'errMany','auth/quota-exceeded':'errMany','auth/billing-not-enabled':'errBilling','auth/region-not-allowed':'smsRegionError','auth/operation-not-allowed':'errProvider','auth/network-request-failed':'errNet','auth/captcha-check-failed':'errCaptcha','auth/invalid-app-credential':'errCaptcha','auth/missing-app-credential':'errCaptcha'}[x.code];
   return k?t(k)+(x.code==='auth/operation-not-allowed'&&x.message?' ('+x.message+')':''):x.message};
+function clearAuthError(){
+  $('#err').textContent='';
+  $$('#em,#pw').forEach(input=>{input.classList.remove('auth-invalid');input.removeAttribute('aria-invalid')})
+}
+function setAuthBusy(pending,statusKey='authChecking'){
+  busy=pending;window.rutoAuthBusy=pending;
+  $$('#auth .tabs button,#accountTypeChoice button,#gbtn,#fbtn,#pbtn,#sub,#em,#pw,#nm,#companyName,#keepLoggedIn,#consentCheck,#phsend,#phok')
+    .forEach(control=>control.disabled=pending);
+  if(!pending)RutoConsent.refresh(mode==='up');
+  $('#auth').setAttribute('aria-busy',String(pending));
+  const status=$('#authStatus');status.hidden=!pending;status.textContent=pending?t(statusKey):''
+}
+function showCredentialError(){
+  $('#err').textContent=t('errBad');$('#forgotPassword').hidden=false;
+  $$('#em,#pw').forEach(input=>{input.classList.add('auth-invalid');input.setAttribute('aria-invalid','true')})
+}
 
 /* ============ AUTH: email ============ */
 const sha=async s=>crypto.subtle?[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('ruto:'+s)))].map(b=>b.toString(16).padStart(2,'0')).join(''):btoa(s);
@@ -159,7 +178,7 @@ function authMode(m){
   const savedAccountType=LS('ruto_last_account_type','personal');
   if(m==='in'&&['personal','company'].includes(savedAccountType))accountType=savedAccountType;
   $('#authHeading').textContent=t(m==='in'?'authSignInTitle':'authSignUpTitle');
-  $('#sub').textContent=t(m==='in'?'signin':'signup');$('#err').textContent='';
+  $('#sub').textContent=t(m==='in'?'signin':'signup');clearAuthError();
   updateAccountTypeUI();RutoConsent.refresh(m==='up');
 }
 $('#keepLoggedIn').addEventListener('change',()=>{
@@ -183,7 +202,7 @@ function updateAccountTypeUI(){
 $$('#accountTypeChoice [data-account-type]').forEach(b=>b.onclick=()=>{
   accountType=b.dataset.accountType;updateAccountTypeUI();$('#err').textContent=''});
 $$('#auth .tabs .btn').forEach(b=>b.onclick=()=>authMode(b.dataset.m));
-['#em','#pw'].forEach(selector=>$(selector).addEventListener('input',()=>$('#forgotPassword').hidden=true));
+['#em','#pw'].forEach(selector=>$(selector).addEventListener('input',()=>{$('#forgotPassword').hidden=true;clearAuthError()}));
 const isCredentialFailure=code=>['auth/invalid-credential','auth/wrong-password','auth/user-not-found'].includes(code);
 // Profile updates merge existing consent and creation metadata instead of replacing them.
 const saveProfile=(uid,data,{create=false}={})=>{
@@ -197,10 +216,10 @@ const profileUpdateRecord=data=>{
   delete record.consent;delete record.createdAt;
   return record
 };
-async function ensureConsentProfile(user,isNewUser=false,provider=''){
+async function ensureConsentProfile(user,isNewUser=false,provider='',knownProfile){
   if(!RutoConsent.isAccepted())return false;
-  let existing={};
-  if(!isNewUser){
+  let existing=knownProfile||{};
+  if(!isNewUser&&knownProfile===undefined){
     try{existing=await getProfileRecord(user.uid)}
     catch(error){console.warn('Could not read the account before saving consent.',error);return false}
   }
@@ -222,97 +241,121 @@ function cacheProfile(uid,data){
 async function getProfileRecord(uid){
   const cached=LS('ruto_profiles',{})[uid]||{};
   if(!db)return cached;
+  let timer;const timeoutMs=Object.keys(cached).length?900:1500;
   try{
-    const doc=await db.collection('users').doc(uid).get();
+    const request=db.collection('users').doc(uid).get(),
+      timeout=new Promise((resolve,reject)=>{timer=setTimeout(()=>reject(new Error('Profile lookup timed out')),timeoutMs)}),
+      doc=await Promise.race([request,timeout]);
     if(doc.exists){const data=doc.data();cacheProfile(uid,data);return data}
   }catch(e){if(!Object.keys(cached).length)throw e;console.warn('profile read',e)}
+  finally{clearTimeout(timer)}
   return cached}
 $('#auth').onsubmit=async e=>{e.preventDefault();
   if(!$('#phoneBox').hidden){$('#phcode').hidden?sendCode():verifyCode();return}
+  if(mode==='in'&&!RutoConsent.isAccepted()){$('#err').textContent=t('consentRequired');return}
   if(mode==='up'&&!RutoConsent.isAccepted()){$('#err').textContent=t('consentRequired');return}
-  $('#forgotPassword').hidden=true;
+  clearAuthError();$('#forgotPassword').hidden=true;
   const em=$('#em').value.trim().toLowerCase(),pw=$('#pw').value,nm=$('#nm').value.trim(),companyName=$('#companyName').value.trim(),U=LS('ruto_users',{});
   if(!em||!pw||(mode==='up'&&(!nm||(accountType==='company'&&!companyName)))){$('#err').textContent=t('errFill');return}
   if(pw.length<6){$('#err').textContent=t('pass');return}
   if(!SV(RUTO_KEEP_LOGGED_IN_KEY,$('#keepLoggedIn').checked)){console.warn('Could not save the keep-login preference.');$('#err').textContent=t('keepLoggedInSaveFailed')}
-  if(FB_ON){if(!auth){$('#err').textContent=t('errNet');return}busy=true;try{
+  setAuthBusy(true,mode==='in'?'authChecking':'authCreatingAccount');
+  if(FB_ON){if(!auth){$('#err').textContent=t('errNet');setAuthBusy(false);return}try{
     await setAuthPersistence();
     if(mode==='up'){
       const c=await auth.createUserWithEmailAndPassword(em,pw);
+      setAuthBusy(true,'authVerifyingAccount');
       await c.user.updateProfile({displayName:nm});
       const data={...RutoConsent.firestoreFields({email:em,displayName:nm}),name:nm,accountType,companyName:accountType==='company'?companyName:''};
-      const saved=await saveProfile(c.user.uid,data,{create:true});
-      if(!saved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
       cacheProfile(c.user.uid,{...data,consent:RutoConsent.localConsent()});
-      enter(c.user.uid,nm,{...data,consent:RutoConsent.localConsent()});busy=false;
+      Promise.resolve(saveProfile(c.user.uid,data,{create:true})).catch(error=>{
+        console.warn('Could not finish saving the new account profile.',error)
+      });
+      enter(c.user.uid,nm,{...data,consent:RutoConsent.localConsent()});
     }else{
-      const c=await auth.signInWithEmailAndPassword(em,pw);let stored={};
-      try{stored=await getProfileRecord(c.user.uid)}catch(x){
-        if(accountType==='company'){await auth.signOut();busy=false;$('#err').textContent=t('companyProfileLoadFail');return}
-        console.warn('profile read',x)}
-      if((stored.accountType||'personal')!==accountType){
-        await auth.signOut();busy=false;$('#err').textContent=t('accountTypeMismatch');return}
-      if(stored.consent?.accepted!==true){
-        if(!RutoConsent.isAccepted()){
-          await auth.signOut();busy=false;$('#err').textContent=t('consentRequired');return
-        }
-        const consentSaved=await ensureConsentProfile(c.user,false,'password');
-        if(!consentSaved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
-        stored=LS('ruto_profiles',{})[c.user.uid]||stored
+      const c=await auth.signInWithEmailAndPassword(em,pw);
+      setAuthBusy(true,'authVerifyingAccount');
+      let stored=LS('ruto_profiles',{})[c.user.uid]||{};
+      if(!Object.keys(stored).length){
+        try{stored=await getProfileRecord(c.user.uid)}
+        catch(error){stored={}}
       }
-      enter(c.user.uid,c.user.displayName||em,stored);busy=false
+      if((stored.accountType||'personal')!==accountType){
+        await auth.signOut();$('#err').textContent=t('accountTypeMismatch');return}
+      if(!RutoConsent.isConsentAccepted(stored)){
+        if(!RutoConsent.isAccepted()){
+          await auth.signOut();$('#err').textContent=t('consentRequired');return
+        }
+        Promise.resolve(ensureConsentProfile(c.user,false,'password',stored)).catch(error=>{
+          console.warn('Could not finish saving sign-in consent.',error)
+        });
+        stored={...stored,consent:RutoConsent.localConsent()}
+      }
+      enter(c.user.uid,c.user.displayName||em,stored)
     }
-  }catch(x){busy=false;$('#err').textContent=fbErr(x);if(mode==='in'&&isCredentialFailure(x.code))$('#forgotPassword').hidden=false}return}
-  const h=await sha(em+pw);
-  if(mode==='up'){if(U[em]){$('#err').textContent=t('errExist');return}U[em]={name:nm,h,accountType,companyName:accountType==='company'?companyName:'',consent:RutoConsent.localConsent()};if(!SV('ruto_users',U)){$('#err').textContent=t('saveFail');return}}
-  else if(!U[em]||U[em].h!==h){$('#err').textContent=t('errBad');$('#forgotPassword').hidden=false;return}
-  if((U[em].accountType||'personal')!==accountType){$('#err').textContent=t('accountTypeMismatch');return}
-  const details={name:U[em].name,email:em,accountType:U[em].accountType||'personal',companyName:U[em].companyName||'',consent:U[em].consent};
-  cacheProfile(em,details);
-  if(!persistLocalSession(em)){$('#err').textContent=t('saveFail');return}
-  enter(em,details.name,details)};
+  }catch(error){
+    if(mode==='in'&&isCredentialFailure(error.code))showCredentialError();
+    else $('#err').textContent=fbErr(error)||t('errNet')
+  }finally{setAuthBusy(false)}
+  return}
+  try{
+    const h=await sha(em+pw);
+    if(mode==='up'){
+      if(U[em]){$('#err').textContent=t('errExist');return}
+      U[em]={name:nm,h,accountType,companyName:accountType==='company'?companyName:'',consent:RutoConsent.localConsent()};
+      if(!SV('ruto_users',U)){$('#err').textContent=t('saveFail');return}
+    }else if(!U[em]||U[em].h!==h){showCredentialError();return}
+    if((U[em].accountType||'personal')!==accountType){$('#err').textContent=t('accountTypeMismatch');return}
+    const details={name:U[em].name,email:em,accountType:U[em].accountType||'personal',companyName:U[em].companyName||'',consent:U[em].consent};
+    cacheProfile(em,details);
+    if(!persistLocalSession(em)){$('#err').textContent=t('saveFail');return}
+    enter(em,details.name,details)
+  }catch(error){$('#err').textContent=error.message||t('saveFail')}
+  finally{setAuthBusy(false)}
+};
 $('#out').onclick=async()=>{stopLocationTracking();localStorage.removeItem('ruto_session');clearBrowserSession();if(auth)await auth.signOut();location.reload()};
 
-/* ============ GOOGLE: always shows the account chooser ============ */
-async function googleIn(){
+/* ============ GOOGLE / FACEBOOK ============ */
+async function providerIn(name){
+  if(busy)return;
   if(!auth){$('#err').textContent=t('needFb');return}
   if(!RutoConsent.isAccepted()){$('#err').textContent=t('consentRequired');return}
-  const pr=new firebase.auth.GoogleAuthProvider();pr.setCustomParameters({prompt:'select_account'});
-  try{busy=true;await setAuthPersistence();const c=await auth.signInWithPopup(pr),u=c.user;
-    const saved=await ensureConsentProfile(u,!!c.additionalUserInfo?.isNewUser,'google');
-    if(!saved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
-    RutoConsent.clearPendingRedirect();
-    enter(u.uid,u.displayName||u.email||'User',LS('ruto_profiles',{})[u.uid]||{});busy=false}
-  catch(x){busy=false;
-    if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(x.code)){
-      if(!RutoConsent.rememberRedirect('google')){$('#err').textContent=t('consentStorageFailed');return}
-      return auth.signInWithRedirect(pr).catch(y=>{RutoConsent.clearPendingRedirect();$('#err').textContent=fbErr(y)})
-    }
-    RutoConsent.clearPendingRedirect();
-    if(!['auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(x.code))$('#err').textContent=fbErr(x)}}
-$('#gbtn').onclick=googleIn;
-async function facebookIn(){
-  if(!auth){$('#err').textContent=t('needFb');return}
-  if(!RutoConsent.isAccepted()){$('#err').textContent=t('consentRequired');return}
-  const pr=new firebase.auth.FacebookAuthProvider();
-  pr.addScope('email');
+  const provider=name==='google'?new firebase.auth.GoogleAuthProvider():new firebase.auth.FacebookAuthProvider();
+  if(name==='google')provider.setCustomParameters({prompt:'select_account'});
+  else provider.addScope('email');
+  let redirectAttempted=false;
+  clearAuthError();setAuthBusy(true,'authConnectingProvider');
   try{
-    busy=true;await setAuthPersistence();auth.languageCode=lang?'fil':'en';
-    const c=await auth.signInWithPopup(pr),u=c.user;
-    const saved=await ensureConsentProfile(u,!!c.additionalUserInfo?.isNewUser,'facebook');
-    if(!saved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
+    await setAuthPersistence();
+    auth.languageCode=lang?'fil':'en';
+    if(iosBrowser){
+      if(!RutoConsent.rememberRedirect(name)){$('#err').textContent=t('consentStorageFailed');return}
+      redirectAttempted=true;
+      await auth.signInWithRedirect(provider);
+      return
+    }
+    const result=await auth.signInWithPopup(provider),user=result.user;
+    setAuthBusy(true,'authVerifyingAccount');
     RutoConsent.clearPendingRedirect();
-    enter(u.uid,u.displayName||u.email||'User',LS('ruto_profiles',{})[u.uid]||{});busy=false
-  }catch(x){
-    busy=false;
-    if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(x.code)){
-      if(!RutoConsent.rememberRedirect('facebook')){$('#err').textContent=t('consentStorageFailed');return}
-      return auth.signInWithRedirect(pr).catch(y=>{RutoConsent.clearPendingRedirect();$('#err').textContent=fbErr(y)})
+    Promise.resolve(ensureConsentProfile(user,!!result.additionalUserInfo?.isNewUser,name)).catch(error=>{
+      console.warn('Could not finish saving provider consent.',error)
+    });
+    enter(user.uid,user.displayName||user.email||'User',LS('ruto_profiles',{})[user.uid]||{})
+  }catch(error){
+    if(!redirectAttempted&&['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(error.code)){
+      if(!RutoConsent.rememberRedirect(name)){$('#err').textContent=t('consentStorageFailed');return}
+      redirectAttempted=true;
+      try{await auth.signInWithRedirect(provider)}
+      catch(redirectError){RutoConsent.clearPendingRedirect();$('#err').textContent=fbErr(redirectError)||t('errNet')}
+      return
     }
     RutoConsent.clearPendingRedirect();
-    if(!['auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(x.code))$('#err').textContent=fbErr(x)
-  }}
-$('#fbtn').onclick=facebookIn;
+    if(redirectAttempted||!['auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(error.code))
+      $('#err').textContent=fbErr(error)||t('errNet')
+  }finally{setAuthBusy(false)}
+}
+$('#gbtn').onclick=()=>providerIn('google');
+$('#fbtn').onclick=()=>providerIn('facebook');
 
 /* ============ PHONE NUMBER SIGN-IN (SMS code) ============ */
 let captcha=null,confirmRes=null;
@@ -371,6 +414,16 @@ $('#cta').onclick=event=>openAuth('up',event.currentTarget);
 $('#openSignIn').onclick=event=>openAuth('in',event.currentTarget);
 $('#authClose').onclick=closeAuth;
 $('#authBackdrop').onclick=closeAuth;
+$('#planGuideClose').onclick=()=>{
+  $('#planGuide').hidden=true;
+  $('#planGuideOpen').hidden=false;
+  $('#planGuideOpen').focus()
+};
+$('#planGuideOpen').onclick=()=>{
+  $('#planGuide').hidden=false;
+  $('#planGuideOpen').hidden=true;
+  $('#planGuideHeading').focus()
+};
 const RUTO_TUTORIAL_KEY='ruto_tutorial_seen_v1',RUTO_TUTORIAL_VERSION='2';
 const RUTO_TUTORIAL_TARGETS=['#menuToggle','#addr','#addDrop','#mapCategoryBar','#mapLocate','#fuelMini','#pri',()=>$('#res').hidden?'#empty':'#best','#save','#sched','#notificationButton','#fab'];
 const RUTO_TUTORIAL_ICONS=['#g-globe','#g-pin','#g-box','#g-globe','#g-pin','#g-fuel','#g-route','#g-truck','#g-box','#g-cal','#g-alert','#g-chat'];
@@ -715,6 +768,9 @@ if(matchMedia('(prefers-reduced-motion:reduce)').matches)$$('animateMotion,anima
 /* ============ ENTER APP + LOCATION GATE ============ */
 function enter(uid,name,details={}){
   if(st.user)return;st.user=uid;rememberBrowserSession(uid);
+  $('#authModal').hidden=true;
+  document.body.classList.remove('auth-modal-open');
+  authOpener=null;
   window.refreshNotifications?.();
   if(LS('ruto_pending_app_update',false))SV('ruto_pending_app_update',false);
   window.checkReleaseUpdate?.(uid);
@@ -794,9 +850,9 @@ function initMap(){
   map.on('click',e=>addPoint(e.latlng.lat,e.latlng.lng));
   new ResizeObserver(()=>map.invalidateSize()).observe($('#map'));
 }
-function addPoint(lat,lng,name,asOrigin){
+function addPoint(lat,lng,name,asOrigin,kind='delivery'){
   if(asOrigin||!st.origin)st.origin={lat,lng,name:name||'Origin'};
-  else st.stops.push({lat,lng,name:name||'Drop-off '+(st.stops.length+1),kg:10,cargo:'box',by:''});
+  else st.stops.push({lat,lng,name:name||'Drop-off '+(st.stops.length+1),kg:kind==='support'?0:10,cargo:'box',by:'',kind});
   render()}
 const pinI=(x,o)=>L.divIcon({className:'',html:`<div class="pin ${o?'o':''}"><b>${x}</b></div>`,iconSize:[30,30],iconAnchor:[15,30]});
 let fitKey='';
@@ -940,7 +996,7 @@ function editNote(){const x=st.editId&&st.H.find(q=>q.id===st.editId);$('#editno
 const depart=()=>new Date(($('#date').value||ymd(new Date()))+'T'+($('#time').value||'08:00'));
 function evalV(v,r){
   const water=v.dom==='water',km1=water?r.waterKm:r.landKm,
-  kg=st.stops.reduce((a,s)=>a+ +s.kg,0),needC=st.stops.some(s=>CLOSED.includes(s.cargo)),trips=Math.max(1,Math.ceil(kg/v.cap)),
+  kg=st.stops.filter(s=>s.kind!=='support').reduce((a,s)=>a+ +s.kg,0),needC=st.stops.some(s=>s.kind!=='support'&&CLOSED.includes(s.cargo)),trips=Math.max(1,Math.ceil(kg/v.cap)),
   // land: road time with traffic x vehicle factor, never faster than the vehicle's own speed
   sec1=water?km1/v.speed*3600+r.portStops*PORT_MIN*60:Math.max(r.landSec*v.tf,km1/v.speed*3600),
   service=(water&&r.landKm>0)?0:st.stops.length*SERVICE_MIN/60,
@@ -961,12 +1017,12 @@ const clock=d=>d.toLocaleTimeString('en-PH',{hour:'numeric',minute:'2-digit'});
 /* ============ RENDER ============ */
 function stopsUI(){
   $('#nostop').hidden=st.stops.length>0;
-  $('#stops').innerHTML=st.stops.map((s,i)=>`<div class="stop">
+  $('#stops').innerHTML=st.stops.map((s,i)=>{const support=s.kind==='support';return `<div class="stop ${support?'support-stop':''}">
    <div class="n"><b>${i+1}</b></div><input id="sn${i}" value="${esc(s.name)}" onchange="upd(${i},'name',this.value)" aria-label="Name">
-   <input type="number" min="0" value="${+s.kg}" onchange="upd(${i},'kg',this.value)" aria-label="kg" title="kg">
-   <div class="sub"><select onchange="upd(${i},'cargo',this.value)">${Object.keys(CI).map(k=>`<option value="${k}" ${k==s.cargo?'selected':''}>${t('c_'+k)}</option>`).join('')}</select>
+   ${support?`<span class="stop-kind">${t('poiSupportStop')}</span>`:`<input type="number" min="0" value="${+s.kg}" onchange="upd(${i},'kg',this.value)" aria-label="kg" title="kg">`}
+   <div class="sub">${support?'':`<select onchange="upd(${i},'cargo',this.value)">${Object.keys(CI).map(k=>`<option value="${k}" ${k==s.cargo?'selected':''}>${t('c_'+k)}</option>`).join('')}`}
    ${t('by')} <input type="time" value="${esc(s.by)}" onchange="upd(${i},'by',this.value)">
-   <span class="acts"><button class="ib" title="Edit" onclick="$('#sn${i}').focus()">${ic('edit')}</button><button class="ib" title="Update" onclick="relocate(${i})">${ic('refresh')}</button><button class="ib d" title="Delete" onclick="del(${i})">${ic('trash')}</button></span></div></div>`).join('')}
+   <span class="acts"><button class="ib" title="Edit" onclick="$('#sn${i}').focus()">${ic('edit')}</button><button class="ib" title="Update" onclick="relocate(${i})">${ic('refresh')}</button><button class="ib d" title="Delete" onclick="del(${i})">${ic('trash')}</button></span></div></div>`}).join('')}
 window.upd=(i,k,v)=>{st.stops[i][k]=k==='kg'?Math.max(0,+v||0):v;if(k!=='name')render()};
 window.del=i=>{st.stops.splice(i,1);render()};
 window.relocate=async i=>{const p=await geocode(st.stops[i].name);if(!p){toast(t('notFound'),'bad');return}Object.assign(st.stops[i],p);render()};
@@ -994,7 +1050,7 @@ function renderResults(){
   $('#res').classList.remove('stale');
   const budget=budgetInput.value===''?null:budgetInput.valueAsNumber;
   const need=[r.landKm>.05?'land':null,r.waterKm>.05?'water':null].filter(Boolean);if(!need.length)need.push('land');
-  const types=[...new Set(st.stops.map(s=>s.cargo))],perish=types.some(x=>PERISH.includes(x)),pri=$('#pri').value,
+  const types=[...new Set(st.stops.filter(s=>s.kind!=='support').map(s=>s.cargo))],perish=types.some(x=>PERISH.includes(x)),pri=$('#pri').value,
     w=perish&&pri==='balanced'?[.2,.7,.1]:W[pri];
   // Only vehicles that fit this trip: land vehicles for road parts, boats for water parts
   const groups=need.map(dom=>{

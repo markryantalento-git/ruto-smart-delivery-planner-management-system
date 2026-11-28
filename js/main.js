@@ -108,17 +108,30 @@ if(auth){
     if(restoringUid===user.uid)return;
     if(!shouldRestoreSession(user)){busy=false;openAuth('in',$('#openSignIn'));return}
     restoringUid=user.uid;busy=true;
+    const cached=LS('ruto_profiles',{})[user.uid]||{};
+    if(RutoConsent.isConsentAccepted(cached)){
+      busy=false;
+      if(!st.user)enter(user.uid,user.displayName||user.email||user.phoneNumber||'User',cached);
+      restoringUid=null;
+      return
+    }
+    let timer;
     try{
-      const snapshot=await db.collection('users').doc(user.uid).get(),
-        profile=snapshot.exists?snapshot.data():{};
-      if(profile.consent?.accepted===true){
+      const snapshot=await Promise.race([
+        db.collection('users').doc(user.uid).get(),
+        new Promise((resolve,reject)=>{timer=setTimeout(()=>reject(new Error('Profile lookup timed out')),1500)})
+      ]);
+      clearTimeout(timer);
+      const profile=snapshot.exists?snapshot.data():{};
+      if(RutoConsent.isConsentAccepted(profile)){
         cacheProfile(user.uid,profile);busy=false;
         if(!st.user)enter(user.uid,user.displayName||user.email||user.phoneNumber||'User',profile);
         return
       }
       await showConsentGate('consentRequired')
     }catch(error){
-      console.warn('Could not verify consent for the returning account.',error);
+      clearTimeout(timer);
+      console.warn('Could not verify consent quickly for the returning account.',error);
       await showConsentGate('consentProfileLoadFailed')
     }finally{
       if(restoringUid===user.uid)restoringUid=null;

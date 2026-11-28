@@ -30,7 +30,7 @@ async function start(d){
   banner(null,t('locating'),'');$('#nvArrive').textContent=t('markArrived');$('#nvCenter').hidden=true;$('#navinfo').textContent='';$('#navalts').innerHTML='';
   let pos=await here();if(N!==me)return;
   if(d.queue)N.queue=d.queue.map(p=>({...p,kind:p.kind||'place'}));
-  else{const o=d.order||d.stops.map((_,i)=>i);N.queue=o.map(i=>({...d.stops[i],kind:'drop'}));if(d.round)N.queue.push({...d.origin,kind:'origin'});
+  else{const o=d.order||d.stops.map((_,i)=>i);N.queue=o.map(i=>({...d.stops[i],kind:d.stops[i].kind==='support'?'support':'drop'}));if(d.round)N.queue.push({...d.origin,kind:'origin'});
     if(!pos||hav(pos,d.origin)>.3)N.queue.unshift({...d.origin,kind:'pickup'})}
   const noGps=!pos;
   if(noGps){pos=d.origin||st.origin||{lat:14.5995,lng:120.9842};if(N.queue[0]?.kind==='pickup')N.queue.shift();toast(t('noGps'),'bad')}

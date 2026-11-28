@@ -52,7 +52,8 @@ const startOf=e=>new Date(e.date+'T'+e.time),endOf=e=>new Date(startOf(e).getTim
 const when=e=>startOf(e).toLocaleString('en-PH',{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
 const utc=d=>d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
 const evTitle=e=>`RUTO delivery: ${e.stops[0]?.name||''}${e.stops.length>1?' +'+(e.stops.length-1):''}`;
-const evDesc=e=>[`${t('vehicle')}: ${[e.veh,e.veh2].filter(Boolean).map(id=>vById(id)?.name).join(' + ')}`,`${t('total')}: ${peso(e.cost)} · ${e.km.toFixed(1)} km`,`${t('from')}: ${e.origin.name}`,...(e.order||e.stops.map((_,i)=>i)).map((i,k)=>`${k+1}. ${e.stops[i].name} (${e.stops[i].kg} kg, ${t('c_'+e.stops[i].cargo)})`)].join('\n');
+const stopDescription=s=>s.kind==='support'?`${s.name} (${t('poiSupportStop')})`:`${s.name} (${s.kg} kg, ${t('c_'+s.cargo)})`;
+const evDesc=e=>[`${t('vehicle')}: ${[e.veh,e.veh2].filter(Boolean).map(id=>vById(id)?.name).join(' + ')}`,`${t('total')}: ${peso(e.cost)} · ${e.km.toFixed(1)} km`,`${t('from')}: ${e.origin.name}`,...(e.order||e.stops.map((_,i)=>i)).map((i,k)=>`${k+1}. ${stopDescription(e.stops[i])}`)].join('\n');
 const evLoc=e=>`${e.origin.lat.toFixed(5)},${e.origin.lng.toFixed(5)}`;
 const icsEsc=s=>String(s).replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/[,;]/g,'\\$&');
 const fold=line=>{const enc=new TextEncoder();let out='',n=0;for(const c of line){const b=enc.encode(c).length;if(n+b>73){out+='\r\n ';n=1}out+=c;n+=b}return out};
@@ -68,7 +69,7 @@ const googleUrl=e=>'https://calendar.google.com/calendar/render?'+new URLSearchP
 
 /* ---- list item used by history and calendar ---- */
 function itemHTML(x){const v=vById(x.veh)||V[0],names=[x.veh,x.veh2].filter(Boolean).map(id=>vById(id)?.name).join(' + ')||v.name;
-  return `<div class="hi"><div>${ic(v.icon)}</div><div class="m"><b>${esc(when(x))}</b> ${x.scheduled?`<span class="b">${t('scheduled')}</span>`:''}${x.done?`<span class="b">✓ ${t('delivered')}</span>`:''}<br><span class="muted">${esc(x.stops.map(s=>s.name).join(' → '))}<br>${names} · ${x.stops.length} ${t('stopsN')} · ${x.km.toFixed(1)} km · ${peso(x.cost)}</span></div>
+  return `<div class="hi"><div>${ic(v.icon)}</div><div class="m"><b>${esc(when(x))}</b> ${x.scheduled?`<span class="b">${t('scheduled')}</span>`:''}${x.done?`<span class="b">✓ ${t('delivered')}</span>`:''}<br><span class="muted">${esc(x.stops.map(s=>s.kind==='support'?`${s.name} (${t('poiSupportStop')})`:s.name).join(' → '))}<br>${names} · ${x.stops.length} ${t('stopsN')} · ${x.km.toFixed(1)} km · ${peso(x.cost)}</span></div>
    <div class="acts"><button class="btn p" data-a="nav" data-id="${+x.id}">${ic('g-route')} ${t('navigate')}</button><button class="ib" title="${t('addCalQ')}" aria-label="${t('addCalQ')}" data-a="cal" data-id="${+x.id}">${ic('g-cal')}</button><button class="ib" title="Edit" aria-label="Edit" data-a="edit" data-id="${+x.id}">${ic('edit')}</button><button class="ib d" title="Delete" aria-label="Delete" data-a="del" data-id="${+x.id}">${ic('trash')}</button></div></div>`}
 document.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b)return;const x=st.H.find(q=>q.id===+b.dataset.id);if(!x)return;
   ({nav:()=>NAV.start(x),cal:()=>calDialog(x),edit:()=>loadH(x),del:()=>delH(x)})[b.dataset.a]()});

@@ -25,10 +25,16 @@ The planner lets users search for places or select them on the map, enter cargo 
 details, choose priorities and land/water travel preferences, and compare suitable vehicles.
 
 The comparison estimates trip distance, time, fuel or energy use, and cost, and can indicate when
-the load may require multiple vehicles or trips. Map categories help users find nearby useful
-places such as gas stations, food stops, and repair services to add as stop-overs. Saved plans can
-be reviewed in History, arranged on the calendar, or followed with the in-app navigation while
-location access is allowed. RuBot can answer questions about RUTO and help users find nearby places.
+the load may require multiple vehicles or trips. Nearby map categories are grouped into delivery
+hubs (groceries, convenience stores, shopping centers, mail and shipping, and restaurants) and
+route support (gas, parking, charging, ATMs, and hospitals or clinics). Search can use GPS, the
+pickup, a selected drop-off, or map center and a 1, 3, or 5 km radius. Results show Haversine
+distance, an approximate out-and-back detour/fuel impact using the active vehicle and fuel rate,
+and a matching vehicle hint. Choose a result to set the pickup, append a drop-off, or add a
+non-cargo route-support stop; the existing planner then recalculates its route and estimates.
+The detour and fuel indication is an estimate, not a routed cost quote. Saved plans can be reviewed
+in History, arranged on the calendar, or followed with the in-app navigation while location access
+is allowed. RuBot can answer questions about RUTO and help users find nearby places.
 
 RUTO is a planning aid, not a dispatch service or a source of guaranteed live traffic, prices, ETAs,
 or delivery results. Actual vehicle capacity, road conditions, fuel prices, and delivery requirements
@@ -101,6 +107,7 @@ the app is open. GPS permission is required; external Google Maps and Waze links
      enable the provider, and confirm the Firebase callback URI. Keep the App Secret private; never commit
      it or put it in browser code. Add the deployed host under Authentication > Settings > Authorized domains.
    - Facebook sign-in uses Firebase's OAuth flow; configure both Meta and Firebase before testing it.
+   - On iPhone and iPad, Google and Facebook sign-in use a full-page redirect instead of a popup.
    In Authentication > Settings, keep **One account per email address** enabled. Firebase then
    rejects a second email/password account for an email already in use; the app also checks this
    in its local-only sign-in fallback when Firebase is not configured. Google and other providers

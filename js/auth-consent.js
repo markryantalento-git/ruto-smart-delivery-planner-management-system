@@ -27,14 +27,14 @@
     catch(error){console.warn('Could not clear pending RUTO consent.',error)}
   }
   function refresh(mode){
-    const accepted=checkbox.checked,
+    const accepted=checkbox.checked,busy=window.rutoAuthBusy===true,
       signup=mode??document.querySelector('#auth .tabs .btn.on')?.dataset.m==='up',
       submit=document.querySelector('#sub');
     if(providerHint)providerHint.hidden=accepted;
-    if(submit)submit.disabled=signup&&!accepted;
-    ['#gbtn','#fbtn','#pbtn','#phsend'].forEach(selector=>{
+    if(submit)submit.disabled=busy||signup&&!accepted;
+    ['#gbtn','#fbtn','#pbtn','#phsend','#phok'].forEach(selector=>{
       const button=document.querySelector(selector);
-      if(button)button.disabled=!accepted
+      if(button)button.disabled=busy||!accepted
     })
   }
 
@@ -45,6 +45,7 @@
   window.RutoConsent={
     policyVersion:POLICY_VERSION,
     isAccepted:()=>checkbox.checked,
+    isConsentAccepted:(record)=>record?.consent?.accepted===true&&record.consent.policyVersion===POLICY_VERSION,
     refresh,
     rememberRedirect(provider=''){
       if(!checkbox.checked)return false;

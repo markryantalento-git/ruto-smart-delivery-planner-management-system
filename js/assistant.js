@@ -2,44 +2,59 @@
  With Firebase AI Logic enabled it uses Gemini; otherwise a built-in basic mode answers. */
 
 /* ---- places near the user (OpenStreetMap / Overpass) ---- */
-const CATS={ // order matters: the first matching pattern wins
- charging:{k:'cCharging',icon:'g-bolt',color:'#168C8C',q:['["amenity"="charging_station"]'],re:/charging|charger|mag-?charge/i},
- gas:{k:'cGas',icon:'g-fuel',color:'#C2410C',q:['["amenity"="fuel"]'],re:/gas(oline|olina)?\s*-?station|gasolin|magpa-?gas|magpakarga|diesel|krudo|petron|\bshell\b|caltex|\bfuel\b|\bgas\b/i},
- market:{k:'cMarket',icon:'g-market',color:'#8A6500',q:['["amenity"="marketplace"]','["shop"="wholesale"]'],re:/palengke|pamilihan|talipapa|bagsakan|market|wholesale|bilihan ng/i},
- repair:{k:'cRepair',icon:'g-wrench',color:'#526579',q:['["shop"~"^(car_repair|motorcycle_repair|tyres)$"]'],re:/vulcani|talyer|repair|mekaniko|mechanic|flat tire|gulong|nasiraan/i},
- ice:{k:'cIce',icon:'g-snow',color:'#277DA1',q:['["shop"="ice"]','["name"~"ice plant|tube ice|yelo",i]'],re:/\bice\b|yelo/i},
- pharmacy:{k:'cPharmacy',icon:'g-pill',color:'#A93454',q:['["amenity"="pharmacy"]'],re:/pharmacy|botika|drug ?store/i},
- hospital:{k:'cHospital',icon:'g-medical',color:'#B4233C',q:['["amenity"~"^(hospital|clinic)$"]'],re:/hospital|ospital|clinic|klinika/i},
- atm:{k:'cAtm',icon:'g-bank',color:'#256D55',q:['["amenity"~"^(atm|bank)$"]'],re:/\batm\b|\bbank\b|bangko|withdraw/i},
- police:{k:'cPolice',icon:'g-shield',color:'#315A9B',q:['["amenity"="police"]'],re:/police|pulis/i},
- toilet:{k:'cToilet',icon:'g-toilet',color:'#526579',q:['["amenity"="toilets"]'],re:/toilet|\bcr\b|banyo|restroom|comfort room/i},
- parking:{k:'cParking',icon:'g-parking',color:'#376C9C',q:['["amenity"="parking"]'],re:/parking|paradahan/i},
- convenience:{k:'cConvenience',icon:'g-store',color:'#6B5A2B',q:['["shop"="convenience"]'],re:/convenience|7-?eleven|tindahan/i},
- groceries:{k:'cGroceries',icon:'g-basket',color:'#538234',q:['["shop"~"^(supermarket|grocery)$"]'],re:/grocer|supermarket|grocery/i},
- shopping:{k:'cShopping',icon:'g-bag',color:'#376C9C',q:['["shop"~"^(clothes|mall|department_store|electronics|books|shoes|sports|furniture)$"]'],re:/shopping|mall|clothes|apparel|electronics store/i},
- hotel:{k:'cHotel',icon:'g-bed',color:'#7057A3',q:['["tourism"~"^(hotel|motel|guest_house|hostel)$"]'],re:/hotel|motel|hostel|inn\b|guest ?house/i},
- coffee:{k:'cCoffee',icon:'g-coffee',color:'#8A5632',q:['["amenity"="cafe"]'],re:/coffee|cafe|kape/i},
- restaurant:{k:'cRestaurant',icon:'g-food',color:'#168C8C',q:['["amenity"~"^(restaurant|fast_food|food_court)$"]'],re:/restaurant|\bresto\b|karinderya|carinderia|kainan|food|gutom|\beat/i},
- store:{k:'cStore',icon:'g-store',color:'#6B5A2B',q:['["shop"~"^(convenience|supermarket)$"]'],re:/convenience|supermarket|grocery|7-?eleven|tindahan/i},
- food:{k:'cFood',icon:'g-food',color:'#168C8C',q:['["amenity"~"^(restaurant|fast_food|cafe|food_court)$"]'],re:/kain|karinderya|carinderia|restaurant|\bresto\b|food|gutom|kape|coffee|\beat/i}};
+const PLACE_CATEGORIES=[
+ {id:'delivery_hubs',k:'poiGroupDelivery',categories:[
+  {id:'groceries',k:'poiCatGroceries',icon:'g-basket',badge:'G',color:'#FFD700',q:['["shop"~"^(supermarket|grocery|greengrocer)$"]'],re:/grocer|supermarket|grocery|pamilihan/i,vehicles:['trike','jeep','van']},
+  {id:'convenience_stores',k:'poiCatConvenience',icon:'g-store',badge:'C',color:'#F0F1F2',q:['["shop"~"^(convenience|kiosk|mini_market)$"]'],re:/convenience|7-?eleven|tindahan/i,vehicles:['trike','jeep','van']},
+  {id:'shopping_centers',k:'poiCatShopping',icon:'g-bag',badge:'S',color:'#D4D4D4',q:['["shop"~"^(mall|department_store)$"]'],re:/shopping|mall|department store/i,vehicles:['van','t2','t5']},
+  {id:'mail_shipping',k:'poiCatMail',icon:'g-box',badge:'M',color:'#666666',markerInk:'#fff',q:['["amenity"~"^(post_office|parcel_locker)$"]','["shop"="shipping"]'],re:/post office|mail|shipping|parcel|courier|koreo|padala/i,vehicles:['van','pickup','t2']},
+  {id:'restaurants',k:'poiCatRestaurants',icon:'g-food',badge:'R',color:'#fff',q:['["amenity"~"^(restaurant|fast_food|food_court)$"]','["takeaway"="yes"]'],re:/restaurant|takeout|takeaway|\bresto\b|karinderya|carinderia|kainan/i,vehicles:['trike','jeep','van']}
+ ]},
+ {id:'route_support',k:'poiGroupRoute',categories:[
+  {id:'gas',k:'poiCatGas',icon:'g-fuel',badge:'F',color:'#FFD700',q:['["amenity"="fuel"]'],re:/gas(oline|olina)?\s*-?station|gasolin|magpa-?gas|magpakarga|diesel|krudo|petron|\bshell\b|caltex|\bfuel\b|\bgas\b/i,vehicles:['trike','jeep','van','t2']},
+  {id:'parking',k:'poiCatParking',icon:'g-parking',badge:'P',color:'#353839',markerInk:'#fff',q:['["amenity"="parking"]'],re:/parking|paradahan/i,vehicles:['car','trike','van']},
+  {id:'charging_stations',k:'poiCatCharging',icon:'g-bolt',badge:'E',color:'#D4D4D4',q:['["amenity"="charging_station"]'],re:/charging|charger|mag-?charge/i,vehicles:['etrike','car','van']},
+  {id:'atm',k:'poiCatAtm',icon:'g-bank',badge:'A',color:'#666666',markerInk:'#fff',q:['["amenity"="atm"]'],re:/\batm\b|cash machine|withdraw/i,vehicles:['car','trike']},
+  {id:'hospitals_clinics',k:'poiCatHospitals',icon:'g-medical',badge:'H',color:'#F0F1F2',q:['["amenity"~"^(hospital|clinic|doctors)$"]'],re:/hospital|ospital|clinic|klinika|doctor/i,vehicles:['car','van','jeep']}
+ ]}
+];
+const PLACE_CATEGORY_BY_ID=Object.fromEntries(PLACE_CATEGORIES.flatMap(group=>group.categories.map(category=>[category.id,{...category,groupId:group.id,groupKey:group.k}])));
+const CATS=Object.fromEntries(Object.entries(PLACE_CATEGORY_BY_ID));
+Object.assign(CATS,{
+ charging:PLACE_CATEGORY_BY_ID.charging_stations,
+ convenience:PLACE_CATEGORY_BY_ID.convenience_stores,
+ shopping:PLACE_CATEGORY_BY_ID.shopping_centers,
+ restaurant:PLACE_CATEGORY_BY_ID.restaurants,
+ hospital:PLACE_CATEGORY_BY_ID.hospitals_clinics,
+ market:{k:'cMarket',icon:'g-market',color:'#8A7000',q:['["amenity"="marketplace"]','["shop"="wholesale"]'],re:/palengke|pamilihan|talipapa|bagsakan|market|wholesale|bilihan ng/i},
+ repair:{k:'cRepair',icon:'g-wrench',color:'#5C6061',q:['["shop"~"^(car_repair|motorcycle_repair|tyres)$"]'],re:/vulcani|talyer|repair|mekaniko|mechanic|flat tire|gulong|nasiraan/i},
+ ice:{k:'cIce',icon:'g-snow',color:'#D4AF37',q:['["shop"="ice"]','["name"~"ice plant|tube ice|yelo",i]'],re:/\bice\b|yelo/i},
+ pharmacy:{k:'cPharmacy',icon:'g-pill',color:'#A47C00',q:['["amenity"="pharmacy"]'],re:/pharmacy|botika|drug ?store/i},
+ police:{k:'cPolice',icon:'g-shield',color:'#353839',q:['["amenity"="police"]'],re:/police|pulis/i},
+ toilet:{k:'cToilet',icon:'g-toilet',color:'#777777',q:['["amenity"="toilets"]'],re:/toilet|\bcr\b|banyo|restroom|comfort room/i},
+ hotel:{k:'cHotel',icon:'g-bed',color:'#8A7000',q:['["tourism"~"^(hotel|motel|guest_house|hostel)$"]'],re:/hotel|motel|hostel|inn\b|guest ?house/i},
+ coffee:{k:'cCoffee',icon:'g-coffee',color:'#A47C00',q:['["amenity"="cafe"]'],re:/coffee|cafe|kape/i},
+ store:{k:'cStore',icon:'g-store',color:'#8A7000',q:['["shop"~"^(convenience|supermarket)$"]'],re:/convenience|supermarket|grocery|7-?eleven|tindahan/i},
+ food:{k:'cFood',icon:'g-food',color:'#C9A227',q:['["amenity"~"^(restaurant|fast_food|cafe|food_court)$"]'],re:/kain|karinderya|carinderia|restaurant|\bresto\b|food|gutom|kape|coffee|\beat/i}
+});
 const myPos=()=>NAV.position||st.me||st.origin||(map&&{lat:map.getCenter().lat,lng:map.getCenter().lng});
 async function overpass(query){
-  let err;for(const url of RUTO.OVERPASS){try{const j=await getJSON(url,{method:'POST',body:new URLSearchParams({data:query})},6000);if(j?.elements)return j.elements}catch(e){err=e}}
+  let err;for(const url of RUTO.OVERPASS){try{const j=await getJSON(url,{method:'POST',body:new URLSearchParams({data:query})},12000);if(j?.elements)return j.elements}catch(e){err=e}}
   throw err||new Error('places')}
 let lastPlaces=[];const placesCache=new Map();
-async function findPlaces(category,name,limit=5,updateLast=true){
-  const at=myPos(),cat=CATS[category];
+async function findPlaces(category,name,limit=5,updateLast=true,options={}){
+  const at=options.at||myPos(),radius=options.radius||30000,radiusKm=options.radiusKm??radius/1000,maxResults=options.maxResults||600,cat=CATS[category];
   const term=String(name||'').replace(/[^\p{L}\p{N} '&-]/gu,'').trim().slice(0,40);
   const filters=term?[(cat?cat.q[0]:'')+`["name"~"${term}",i]`]:cat?.q;
   if(!at||!filters||!Number.isFinite(at.lat)||!Number.isFinite(at.lng))return{places:[],at};
-  const cacheKey=[category||'',term.toLowerCase(),at.lat.toFixed(3),at.lng.toFixed(3),limit].join('|'),cached=placesCache.get(cacheKey);
+  const cacheKey=[category||'',term.toLowerCase(),at.lat.toFixed(4),at.lng.toFixed(4),limit,radius,maxResults].join('|'),cached=placesCache.get(cacheKey);
   if(cached&&Date.now()-cached.at<60000){if(updateLast)lastPlaces=cached.places;return{...cached.result,places:cached.places}}
-  const els=await overpass(`[out:json][timeout:15];(${filters.map(f=>`nwr${f}(around:30000,${at.lat},${at.lng});`).join('')});out center 600;`);
+  const els=await overpass(`[out:json][timeout:12];(${filters.map(f=>`nwr${f}(around:${radius},${at.lat},${at.lng});`).join('')});out center ${maxResults};`);
   const uniqueElements=new Map(els.map(element=>[`${element.type||''}/${element.id??`${element.lat},${element.lon}`}`,element]));
-  const places=[...uniqueElements.values()].map(e=>{const g=e.center||e,x=e.tags||{},p={lat:g.lat,lng:g.lon,name:x.name||x.brand||t(cat?.k||'place'),
+  const places=[...uniqueElements.values()].map(e=>{const g=e.center||e,x=e.tags||{},p={lat:g.lat,lng:g.lon,categoryId:category,name:x.name||x.brand||t(cat?.k||'place'),
     info:[x.brand&&x.brand!==x.name?x.brand:'',[x['addr:street'],x['addr:city']].filter(Boolean).join(', '),x.opening_hours].filter(Boolean).join(' · ')};p.km=hav(at,p);return p})
-   .filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)).sort((a,b)=>a.km-b.km).slice(0,limit);
-  const result={at,label:term||t(cat?.k||'place'),usingGps:!!(NAV.position||st.me)};
+   .filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&p.km<=radiusKm).sort((a,b)=>a.km-b.km).slice(0,limit);
+  const result={at,radiusKm,label:term||t(cat?.k||'place'),usingGps:!!(NAV.position||st.me)};
   if(updateLast)lastPlaces=places;placesCache.set(cacheKey,{at:Date.now(),places,result});
   return{places,...result}}
 
@@ -61,82 +76,170 @@ function placeList(res){
   list.forEach((p,i)=>L.marker(p,{icon:pinI(i+1)}).addTo(m).on('click',()=>goTo(p)));
   m.fitBounds(L.latLngBounds([res.at,...list].map(p=>[p.lat,p.lng])),{padding:[25,25],maxZoom:16});
   setTimeout(()=>{m.invalidateSize();d.scrollIntoView({block:'nearest'})},80)}
-const MAP_CATS=['restaurant','hotel','shopping','coffee','gas','convenience','groceries'],
-  MORE_MAP_CATS=['market','repair','charging','pharmacy','hospital','atm','parking','toilet','police','ice'];
-let mapPoiLayer=null,mapPoiRequest=0,activeMapCategory='';
-function mapCategoryButton(key){
-  const button=document.createElement('button'),label=document.createElement('span');
-  button.type='button';button.className='map-category-chip';button.dataset.poiCat=key;button.setAttribute('aria-pressed','false');
-  const icon=document.createElementNS('http://www.w3.org/2000/svg','svg'),use=document.createElementNS('http://www.w3.org/2000/svg','use');
-  icon.classList.add('i','map-category-glyph');icon.setAttribute('aria-hidden','true');use.setAttribute('href','#'+CATS[key].icon);icon.append(use);
-  label.textContent=t(CATS[key].k);button.append(icon,label);
-  button.onclick=()=>searchMapCategory(key);
+let mapPoiLayer=null,mapPoiRequest=0,activeMapCategory='',lastMapPoiResult=null;
+function mapCategoryButton(category){
+  const button=document.createElement('button'),badge=document.createElement('span'),icon=document.createElementNS('http://www.w3.org/2000/svg','svg'),
+    use=document.createElementNS('http://www.w3.org/2000/svg','use'),label=document.createElement('span');
+  button.type='button';button.className='map-category-chip';button.dataset.poiCat=category.id;
+  button.style.setProperty('--poi-color',category.color);button.style.setProperty('--poi-marker-ink',category.markerInk||'#353839');button.setAttribute('aria-pressed','false');button.setAttribute('aria-label',t(category.k));
+  badge.className='map-category-badge';badge.textContent=category.badge;badge.setAttribute('aria-hidden','true');
+  icon.classList.add('i','map-category-glyph');icon.setAttribute('aria-hidden','true');use.setAttribute('href','#'+category.icon);icon.append(use);
+  label.textContent=t(category.k);button.append(badge,icon,label);
+  button.onclick=()=>searchMapCategory(category.id);
   return button
 }
+function updatePoiAnchorOptions(){
+  const select=$('#poiAnchor');if(!select)return;
+  const current=select.value||'auto',gps=NAV.position||st.me,options=[{value:'auto',label:t('poiAnchorAuto')}];
+  if(gps)options.push({value:'gps',label:t('poiAnchorGps')});
+  if(st.origin)options.push({value:'pickup',label:t('poiAnchorPickup')});
+  st.stops.forEach((stop,index)=>options.push({value:'drop:'+index,label:t('poiAnchorDropoff',{n:index+1})}));
+  options.push({value:'map',label:t('poiAnchorMap')});
+  select.replaceChildren(...options.map(option=>{const el=document.createElement('option');el.value=option.value;el.textContent=option.label;return el}));
+  select.value=options.some(option=>option.value===current)?current:'auto'
+}
+function poiAnchor(){
+  updatePoiAnchorOptions();
+  const key=$('#poiAnchor').value,gps=NAV.position||st.me,mapCenter=map.getCenter();
+  if(key==='gps'&&gps)return{point:gps,name:t('poiAnchorGps'),usingGps:true};
+  if(key==='pickup'&&st.origin)return{point:st.origin,name:t('poiAnchorPickup'),usingGps:false};
+  if(key.startsWith('drop:')){
+    const index=Number(key.slice(5)),stop=st.stops[index];
+    if(stop)return{point:stop,name:stop.name||t('poiAnchorDropoff',{n:index+1}),usingGps:false}
+  }
+  if(key==='map')return{point:{lat:mapCenter.lat,lng:mapCenter.lng},name:t('poiAnchorMap'),usingGps:false};
+  if(gps)return{point:gps,name:t('poiAnchorGps'),usingGps:true};
+  if(st.origin)return{point:st.origin,name:t('poiAnchorPickup'),usingGps:false};
+  if(st.stops.length)return{point:st.stops[st.stops.length-1],name:st.stops[st.stops.length-1].name||t('poiAnchorDropoff',{n:st.stops.length}),usingGps:false};
+  return{point:{lat:mapCenter.lat,lng:mapCenter.lng},name:t('poiAnchorMap'),usingGps:false}
+}
+function activePoiVehicle(category){
+  const config=PLACE_CATEGORY_BY_ID[category],selected=vById(st.sel.land)||st.chosen?.land?.v,
+    vehicle=selected?.dom==='land'?selected:null;
+  return vehicle||config.vehicles.map(vById).find(Boolean)||vById('car')
+}
+function poiIndication(place,category){
+  const config=PLACE_CATEGORY_BY_ID[category],vehicle=activePoiVehicle(category),suggested=config.vehicles.map(vById).find(Boolean)||vehicle,
+    rate=Number(st.fuel?.[vehicle.fuel]),detourKm=place.km*2,
+    kmFuel=vehicle.dom==='water'?vehicle.fuelLph/vehicle.speed:1/vehicle.kmpl,
+    routeFactor=Number(st.r?.factor),traffic=Number.isFinite(routeFactor)?1+.35*Math.max(0,routeFactor-1):1,
+    fuelCost=Number.isFinite(rate)?detourKm*kmFuel*rate*traffic:null,
+    minutes=detourKm/Math.max(1,vehicle.speed)*60;
+  return{detourKm,fuelCost,minutes,vehicle,suggested}
+}
+function poiDistance(km){
+  return km<1?t('poiMeters',{n:Math.round(km*1000)}):t('poiKm',{n:km.toFixed(1)})
+}
 function renderMapCategories(){
-  const bar=$('#mapCategoryBar'),more=$('#mapCategoryMore');
-  if(!bar||!more)return;
-  bar.replaceChildren(...MAP_CATS.map(mapCategoryButton));
-  const moreButton=document.createElement('button');
-  moreButton.type='button';moreButton.className='map-category-chip map-category-more-button';moreButton.id='mapMoreButton';
-  moreButton.textContent=t('poiMore');moreButton.setAttribute('aria-expanded',String(!more.hidden));
-  moreButton.onclick=()=>{more.hidden=!more.hidden;moreButton.setAttribute('aria-expanded',String(!more.hidden))};
-  bar.append(moreButton);
-  more.replaceChildren(...MORE_MAP_CATS.map(mapCategoryButton));
+  const bar=$('#mapCategoryBar');if(!bar)return;
+  bar.replaceChildren(...PLACE_CATEGORIES.map(group=>{
+    const section=document.createElement('div'),title=document.createElement('span');
+    section.className='map-category-group';section.setAttribute('role','group');section.setAttribute('aria-label',t(group.k));
+    title.className='map-category-group-title';title.textContent=t(group.k);
+    section.append(title,...group.categories.map(mapCategoryButton));return section
+  }));
   bar.setAttribute('aria-label',t('poiExplore'));
-  updateMapCategoryState()
+  $('#poiAnchorLabel').textContent=t('poiAnchorLabel');$('#poiRadiusLabel').textContent=t('poiRadiusLabel');$('#poiSortLabel').textContent=t('poiSortLabel');
+  for(const [id,key] of [['poiRadius1','poiRadius1'],['poiRadius3','poiRadius3'],['poiRadius5','poiRadius5'],
+    ['poiSortDistance','poiSortDistance'],['poiSortCost','poiSortCost'],['poiSortEta','poiSortEta']])$('#'+id).textContent=t(key);
+  $('#poiAnchor').setAttribute('aria-label',t('poiAnchorLabel'));$('#poiRadius').setAttribute('aria-label',t('poiRadiusLabel'));$('#poiSort').setAttribute('aria-label',t('poiSortLabel'));
+  $('#poiClose').setAttribute('aria-label',t('poiClose'));
+  updatePoiAnchorOptions();updateMapCategoryState()
 }
 function updateMapCategoryState(){
-  $$('#mapCategoryBar [data-poi-cat],#mapCategoryMore [data-poi-cat]').forEach(button=>{
+  $$('#mapCategoryBar [data-poi-cat]').forEach(button=>{
     const active=button.dataset.poiCat===activeMapCategory;
     button.classList.toggle('is-active',active);button.setAttribute('aria-pressed',String(active))
   })
 }
+// Reuse app.js addPoint() so planner stop updates immediately run the route recalculation.
+function addPlaceToPlan(place,action){
+  const hasPickup=!!st.origin;
+  if(action==='pickup'){addPoint(place.lat,place.lng,place.name,true);toast(t('poiPickupAdded'),'ok');return}
+  if(action==='support')addPoint(place.lat,place.lng,place.name,false,'support');
+  else addPoint(place.lat,place.lng,place.name,false);
+  toast(hasPickup?t(action==='support'?'poiSupportAdded':'poiDropAdded'):'poiAsPickupNoOrigin','ok')
+}
 function showMapPlaces(result,category){
-  const panel=$('#poiPanel'),list=$('#poiResults');
-  panel.hidden=false;$('#poiHeading').textContent=t('poiStopoverCategory',{category:t(CATS[category].k)});
-  $('#poiSummary').textContent=result.places.length
-    ?`${t('poiResultCount',{n:result.places.length})} · ${t(result.usingGps?'poiAroundYou':'poiAroundPickup')}`
-    :t('poiNoResults');
-  list.replaceChildren();
-  if(mapPoiLayer)mapPoiLayer.clearLayers();
+  const panel=$('#poiPanel'),list=$('#poiResults'),config=PLACE_CATEGORY_BY_ID[category];
+  panel.hidden=false;$('#poiHeading').textContent=t(config.k);
+  $('#poiSummary').textContent=t('poiSearchSummary',{n:result.places.length,radius:result.radiusKm,anchor:result.anchorLabel});
+  list.replaceChildren();if(mapPoiLayer)mapPoiLayer.clearLayers();
   if(!result.places.length){
     const empty=document.createElement('p');empty.className='muted';empty.textContent=t('poiNoResults');list.append(empty);return
   }
+  // Keep the category markers separate from app.js route markers on the shared Leaflet map.
   if(!mapPoiLayer)mapPoiLayer=L.layerGroup().addTo(map);
-  result.places.forEach((place,index)=>{
-    const marker=L.marker(place,{icon:L.divIcon({className:'poi-icon-wrap',html:`<span class="poi-map-icon ${category}" style="--poi-color:${CATS[category].color}"><svg class="poi-marker-svg" aria-hidden="true"><use href="#${CATS[category].icon}"></use></svg></span>`,iconSize:[42,48],iconAnchor:[21,46]})}).addTo(mapPoiLayer);
-    marker.bindPopup(`<strong>${esc(place.name)}</strong><br><span>${place.km<1?Math.round(place.km*1000)+' m':place.km.toFixed(1)+' km'}</span>`);
-    const row=document.createElement('div'),rank=document.createElement('span'),details=document.createElement('span'),name=document.createElement('strong'),meta=document.createElement('small'),go=document.createElement('button');
-    row.className='poi-result';row.setAttribute('role','listitem');
-    rank.className='poi-result-rank';rank.textContent=String(index+1);
+  result.places.forEach(place=>{
+    const impact=place.impact,marker=L.marker(place,{icon:L.divIcon({className:'poi-icon-wrap',
+      html:`<span class="poi-map-icon" style="--poi-color:${config.color};--poi-marker-ink:${config.markerInk||'#353839'}"><span class="poi-map-badge">${config.badge}</span><svg class="poi-marker-svg" aria-hidden="true"><use href="#${config.icon}"></use></svg></span>`,
+      iconSize:[42,48],iconAnchor:[21,46]})}).addTo(mapPoiLayer);
+    marker.bindPopup(`<strong>${esc(place.name)}</strong><br><span>${esc(poiDistance(place.km))}</span><br><span>${esc(t('poiFuelImpact',{cost:impact.fuelCost===null?'—':peso(impact.fuelCost)}))}</span>`);
+    const row=document.createElement('article'),icon=document.createElement('span'),svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),
+      use=document.createElementNS('http://www.w3.org/2000/svg','use'),details=document.createElement('div'),
+      name=document.createElement('strong'),address=document.createElement('small'),badges=document.createElement('div'),actions=document.createElement('div');
+    row.className='poi-result';row.setAttribute('role','listitem');row.style.setProperty('--poi-color',config.color);row.style.setProperty('--poi-marker-ink',config.markerInk||'#353839');
+    icon.className='poi-result-icon';icon.textContent=config.badge;icon.title=t(config.k);
+    svg.classList.add('i');svg.setAttribute('aria-hidden','true');use.setAttribute('href','#'+config.icon);svg.append(use);icon.append(svg);
     details.className='poi-result-details';name.className='poi-result-name';name.textContent=place.name;
-    meta.className='poi-result-detail';meta.textContent=[place.km<1?Math.round(place.km*1000)+' m':place.km.toFixed(1)+' km',place.info].filter(Boolean).join(' · ');
-    details.append(name,meta);go.type='button';go.className='btn p';go.textContent=t('poiDirections');
-    go.onclick=()=>{NAV.detour({...place,kind:'place'});toast(t('takingYou',{s:place.name}),'ok')};
-    row.append(rank,details,go);list.append(row)
+    address.className='poi-result-detail';address.textContent=[poiDistance(place.km),place.info].filter(Boolean).join(' · ');
+    badges.className='poi-indications';
+    const indicationItems=[
+      ['distance',poiDistance(place.km)],
+      ['detour',t('poiDetour',{km:impact.detourKm.toFixed(1)})],
+      ['fuel',t('poiFuelImpact',{cost:impact.fuelCost===null?'—':peso(impact.fuelCost)})],
+      ['eta',t('poiEtaImpact',{time:fmtT(impact.minutes)})],
+      ['vehicle',t('poiVehicleHint',{vehicle:impact.suggested.name})]
+    ];
+    indicationItems.forEach(([kind,text])=>{const pill=document.createElement('span');pill.className='poi-pill poi-pill-'+kind; pill.textContent = text; badges.append(pill)});
+    details.append(name,address,badges);actions.className='poi-result-actions';
+    for(const [action,key] of [['pickup','poiPickupAction'],['drop','poiDropAction'],['support','poiSupportAction']]){
+      const button=document.createElement('button');button.type='button';button.className='btn poi-action poi-action-'+action;button.textContent=t(key);
+      button.setAttribute('aria-label',t('poiActionLabel',{action:t(key),place:place.name}));
+      button.onclick=()=>addPlaceToPlan(place,action);actions.append(button)
+    }
+    row.append(icon,details,actions);list.append(row)
   });
-  map.fitBounds(L.latLngBounds([result.at,...result.places].map(place=>[place.lat,place.lng])),{padding:[30,30],maxZoom:15});
-  setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}),40)
+  map.fitBounds(L.latLngBounds([result.at,...result.places].map(place=>[place.lat,place.lng])),{padding:[30,30],maxZoom:15})
 }
 async function searchMapCategory(category){
-  const request=++mapPoiRequest;
+  if(!PLACE_CATEGORY_BY_ID[category])return;
+  const request=++mapPoiRequest,radiusKm=Number($('#poiRadius').value)||3,anchor=poiAnchor(),sortBy=$('#poiSort').value;
   activeMapCategory=category;updateMapCategoryState();
-  const panel=$('#poiPanel');panel.hidden=false;
-  $('#poiHeading').textContent=t(CATS[category].k);$('#poiSummary').textContent=t('poiSearching');
+  const panel=$('#poiPanel');panel.hidden=false;panel.setAttribute('aria-busy','true');
+  $('#poiHeading').textContent=t(PLACE_CATEGORY_BY_ID[category].k);$('#poiSummary').textContent=t('poiSearching');
   $('#poiResults').replaceChildren();
-  $$('#mapCategoryBar [data-poi-cat],#mapCategoryMore [data-poi-cat]').forEach(button=>button.disabled=true);
+  $$('#mapCategoryBar [data-poi-cat]').forEach(button=>button.disabled=true);
   try{
-    const result=await findPlaces(category,null,60,false);
-    if(request===mapPoiRequest)showMapPlaces(result,category)
+    const result=await findPlaces(category,null,100,false,{at:anchor.point,radius:radiusKm*1000,radiusKm,maxResults:240});
+    if(request===mapPoiRequest){
+      const places=result.places.map(place=>({...place,km:hav(anchor.point,place)}))
+        .filter(place=>place.categoryId===category&&place.km<=radiusKm)
+        .map(place=>({...place,impact:poiIndication(place,category)}));
+      places.sort((a,b)=>sortBy==='cost'?(a.impact.fuelCost??Infinity)-(b.impact.fuelCost??Infinity):
+        sortBy==='eta'?a.impact.minutes-b.impact.minutes:a.km-b.km);
+      lastMapPoiResult={...result,at:anchor.point,radiusKm,anchorLabel:anchor.name,usingGps:anchor.usingGps,places};
+      showMapPlaces(lastMapPoiResult,category)
+    }
   }catch(error){
     console.warn('Nearby place search failed.',error);
     if(request===mapPoiRequest){$('#poiSummary').textContent=t('poiSearchFailed');$('#poiResults').replaceChildren();if(mapPoiLayer)mapPoiLayer.clearLayers()}
   }finally{
-    $$('#mapCategoryBar [data-poi-cat],#mapCategoryMore [data-poi-cat]').forEach(button=>button.disabled=false)
+    if(request===mapPoiRequest){
+      panel.setAttribute('aria-busy','false');
+      $$('#mapCategoryBar [data-poi-cat]').forEach(button=>button.disabled=false)
+    }
   }
 }
-$('#poiClose').onclick=()=>{$('#poiPanel').hidden=true;activeMapCategory='';updateMapCategoryState();if(mapPoiLayer)mapPoiLayer.clearLayers()};
+$('#poiAnchor').addEventListener('change',()=>{if(activeMapCategory)searchMapCategory(activeMapCategory)});
+$('#poiRadius').addEventListener('change',()=>{if(activeMapCategory)searchMapCategory(activeMapCategory)});
+$('#poiSort').addEventListener('change',()=>{if(activeMapCategory)searchMapCategory(activeMapCategory)});
+$('#poiClose').onclick=()=>{
+  mapPoiRequest++;lastMapPoiResult=null;
+  $('#poiPanel').hidden=true;$('#poiPanel').removeAttribute('aria-busy');
+  $$('#mapCategoryBar [data-poi-cat]').forEach(button=>button.disabled=false);
+  activeMapCategory='';updateMapCategoryState();if(mapPoiLayer)mapPoiLayer.clearLayers()
+};
 renderMapCategories();
 function goTo(p){if(!p)return;const msg=t('takingYou',{s:p.name});bubble('bot',msg);openAI(false);NAV.detour(p);setTimeout(()=>speak(msg),50)}
 function reply(msg){bubble('bot',msg);speak(msg)}

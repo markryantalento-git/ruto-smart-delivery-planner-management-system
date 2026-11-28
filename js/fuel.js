@@ -2,6 +2,7 @@
  Refresh checks, in order of newest date: data/fuel-prices.json, Firestore document public/fuel,
  RUTO.FUEL_API_URL, and (button only) an AI web search that you must approve. */
 const FK=[['gas','fGas'],['diesel','fDie'],['kero','fKer'],['ev','fEv']];
+const FUEL_ICONS={gas:'g-fuel-gas',diesel:'g-fuel-diesel',kero:'g-kerosene',ev:'g-electricity'};
 const FUEL_DEFAULT={gas:67.96,diesel:83.99,kero:109.10,ev:12,asOf:'2026-11-24',source:'fuelprice.ph',manual:false,checked:0};
 {const s=LS('ruto_fuel3',null);st.fuel={...FUEL_DEFAULT,...(s||{})};st.prev=LS('ruto_fuelprev',{})}
 const validFuel=d=>d&&/^\d{4}-\d{2}-\d{2}$/.test(d.asOf||'')&&['gas','diesel'].every(k=>+d[k]>20&&+d[k]<250)&&(d.kero==null||(+d.kero>20&&+d.kero<300))&&d.asOf<=ymd(new Date(Date.now()+86400000));
@@ -28,7 +29,7 @@ function fuelMiniUI(){
   strip.setAttribute('aria-label',t('fuelH'));
   strip.innerHTML=`<div class="fuel-mini-head"><span>${ic('g-fuel')}<strong>${t('fuelH')}</strong></span><button class="btn fuel-mini-edit" id="fuelMiniEdit" type="button">${ic('edit')} ${t('fuelEditPrices')}</button></div><div class="fuel-mini-prices">`+
     FK.map(([key,label])=>{const movement=fuelMovement(key),unit=key==='ev'?'/kWh':'/L';
-      return`<div class="fuel-mini-price"><span>${t(label)}</span><strong>₱${Number(st.fuel[key]).toFixed(2)}<small>${unit}</small></strong><small class="dash-price-trend ${movement.direction}">${movement.change>0?'▲ ':movement.change<0?'▼ ':''}${movement.label}</small></div>`
+      return`<div class="fuel-mini-price fuel-${key}"><span class="fuel-mini-label">${ic(FUEL_ICONS[key],'fuel-type-icon')}<span>${t(label)}</span></span><strong>₱${Number(st.fuel[key]).toFixed(2)}<small>${unit}</small></strong><small class="dash-price-trend ${movement.direction}">${movement.change>0?'▲ ':movement.change<0?'▼ ':''}${movement.label}</small></div>`
     }).join('')+'</div>';
   $('#fuelMiniEdit').onclick=()=>{$('#fuelPanel').open=true;$('#fuelPanel').scrollIntoView({behavior:'smooth',block:'nearest'})}
 }
