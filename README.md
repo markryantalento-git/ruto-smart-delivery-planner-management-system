@@ -13,6 +13,8 @@ Network, carrier SMS, and infrastructure charges charged by third parties may st
 - js/store.js           - save, history, calendar, device calendar
 - js/fuel.js            - fuel price refresh
 - js/nav.js             - live navigation
+- js/vehicle-models.js  - procedural Three.js vehicle geometry
+- js/vendor/three.module.js and three.core.js - locally bundled 3D renderer
 - js/map3d.js           - native OpenFreeMap 3D map and aligned overlays
 - js/places.js          - nearby place search and category results
 - js/main.js            - start-up
@@ -90,13 +92,40 @@ The planner and navigation maps use OpenFreeMap's public Liberty vector-map styl
 toggle opens a native MapLibre GL view with a pitched camera and the style's 3D buildings; route,
 nearby-place, and vehicle markers are rendered on that same map so they remain accurately aligned.
 While a nearby category is searching, an expanding pulse marks the selected search anchor. During
-navigation, a perspective-rendered vehicle model follows the active land or water route segment and
-turns with the reported travel heading.
+navigation, locally rendered Three.js 3D models follow the active route and turn with the reported
+heading. The original procedural models distinguish all 12 selectable vehicles, including the
+motorcycle, e-trike, tricycle, cars, jeepney, vans, pickups, three truck sizes, bangka, and cargo boat.
+Choose a different vehicle in the navigation panel to recalculate the route and its ETA. The vehicle
+marker is hidden while a new destination's initial route is being calculated. Three.js is bundled for
+offline use under `js/vendor/`; its MIT license is included alongside it.
 The standard 2D view continues to use the Leaflet adapter. OpenFreeMap's map data comes from
 OpenStreetMap and its public tile service does not require an API key. If the Leaflet adapter fails,
 the app logs an error and falls back to OpenStreetMap raster tiles. Routing and nearby-place/address
 search continue to use their separate OpenStreetMap-based services. Choose **My location** in the
 nearby-search anchor selector to request GPS when a location has not already been obtained.
+
+The web app can request a screen wake lock where the browser supports it, but a browser-only install
+cannot show iOS Live Activities or Android's native background-navigation notification. The Capacitor
+apps include native lock-screen navigation: Android uses a location foreground service and ongoing
+notification; iOS uses a Live Activity and background location. After the first route is calculated,
+the native feature requests location access (including background/Always access) and notifications as
+required by the platform. Live Activities require iOS 16.1 or later; device settings, OS power
+management, and user permissions can limit updates.
+
+## Native app shells
+
+Capacitor projects for Android and iOS are scaffolded beside this `ruto` web directory. From the
+workspace root, run `npm install` and `npm run mobile:sync`, then open the project with
+`npm run mobile:android` or `npm run mobile:ios`. Android builds require Android Studio, a JDK, and
+the Android SDK. iOS builds and App Store signing require macOS and Xcode.
+
+The native project sources now include the Android foreground notification/service and the iOS
+Live Activity widget, and the web navigation page starts, updates, and stops them through the
+Capacitor bridge. These native changes have not been built or tested on a device: this Windows
+machine has no Android JDK/SDK and cannot run Xcode. Before release, build each platform, test the
+permission flows and lock-screen updates on physical devices, and verify background location and
+Live Activity behavior with the target OS versions. For browser-only installs, use the in-app
+Google Maps or Waze buttons for lock-screen guidance.
 
 ## Firebase console (project ruto-6b418)
 1. Firestore Database > Create database (production mode, asia-southeast1).
@@ -232,8 +261,9 @@ signed-in user opens RUTO; this does not send background push notifications.
 ## Limits
 - The device calendar cannot be written silently by a website: the user confirms in Google Calendar
   or opens the .ics file. Later edits or deletes do not update the device calendar automatically.
-- Navigation runs while the page is open and the screen is on; it is not a background app.
-  Google Maps and Waze buttons are provided.
+- Browser-only navigation runs while the page is open; native lock-screen behavior is available
+  only in the Capacitor apps and remains unverified until platform builds and device tests pass.
+  Google Maps and Waze buttons are also provided.
 - Water legs are straight-line estimates (except ferry routes found on the map). Ferry fares,
   port fees and sailing schedules are not included. Land/water detection reads the map colour
   at each pin; use "Travel type" to override it.

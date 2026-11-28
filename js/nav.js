@@ -51,8 +51,12 @@ function here(){return new Promise(ok=>{
 async function start(d){
   stop();$('#dlg').open&&$('#dlg').close();
   $('#nav').hidden=false;document.body.classList.add('navon');build();setTimeout(()=>nmap.invalidateSize(),60);
+  lyr.clearLayers();meM=null;meVehicleId=null;
   const land=[d.veh,d.veh2].map(vById).find(v=>v?.dom==='land'),water=[d.veh,d.veh2].map(vById).find(v=>v?.dom==='water');
   N={id:d.id||null,pri:d.pri||'balanced',tmode:d.tmode||'auto',land:land||vById('car'),water:water||vById('cargo'),queue:[],pos:null,follow:true,off:0,last:0,mute:false,sim:null,watch:null,total:0,skipped:false};
+  const navVehicle=$('#navVehicle'),selectedVehicle=N.tmode==='water'?N.water:N.land;
+  navVehicle.innerHTML=V.map(vehicle=>`<option value="${vehicle.id}">${esc(vehicle.name)}</option>`).join('');
+  navVehicle.value=selectedVehicle.id;
   const me=N;
   banner(null,t('locating'),'');$('#nvArrive').textContent=t('markArrived');$('#nvCenter').hidden=true;$('#navinfo').textContent='';$('#navalts').innerHTML='';
   let pos=await here();if(N!==me)return;
@@ -97,6 +101,8 @@ function prepare(r){
 async function routeTo(){
   const me=N,n=++seqN;if(!me||!me.queue.length)return;
   const to=me.queue[0];me.arrived=false;me.route=null;
+  lyr.clearLayers();meM=null;meVehicleId=null;
+  nav3D.setMarkers('user',[]);nav3D.setMarkers('route',[]);nav3D.setRoute([]);
   banner(null,t('routing'),to.name);$('#nvArrive').textContent=t('markArrived');
   let opts;try{opts=await options(me.pos,to)}catch(e){if(N===me&&n===seqN){banner(null,t(D[e.message]?e.message:'routeFail'),to.name);me.route=null}return}
   if(N!==me||n!==seqN)return;
@@ -105,7 +111,7 @@ async function routeTo(){
   me.fast=fast;me.cheap=cheap;
   use(me.pri==='cheap'?cheap:me.pri==='fast'?fast:pickAlt(me.opts,me.pri));
   say(t('goingTo',{s:to.name})+'. '+text(me.route.steps[0]))}
-function use(r){N.route=r;N.idx=0;N.off=0;N.along=0;draw();altsUI();update(N.pos,0);
+function use(r){N.route=r;N.idx=0;N.off=0;N.along=0;N.nativeRouteId=(N.nativeRouteId||0)+1;draw();altsUI();update(N.pos,0);
   if(!N.follow)return;if(nav3D.visible)nav3D.flyTo(N.pos,17);else nmap.setView(ll(N.pos),17)}
 function altsUI(){
   const{fast,cheap,route}=N,list=fast===cheap?[[fast,t('recommended')]]:[[fast,t('faster')],[cheap,t('saver')]];
@@ -125,12 +131,11 @@ function draw(){
   mark(N.pos,N.heading||0)}
 function mark(p,h){
   const segment=segAt(N.along||0),vehicle=segment?.water?N.water:N.land,html=window.rutoNavigationVehicleMarkup(vehicle),
-    icon=L.divIcon({className:'',html,iconSize:[72,72],iconAnchor:[36,36]});
+    icon=L.divIcon({className:'',html,iconSize:[96,96],iconAnchor:[48,48]});
   if(!meM)meM=L.marker(p,{icon,zIndexOffset:1100}).addTo(lyr);
-  else if(meVehicleId!==vehicle?.id)meM.setIcon(icon);
+  else if(meVehicleId!==vehicle?.id){window.disposeRutoVehicleModel?.(meM.getElement());meM.setIcon(icon)}
   meVehicleId=vehicle?.id;meM.setLatLng(p);
-  const marker=meM.getElement()?.querySelector('.vehicle-location-marker');
-  if(marker)marker.style.setProperty('--vehicle-heading',h+'deg');
+  window.updateRutoVehicleModel?.(meM.getElement(),h);
   nav3D.setMarker('user','current',{
     lat:p.lat,lng:p.lng,html,className:'vehicle-marker-host',bearing:h,label:t('currentLocation')
   })}
@@ -158,13 +163,65 @@ function update(p,acc){
   const r=N.route,to=N.queue[0];if(!r||N.arrived)return;
   const s=snap(p);N.idx=s.i;N.along=s.along;
   const left=Math.max(0,r.km-s.along),sec=r.km?r.sec*left/r.km:0;
-  $('#navinfo').innerHTML=`<b>${clock(new Date(Date.now()+sec*1000))}</b> <span>${t('eta')}</span> · <b>${fmtT(sec/60)}</b> · <b>${dist((left+Math.max(0,s.d))*1000)}</b> · ~${peso(r.km?r.cost*left/r.km:0)}<br><span class="muted">${t('toStop')}: ${esc(to.name)}${N.queue.length>1?' · +'+(N.queue.length-1):''}${r.estimate?' · '+t('nEstimateShort'):''}</span>`;
+  $('#navinfo').innerHTML=`<strong class="nav-eta-duration">${esc(t('navRemaining',{time:fmtT(sec/60)}))}</strong><span class="nav-eta-arrival">${esc(t('navArrival',{time:clock(new Date(Date.now()+sec*1000))}))} · ${dist((left+Math.max(0,s.d))*1000)}</span><span class="muted nav-eta-detail">${t('toStop')}: ${esc(to.name)}${N.queue.length>1?' · +'+(N.queue.length-1):''}${r.estimate?' · '+t('nEstimateShort'):''} · ~${peso(r.km?r.cost*left/r.km:0)}</span>`;
   if(hav(p,to)<.05||(left<.03&&s.d<.08))return arrive();
   const onWater=r.segs.length&&segAt(s.along)?.water;
   if(!onWater&&s.d>Math.max(.07,(acc||0)/1000*1.5)){if(++N.off>=3&&Date.now()-N.last>12000&&!N.sim){N.last=Date.now();toast(t('rerouting'),'ok');say(t('rerouting'));routeTo();return}}else N.off=0;
   const next=r.steps.find(x=>x.at>s.along+.012&&x.type!=='depart')||r.steps.at(-1),m=Math.max(0,(next.at-s.along)*1000);
   banner(next,text(next),dist(m));
+  syncNativeNavigation();
   if(m<60&&next.said<2){next.said=2;say(text(next))}else if(m<350&&m>=60&&!next.said){next.said=1;say(t('inDist',{d:dist(m)})+', '+text(next))}}
+
+function syncNativeNavigation(){
+  const me=N,r=me?.route,api=window.Capacitor?.Plugins?.RutoLiveNavigation;
+  if(!me||!r||me.noGps||!api||me.nativeFailed||me.nativeStarting)return;
+  const starting=!me.nativeStarted;
+  if(!starting&&Date.now()-(me.nativeLastUpdate||0)<5000)return;
+  me.nativeLastUpdate=Date.now();
+  const next=r.steps.find(step=>step.at>(me.along||0)+.012&&step.type!=='depart')||r.steps.at(-1);
+  const routeId=me.nativeRouteId||1;
+  const stride=Math.max(1,Math.ceil(r.path.length/100));
+  const route=r.path.filter((_,index)=>index%stride===0||index===r.path.length-1)
+    .map(([lat,lng])=>({lat,lng}));
+  const left=Math.max(0,r.km-(me.along||0)),seconds=r.km?r.sec*left/r.km:0;
+  const payload={
+    destination:me.queue[0]?.name||'RUTO navigation',
+    vehicle:(me.tmode==='water'?me.water:me.land)?.name||'Vehicle',
+    arrival:clock(new Date(Date.now()+seconds*1000)),
+    remainingSeconds:Math.round(seconds),
+    totalSeconds:Math.round(r.sec),
+    remainingMeters:Math.round(left*1000),
+    progress:r.km?Math.max(0,Math.min(1,(me.along||0)/r.km)):0,
+    nextStep:next?text(next):'',
+    routeId,
+    route
+  };
+  if(!me.nativeListenerPromise&&api.addListener){
+    me.nativeListenerPromise=api.addListener('locationUpdate',location=>{
+      if(N!==me||me.sim||!Number.isFinite(location?.lat)||!Number.isFinite(location?.lng))return;
+      onPos({lat:location.lat,lng:location.lng},location.accuracy,location.heading)
+    }).then(listener=>{
+      if(N===me)me.nativeListener=listener;
+      else listener.remove()
+    }).catch(error=>console.error('Could not subscribe to native navigation location updates.',error))
+  }
+  const method=starting?'startNavigation':'updateNavigation';
+  if(typeof api[method]!=='function'){me.nativeFailed=true;me.nativeStarted=false;console.error(`Native ${method} method is unavailable.`);toast(t('nativeNavigationError'),'bad');return}
+  if(starting)me.nativeStarting=true;
+  Promise.resolve().then(()=>api[method](payload)).then(result=>{
+    if(N!==me){return api.stopNavigation?.()}
+    me.nativeStarting=false;
+    if(starting)me.nativeStarted=true;
+    if(starting&&result?.liveActivityEnabled===false)toast(t('nativeLiveActivityOff'),'bad')
+  }).catch(error=>{
+    if(N!==me)return;
+    me.nativeStarting=false;
+    me.nativeFailed=true;
+    me.nativeStarted=false;
+    console.error('Native lock-screen navigation could not be started or updated.',error);
+    toast(t('nativeNavigationError'),'bad')
+  })
+}
 function segAt(km){let d=0;for(const s of N.route.segs){d+=pathKm(s.path);if(km<=d)return s}return N.route.segs.at(-1)}
 function banner(step,main,sub){
   $('#navarrow').innerHTML=step?.ferry?ic('g-boat'):step?.type==='arrive'?ic('g-pin'):`<svg class="i" viewBox="0 0 24 24" style="transform:rotate(${ANGLE[step?.mod]||0}deg)"><path d="M12 21V4M5 11l7-7 7 7"/></svg>`;
@@ -207,7 +264,10 @@ function say(message){
   window.speechSynthesis.speak(utterance)
 }
 function stop(){
-  if(N){simStop();clearInterval(N.timer);if(N.watch!=null)navigator.geolocation?.clearWatch(N.watch);N.lock?.release?.().catch(()=>{});window.speechSynthesis?.cancel()}
+  if(N){const ended=N;simStop();clearInterval(N.timer);if(N.watch!=null)navigator.geolocation?.clearWatch(N.watch);N.lock?.release?.().catch(()=>{});window.speechSynthesis?.cancel();
+    ended.nativeListener?.remove?.();ended.nativeListenerPromise?.then(listener=>{if(listener!==ended.nativeListener)listener.remove()}).catch(()=>{});
+    if(ended.nativeStarted)Promise.resolve(window.Capacitor?.Plugins?.RutoLiveNavigation?.stopNavigation?.()).catch(error=>console.error('Could not stop native lock-screen navigation.',error))}
+  window.disposeRutoVehicleModel?.(meM?.getElement());meM=null;meVehicleId=null;
   if(nav3D?.visible)toggle3D(false);
   nav3D?.setMarkers('user',[]);nav3D?.setMarkers('route',[]);nav3D?.setRoute([]);
   setMap3DButton($('#nav3dToggle'),false);meVehicleId=null;
@@ -223,6 +283,14 @@ $('#nvArrive').onclick=next;
 $('#nvCenter').onclick=()=>{if(N){N.follow=true;if(nav3D.visible)nav3D.flyTo(N.pos,17);else nmap.setView(ll(N.pos),17);$('#nvCenter').hidden=true}};
 $('#nvMute').onclick=()=>{if(!N)return;N.mute=!N.mute;$('#nvMute').classList.toggle('on',N.mute);if(N.mute)window.speechSynthesis?.cancel()};
 $('#nvSim').onclick=simToggle;
+$('#navVehicle').onchange=()=>{
+  if(!N)return;
+  const vehicle=vById($('#navVehicle').value);
+  if(!vehicle)return;
+  if(vehicle.dom==='water'){N.water=vehicle;N.tmode='water'}
+  else{N.land=vehicle;N.tmode='land'}
+  simStop();N.arrived=false;routeTo()
+};
 const ext=f=>{const p=N?.queue[0];if(p)window.open(f(p),'_blank','noopener')};
 $('#nvG').onclick=()=>ext(p=>`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}&travelmode=driving&dir_action=navigate`);
 $('#nvW').onclick=()=>ext(p=>`https://waze.com/ul?ll=${p.lat},${p.lng}&navigate=yes`);

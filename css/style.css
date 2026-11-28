@@ -161,51 +161,15 @@ label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
 .poi-search-ripple>span:nth-child(3){animation-delay:1.2s}
 .poi-search-ripple>i{position:absolute;width:12px;height:12px;border:2px solid #fff;border-radius:50%;background:#FFD700;box-shadow:0 1px 8px rgba(0,0,0,.45)}
 @keyframes poi-search-ripple{0%{opacity:.9;transform:translate(-50%,-50%) scale(.45)}100%{opacity:0;transform:translate(-50%,-50%) scale(3.4)}}
-.vehicle-model-marker{width:72px;height:72px}
-.vehicle-model-stage{position:absolute;inset:0;display:grid;place-items:center;perspective:220px}
-.vehicle-3d-model{position:relative;width:54px;height:50px;transform:rotateX(56deg) rotateZ(var(--vehicle-heading,0deg));transform-style:preserve-3d;animation:vehicle-model-float 1.6s ease-in-out infinite;filter:drop-shadow(0 5px 3px rgba(0,0,0,.42))}
-.vehicle-3d-chassis,.vehicle-3d-body,.vehicle-3d-cargo,.vehicle-3d-cabin,.vehicle-3d-window,.vehicle-3d-wheel,.vehicle-3d-light{position:absolute;transform-style:preserve-3d}
-.vehicle-3d-chassis{left:8px;top:7px;width:38px;height:36px;border:1px solid #7D6200;border-radius:13px 13px 10px 10px;background:linear-gradient(145deg,#fff1a3,#d6a900 65%,#8c6a00);transform:translateZ(2px);box-shadow:0 6px 0 #7b5d00}
-.vehicle-3d-body{left:12px;top:5px;width:30px;height:24px;border:1px solid rgba(255,255,255,.85);border-radius:10px 10px 7px 7px;background:linear-gradient(145deg,#fff8c8,#ffd700 54%,#b28b00);transform:translateZ(7px);box-shadow:0 3px 0 #876600}
-.vehicle-3d-cargo{display:none;left:13px;top:20px;width:28px;height:23px;border:1px solid #fff0a0;border-radius:4px;background:linear-gradient(135deg,#fff3a7,#d1a400 70%,#886700);transform:translateZ(11px);box-shadow:0 4px 0 #795b00}
-.vehicle-3d-cabin{left:15px;top:12px;width:24px;height:15px;border:1px solid #ffe988;border-radius:7px 7px 4px 4px;background:linear-gradient(145deg,#fff7ce,#d9ad12);transform:translateZ(14px);box-shadow:0 2px 0 #967300}
-.vehicle-3d-window{left:18px;top:14px;width:18px;height:8px;border:1px solid #e6f4ff;border-radius:5px 5px 2px 2px;background:linear-gradient(135deg,#e7fbff,#5591ad 72%,#274f67);transform:translateZ(17px)}
-.vehicle-3d-wheel{width:9px;height:12px;border:1px solid #d5d9dd;border-radius:4px;background:linear-gradient(90deg,#090b0f,#303740 45%,#090b0f);transform:translateZ(4px)}
-.vehicle-3d-wheel-front-left{left:8px;top:9px}
-.vehicle-3d-wheel-front-right{right:8px;top:9px}
-.vehicle-3d-wheel-rear-left{left:8px;bottom:8px}
-.vehicle-3d-wheel-rear-right{right:8px;bottom:8px}
-.vehicle-3d-light{top:5px;width:6px;height:4px;border:1px solid #fff;background:#fff2a1;box-shadow:0 0 5px #ffe875;transform:translateZ(9px)}
-.vehicle-3d-light-left{left:15px}
-.vehicle-3d-light-right{right:15px}
-.vehicle-3d-model-moto .vehicle-3d-chassis{left:21px;width:12px;height:40px;border-radius:8px;background:linear-gradient(90deg,#6e3c00,#ffd700 50%,#a36b00)}
-.vehicle-3d-model-moto .vehicle-3d-body{left:20px;top:15px;width:14px;height:18px;border-radius:8px}
-.vehicle-3d-model-moto .vehicle-3d-cabin,.vehicle-3d-model-moto .vehicle-3d-window{left:20px;top:17px;width:14px;height:9px;border-radius:5px}
-.vehicle-3d-model-moto .vehicle-3d-wheel{left:21px;width:12px;height:12px;border-radius:50%}
-.vehicle-3d-model-moto .vehicle-3d-wheel-front-left{top:1px}
-.vehicle-3d-model-moto .vehicle-3d-wheel-front-right,.vehicle-3d-model-moto .vehicle-3d-wheel-rear-right{display:none}
-.vehicle-3d-model-moto .vehicle-3d-wheel-rear-left{top:auto;bottom:1px}
-.vehicle-3d-model-etrike .vehicle-3d-body,.vehicle-3d-model-trike .vehicle-3d-body{left:12px;top:13px;width:30px;height:22px;border-radius:10px 10px 5px 5px}
-.vehicle-3d-model-etrike .vehicle-3d-cabin,.vehicle-3d-model-trike .vehicle-3d-cabin{left:15px;top:13px;width:24px;height:15px}
-.vehicle-3d-model-etrike .vehicle-3d-wheel-rear-right,.vehicle-3d-model-trike .vehicle-3d-wheel-rear-right{display:none}
-.vehicle-3d-model-jeep .vehicle-3d-body,.vehicle-3d-model-t2 .vehicle-3d-body{top:4px;width:32px;height:39px;border-radius:7px;background:linear-gradient(145deg,#fff1a2,#e3b300 55%,#a98000)}
-.vehicle-3d-model-jeep .vehicle-3d-cabin,.vehicle-3d-model-t2 .vehicle-3d-cabin{left:14px;top:5px;width:26px;height:13px}
-.vehicle-3d-model-jeep .vehicle-3d-window,.vehicle-3d-model-t2 .vehicle-3d-window{left:17px;top:7px;width:20px;height:8px}
-.vehicle-3d-model-jeep .vehicle-3d-wheel,.vehicle-3d-model-t2 .vehicle-3d-wheel{top:10px;height:11px}
-.vehicle-3d-model-jeep .vehicle-3d-wheel-rear-left,.vehicle-3d-model-jeep .vehicle-3d-wheel-rear-right,.vehicle-3d-model-t2 .vehicle-3d-wheel-rear-left,.vehicle-3d-model-t2 .vehicle-3d-wheel-rear-right{top:auto;bottom:8px}
-.vehicle-3d-model-van .vehicle-3d-body{top:4px;width:32px;height:39px;border-radius:8px}
-.vehicle-3d-model-van .vehicle-3d-cabin{top:5px;height:14px}
-.vehicle-3d-model-van .vehicle-3d-window{top:7px}
-.vehicle-3d-model-pickup .vehicle-3d-cargo{display:block;top:22px;height:17px;background:linear-gradient(135deg,#fff0a0,#c59a00 75%,#876600)}
-.vehicle-3d-model-pickup .vehicle-3d-body{top:4px;height:20px}
-.vehicle-3d-model-t5 .vehicle-3d-cargo,.vehicle-3d-model-t10 .vehicle-3d-cargo,.vehicle-3d-model-cargo .vehicle-3d-cargo{display:block;top:17px;left:9px;width:36px;height:27px;background:linear-gradient(135deg,#fff0a0,#c59a00 70%,#846400)}
-.vehicle-3d-model-t5 .vehicle-3d-body,.vehicle-3d-model-t10 .vehicle-3d-body,.vehicle-3d-model-cargo .vehicle-3d-body{top:3px;left:14px;width:26px;height:17px}
-.vehicle-3d-model-t5 .vehicle-3d-cabin,.vehicle-3d-model-t10 .vehicle-3d-cabin,.vehicle-3d-model-cargo .vehicle-3d-cabin{top:4px;left:16px;width:22px;height:13px}
-.vehicle-3d-model-t5 .vehicle-3d-window,.vehicle-3d-model-t10 .vehicle-3d-window,.vehicle-3d-model-cargo .vehicle-3d-window{top:6px;left:18px;width:18px;height:7px}
-.vehicle-3d-model-bangka .vehicle-3d-chassis,.vehicle-3d-model-cargo.vehicle-3d-model-water .vehicle-3d-chassis{clip-path:polygon(0 0,100% 0,82% 86%,50% 100%,18% 86%);border-radius:7px 7px 18px 18px;background:linear-gradient(90deg,#6d3d00,#ffd700 48%,#aa6f00)}
-.vehicle-3d-model-bangka .vehicle-3d-wheel,.vehicle-3d-model-cargo.vehicle-3d-model-water .vehicle-3d-wheel{display:none}
+.vehicle-model-marker{width:96px;height:96px}
+.vehicle-model-stage{position:absolute;inset:0;display:grid;place-items:center}
+.vehicle-3d-canvas{position:relative;z-index:1;display:block;width:94px;height:94px;pointer-events:none;filter:drop-shadow(0 5px 4px rgba(0,0,0,.46));animation:vehicle-model-float 1.8s ease-in-out infinite}
+.vehicle-3d-fallback{position:absolute;display:grid;width:38px;height:38px;place-items:center;border:2px solid #fff;border-radius:12px;background:#FFD700;color:#353839;box-shadow:0 2px 9px rgba(0,0,0,.42)}
+.vehicle-3d-fallback .i{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:1.9}
+.vehicle-model-stage.is-rendered .vehicle-3d-fallback{display:none}
+.vehicle-model-stage.model-fallback .vehicle-3d-canvas{display:none}
 @keyframes vehicle-model-float{0%,100%{translate:0 1px}50%{translate:0 -2px}}
-@media(prefers-reduced-motion:reduce){.poi-search-ripple>span,.vehicle-3d-model{animation:none}}
+@media(prefers-reduced-motion:reduce){.poi-search-ripple>span,.vehicle-3d-canvas{animation:none}}
 .map-locate{position:absolute;right:13px;bottom:32px;z-index:1000;display:grid;place-items:center;width:48px;height:48px;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.24);cursor:pointer}.map-locate:hover{border-color:var(--amber);background:var(--card)}.map-locate:focus-visible{outline:3px solid var(--amber);outline-offset:2px}.map-locate:disabled{cursor:progress;opacity:.72}.map-locate .i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.map-locate.is-locating .i{animation:map-locate-spin .9s linear infinite}
 @keyframes map-locate-spin{to{transform:rotate(360deg)}}
 .pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--navy);border:2px solid var(--amber);color:#fff;display:grid;place-items:center}
@@ -386,6 +350,11 @@ body.navon{overflow:hidden}#navmap,#navmap3d{flex:1;min-height:0}
 .navtop>div:nth-child(2){flex:1;min-width:0}
 #navarrow svg{width:46px;height:46px;color:var(--amber);stroke-width:2.4}.navtop strong{display:block;font-size:19px;line-height:1.25}.navtop span{opacity:.8}
 .navbot{background:var(--card);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}.navbot p{margin:6px 0}
+.nav-vehicle-picker{display:flex;align-items:center;gap:10px;max-width:100%;margin-bottom:8px;color:var(--muted);font-size:13px;font-weight:700}
+.nav-vehicle-picker select{min-width:0;max-width:100%;padding:7px 30px 7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);font:inherit}
+#navinfo .nav-eta-duration{display:block;font-size:26px;line-height:1.2;color:var(--ink)}
+#navinfo .nav-eta-arrival{display:block;margin-top:3px;font-size:16px;font-weight:650;color:var(--ink)}
+#navinfo .nav-eta-detail{display:block;margin-top:3px}
 #navalts{display:flex;gap:6px;overflow-x:auto}.chip{cursor:pointer;white-space:nowrap;border:1px solid var(--line);background:var(--bg);border-radius:99px;padding:6px 12px;font-size:13px}.chip.on{border-color:var(--amber);background:rgba(255,215,0,.2)}
 #nvCenter{position:absolute;right:12px;top:100px;z-index:1000}.btn.danger{background:var(--red);border-color:var(--red);color:#fff;margin-left:auto}
 .btn.on,.ib.on{background:var(--amber);color:#353839;border-color:var(--amber)}

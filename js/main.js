@@ -166,11 +166,14 @@ if(auth){
         const user=auth.currentUser,providerId=user.providerData.find(p=>['apple.com','google.com','facebook.com'].includes(p.providerId))?.providerId,
           provider=providerId==='facebook.com'?'facebook':providerId==='apple.com'?'apple':'google',
           saved=await ensureConsentProfile(user,false,provider);
-        if(!saved){await auth.signOut();$('#err').textContent=t('consentSaveFailed')}
+        if(!saved){await auth.signOut();busy=false;openAuth('in',$('#openSignIn'));$('#err').textContent=t('consentSaveFailed');return}
         else if(!st.user)enter(user.uid,user.displayName||user.email||'User',LS('ruto_profiles',{})[user.uid]||{})
       }
       if(restoringUid)return;
       busy=false;
+      if(consentRedirect&&!auth.currentUser){
+        openAuth('in',$('#openSignIn'));$('#err').textContent=t('errNet');return
+      }
       if(!st.user&&auth.currentUser){
         if(shouldRestoreSession(auth.currentUser))await restoreAuthenticatedSession(auth.currentUser);
         else openAuth('in',$('#openSignIn'))
@@ -179,12 +182,12 @@ if(auth){
     }
     const user=c.user,accepted=RutoConsent.consumeRedirect();
     if(!accepted||!RutoConsent.isAccepted()){
-      await auth.signOut();busy=false;$('#err').textContent=t('consentRequired');return
+      await auth.signOut();busy=false;openAuth('in',$('#openSignIn'));$('#err').textContent=t('consentRequired');return
     }
     const providerId=c.credential?.providerId||user.providerData.find(p=>['apple.com','google.com','facebook.com'].includes(p.providerId))?.providerId,
       provider=providerId==='facebook.com'?'facebook':providerId==='apple.com'?'apple':'google',
       saved=await ensureConsentProfile(user,!!c.additionalUserInfo?.isNewUser,provider);
-    if(!saved){await auth.signOut();busy=false;$('#err').textContent=t('consentSaveFailed');return}
+    if(!saved){await auth.signOut();busy=false;openAuth('in',$('#openSignIn'));$('#err').textContent=t('consentSaveFailed');return}
     if(!st.user)enter(user.uid,user.displayName||user.email||'User',LS('ruto_profiles',{})[user.uid]||{});
     busy=false
   }).catch(async error=>{
@@ -192,6 +195,7 @@ if(auth){
     RutoConsent.clearPendingRedirect();busy=false;
     console.warn('RUTO provider redirect sign-in failed.',error);
     if(auth.currentUser&&!st.user)await restoreAuthenticatedSession(auth.currentUser);
+    else if(redirectProvider||consentRedirect){openAuth('in',$('#openSignIn'));$('#err').textContent=fbErr(error)||t('errNet')}
     else{showReturningSignIn();if(!$('#authModal').hidden)$('#err').textContent=fbErr(error)}
   });
   // Returning sessions must have a consent record before the app is opened.

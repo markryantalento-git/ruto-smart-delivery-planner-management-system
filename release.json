@@ -1,7 +1,12 @@
 {
-  "version": "0.2.36",
-  "publishedAt": "2026-11-28T05:35:04.058Z",
+  "version": "0.2.41",
+  "publishedAt": "2026-11-28T16:41:55.816+08:00",
   "changes": [
+    "Fixed vehicle model selection so motorcycles, tricycles, land vehicles, bangka, and cargo boats render their own shapes; unknown IDs no longer turn into trucks. Added the missing rear axles to the 10-wheel truck.",
+    "Replaced the flat CSS vehicle markers with original Three.js 3D models for all 12 land and water vehicle types, rotating with navigation heading.",
+    "Added Capacitor lock-screen navigation bridges, Android foreground tracking notifications, and an iOS Live Activity widget; native builds and device tests are still required.",
+    "Added in-navigation vehicle selection with route recalculation, removed stale route and vehicle markers while calculating, and made arrival time and remaining duration easier to see.",
+    "Prevented successful authentication from remaining on the landing page when a post-login notification refresh throws, and exposed failed provider redirects instead of hiding their errors.",
     "Added an animated nearby-category search pulse and perspective-styled vehicle models that follow the active navigation vehicle and heading.",
     "Added a native OpenFreeMap 3D mode with accurately aligned route, nearby-place, and animated vehicle markers, plus direct navigation from unsaved planner routes.",
     "Added explicit current-location anchoring for nearby searches and reduced the Noupe chat launcher's footprint.",

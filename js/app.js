@@ -91,8 +91,8 @@ function vehicleMarkerMarkup(vehicle){
 window.rutoVehicleMarkerMarkup=vehicleMarkerMarkup;
 function navigationVehicleMarkup(vehicle){
   const id=V.some(item=>item.id===vehicle?.id)?vehicle.id:'car';
-  const waterClass=vehicle?.dom==='water'?'vehicle-3d-model-water':'';
-  return `<span class="vehicle-location-marker vehicle-model-marker"><span class="vehicle-location-pulse"></span><span class="vehicle-model-stage" aria-hidden="true"><span class="vehicle-3d-model vehicle-3d-model-${id} ${waterClass}"><span class="vehicle-3d-chassis"></span><span class="vehicle-3d-body"></span><span class="vehicle-3d-cargo"></span><span class="vehicle-3d-cabin"></span><span class="vehicle-3d-window"></span><span class="vehicle-3d-wheel vehicle-3d-wheel-front-left"></span><span class="vehicle-3d-wheel vehicle-3d-wheel-front-right"></span><span class="vehicle-3d-wheel vehicle-3d-wheel-rear-left"></span><span class="vehicle-3d-wheel vehicle-3d-wheel-rear-right"></span><span class="vehicle-3d-light vehicle-3d-light-left"></span><span class="vehicle-3d-light vehicle-3d-light-right"></span></span></span></span>`
+  const icon=vehicle?.icon||'g-car';
+  return `<span class="vehicle-location-marker vehicle-model-marker"><span class="vehicle-location-pulse"></span><span class="vehicle-model-stage" aria-hidden="true"><canvas class="vehicle-3d-canvas" data-vehicle-id="${id}" width="96" height="96"></canvas><span class="vehicle-3d-fallback">${ic(icon)}</span></span></span>`
 }
 window.rutoNavigationVehicleMarkup=navigationVehicleMarkup;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -768,12 +768,13 @@ function enter(uid,name,details={}){
   $('#authModal').hidden=true;
   document.body.classList.remove('auth-modal-open');
   authOpener=null;
-  window.refreshNotifications?.();
-  if(LS('ruto_pending_app_update',false))SV('ruto_pending_app_update',false);
-  window.checkReleaseUpdate?.(uid);
   const intro=$('#brandIntro');
   intro.hidden=false;intro.setAttribute('aria-hidden','false');
   $('#land').hidden=true;$('#app').hidden=false;$('#who').textContent=name;
+  try{window.refreshNotifications?.()}
+  catch(error){console.error('Could not refresh notifications after sign-in.',error)}
+  if(LS('ruto_pending_app_update',false))SV('ruto_pending_app_update',false);
+  window.checkReleaseUpdate?.(uid);
   profileData={accountType:'personal',name,email:auth?.currentUser?.email||(/@/.test(uid)?uid:''),photoURL:'',...details};
   applyProfileData(profileData);
   initMap();$('#date').value=ymd(new Date());fuelUI();applyLang();loadHist();

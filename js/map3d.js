@@ -11,11 +11,10 @@
       if(current&&current.className===item.className&&current.html===item.html){
         current.marker.setLngLat([item.lng,item.lat]);
         current.element.title=item.label||'';
-        const icon=current.element.querySelector('.vehicle-location-marker');
-        if(icon&&Number.isFinite(item.bearing))icon.style.setProperty('--vehicle-heading',item.bearing+'deg');
+        window.updateRutoVehicleModel?.(current.element,item.bearing);
         return
       }
-      current?.marker.remove();
+      if(current){window.disposeRutoVehicleModel?.(current.element);current.marker.remove()}
       const element=document.createElement('div');
       element.className='ruto-maplibre-marker '+(item.className||'');
       element.innerHTML=item.html||'';
@@ -24,7 +23,8 @@
       const marker=new maplibregl.Marker({element,anchor:item.anchor||'center'})
         .setLngLat([item.lng,item.lat]);
       if(item.popup)marker.setPopup(new maplibregl.Popup({offset:18}).setText(item.popup));
-      marker.addTo(map);markers.set(key,{marker,element,className:item.className,html:item.html})
+      marker.addTo(map);markers.set(key,{marker,element,className:item.className,html:item.html});
+      window.renderRutoVehicleModel?.(element,item.bearing)
     }
 
     function syncData(){
@@ -121,7 +121,10 @@
       setMarkers(group,items){
         const prefix=group+':';
         for(const key of markerItems.keys())if(key.startsWith(prefix)){
-          markerItems.delete(key);markers.get(key)?.marker.remove();markers.delete(key)
+          markerItems.delete(key);
+          const current=markers.get(key);
+          if(current){window.disposeRutoVehicleModel?.(current.element);current.marker.remove()}
+          markers.delete(key)
         }
         (items||[]).forEach((item,index)=>this.setMarker(group,item.id??index,item))
       },

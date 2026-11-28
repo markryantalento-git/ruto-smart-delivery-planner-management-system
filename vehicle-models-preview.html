@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RUTO 3D Vehicle Models</title>
+<style>
+  :root{color-scheme:dark;font:16px/1.5 system-ui,sans-serif;background:#191b1d;color:#f5f2e8}
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px;background:radial-gradient(ellipse at top,#393323 0,#191b1d 55%)}
+  main{max-width:1120px;margin:auto}
+  h1{margin:0;color:#f0c64b;font-size:clamp(2rem,5vw,3rem)}
+  p{margin:8px 0 24px;color:#c5c2b9}
+  .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+  .card{min-width:0;padding:12px;border:1px solid #49443a;border-radius:16px;background:linear-gradient(145deg,#292a29,#202122);box-shadow:0 12px 30px #0005}
+  .card h2{margin:2px 6px 0;font-size:1rem}
+  .stage{height:190px;display:grid;place-items:center;overflow:hidden;border-radius:12px;background:radial-gradient(ellipse at center,#65572e 0,#34302a 45%,#242526 78%)}
+  .vehicle-3d-canvas{width:180px;height:180px;display:block}
+  @media(max-width:520px){body{padding:20px}.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stage{height:145px}.vehicle-3d-canvas{width:140px;height:140px}}
+</style>
+</head>
+<body>
+<main>
+  <h1>RUTO 3D vehicle models</h1>
+  <p>Procedural Three.js models used for navigation markers.</p>
+  <section class="gallery" id="gallery" aria-label="Vehicle model gallery"></section>
+</main>
+<script src="js/vehicle-models.js?v=2"></script>
+<script>
+  const vehicles=[
+    ['moto','Motorcycle'],['etrike','Electric tricycle'],['trike','Tricycle with sidecar'],
+    ['car','Car'],['jeep','Jeepney'],['van','Van'],['pickup','Pickup truck'],
+    ['t2','2-ton truck (4 wheels)'],['t5','5-ton truck (6 wheels)'],['t10','10-ton wing truck (10 wheels)'],
+    ['bangka','Bangka'],['cargo','Cargo boat / RoRo']
+  ];
+  const gallery=document.querySelector('#gallery');
+  for(const [id,name] of vehicles){
+    const card=document.createElement('article');
+    card.className='card';
+    card.innerHTML='<div class="stage"><canvas class="vehicle-3d-canvas" aria-label="'+name+' 3D model"></canvas></div><h2>'+name+'</h2>';
+    card.querySelector('canvas').dataset.vehicleId=id;
+    gallery.append(card);
+    window.renderRutoVehicleModel(card);
+  }
+</script>
+</body>
+</html>
