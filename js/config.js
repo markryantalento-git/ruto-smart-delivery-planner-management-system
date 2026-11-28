@@ -11,8 +11,8 @@ window.RUTO = {
   // Kapag blangko: OpenStreetMap (OSRM) ang daan at ESTIMATE ang traffic ayon sa araw at oras.
   TOMTOM_KEY: '',
 
-  // AI assistant: Firebase Console > AI Logic > Get started > Gemini Developer API.
-  // Kapag hindi pa naka-enable, gagana pa rin ang "basic mode" (gas, palengke, kainan, atbp.).
+  // AI web search for fuel prices: Firebase Console > AI Logic > Gemini Developer API.
+  // The Noupe chat widget is configured separately in the Noupe dashboard.
   AI: {
     enabled: true,
     models: ['gemini-3.8-flash', 'gemini-3.5-flash-lite'], // susubukan ayon sa pagkakasunod
@@ -23,7 +23,10 @@ window.RUTO = {
   // Optional: sarili mong fuel price feed -> {"asOf":"2026-12-01","source":"DOE","gas":0,"diesel":0,"kero":0}
   FUEL_API_URL: '',
 
-  // Public map services (libre, may limit). Palitan kapag marami nang users.
+  // Public routing/place search services (free, may limit). Photon is the nearby-search fallback.
   OSRM: 'https://router.project-osrm.org',
-  OVERPASS: ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']
+  OVERPASS: [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter'
+  ]
 };

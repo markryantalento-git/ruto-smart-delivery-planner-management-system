@@ -80,8 +80,28 @@ $('#supportOpen').addEventListener('click',()=>supportDialog.showModal());
 $('#supportDialogClose').addEventListener('click',()=>supportDialog.close());
 supportDialog.addEventListener('click',event=>{if(event.target===supportDialog)supportDialog.close()});
 const cookieNotice=$('#cookieNotice');
-const chooseCookieConsent=allow=>{
-  if(!saveCookieConsent(allow)){$('#cookieStatus').textContent=t('cookieUnavailable');return}
+let noupeScriptState='idle';
+function loadNoupeChat(){
+  if(getRutoCookie('ruto_cookie_consent')!=='noupe'||['loading','loaded'].includes(noupeScriptState))return;
+  noupeScriptState='loading';
+  const script=document.createElement('script');
+  script.src='https://www.noupe.com/embed/01a22017dae0700085cd2b4336f643c2f417.js';
+  script.async=true;
+  script.addEventListener('load',()=>{noupeScriptState='loaded'});
+  script.addEventListener('error',()=>{
+    noupeScriptState='failed';
+    script.remove();
+    cookieNotice.hidden=false;
+    $('#cookieStatus').textContent=t('noupeLoadFailed')
+  });
+  document.body.append(script)
+}
+window.loadNoupeChat=loadNoupeChat;
+const chooseCookieConsent=allowNoupe=>{
+  if(!allowNoupe&&['loading','loaded'].includes(noupeScriptState)&&!window.confirm(t('noupeReloadConfirm')))return;
+  if(!saveCookieConsent(allowNoupe)){$('#cookieStatus').textContent=t('cookieUnavailable');return}
+  if(allowNoupe)loadNoupeChat();
+  else if(['loading','loaded'].includes(noupeScriptState)){location.reload();return}
   $('#cookieStatus').textContent='';
   cookieNotice.hidden=true
 };
@@ -93,6 +113,7 @@ if(copyrightYear)copyrightYear.textContent=new Date().getFullYear();
 applyTheme(localStorage.getItem('ruto_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));
 applyLang();
 initCookieNotice();
+if(getRutoCookie('ruto_cookie_consent')==='noupe')loadNoupeChat();
 if(auth){
   const hasKnownAccount=()=>!!LS('ruto_session',null)||Object.keys(LS('ruto_profiles',{})).length>0||Object.keys(LS('ruto_users',{})).length>0,
     shouldRestoreSession=user=>installedAppMode||keepBrowserLogin()||hasBrowserSession(user.uid),

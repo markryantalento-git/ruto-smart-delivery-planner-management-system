@@ -1,6 +1,6 @@
 /* ============ ACCOUNT CREATION CONSENT ============ */
 (()=>{
-  const POLICY_VERSION='1.0',PENDING_KEY='ruto_pending_auth_consent_v1',
+  const POLICY_VERSION='1.1',PENDING_KEY='ruto_pending_auth_consent_v1',
     checkbox=document.querySelector('#consentCheck'),
     providerHint=document.querySelector('#consentProviderHint');
 

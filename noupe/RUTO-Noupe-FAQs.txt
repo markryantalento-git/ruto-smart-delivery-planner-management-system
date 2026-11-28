@@ -1,0 +1,83 @@
+RUTO FAQ PAIRS FOR NOUPE
+Copy each Question and Answer into Noupe's "Add FAQ" form.
+Answers are bilingual so the chatbot can respond to English and Filipino/Tagalog users. RuBot should use Taglish when the user writes in Taglish.
+
+FAQ 01
+Question: What is RUTO? / Ano ang RUTO?
+Answer: RUTO is a Smart Logistics/Delivery Planner Management System. It helps you plan a pickup and multiple delivery stops, compare suitable vehicles, estimate travel time and cost, and save or schedule a plan. Ang RUTO ay sistema para magplano ng delivery, maghambing ng sasakyan at tantiya ng gastos/oras, at mag-save o mag-schedule ng biyahe.
+
+FAQ 02
+Question: Is RUTO free? / Libre ba ang RUTO?
+Answer: RUTO currently has no subscription or payment wall. Your internet, carrier SMS, and third-party services may have separate charges. Walang RUTO subscription fee sa ngayon, pero maaaring may sariling singil ang internet, SMS carrier, o third-party services.
+
+FAQ 03
+Question: How do I plan a delivery? / Paano magplano ng delivery?
+Answer: Open Plan, set a pickup, add one or more drop-offs, enter cargo type and weight, choose your date and preferences, then review the route and vehicle estimates. Save the plan or add it to Calendar. Buksan ang Plan, itakda ang pickup, idagdag ang mga drop-off at cargo, piliin ang schedule at preferences, saka suriin at i-save o i-schedule ang plano.
+
+FAQ 04
+Question: How do I set the pickup and add drop-offs? / Paano maglagay ng pickup at drop-off?
+Answer: Search for an address or choose a point on the map. Use Set as origin for the pickup and Add drop-off for each destination. Maaari kang maghanap ng address o pumili sa mapa. Piliin ang Set as origin para sa pickup at Add drop-off para sa bawat destinasyon.
+
+FAQ 05
+Question: Which vehicles does RUTO compare? / Anong mga sasakyan ang kino-compare ng RUTO?
+Answer: RUTO includes Motorcycle, E-Trike/E-Bike, Tricycle, Four-Wheeler Car, Jeepney, Van/L300, Pick-up Truck, 2-ton, 5-ton, and 10-ton trucks, Bangka, and Cargo Boat/RoRo. Kasama ang mga motorsiklo, tricycle, kotse, jeepney, van, pickup, truck, at bangka.
+
+FAQ 06
+Question: Why can the cost or ETA change? / Bakit nagbabago ang gastos o ETA?
+Answer: RUTO estimates depend on your stops, cargo, selected vehicle, fuel or electricity prices, route data, and assumptions about traffic and vehicle capacity. They are estimates, not guaranteed quotes. Nakadepende ang mga tantiya sa ruta, cargo, sasakyan, presyo ng fuel/kuryente, at available na data; hindi ito garantisadong presyo o oras.
+
+FAQ 07
+Question: Can RUTO plan a route by boat? / Puwede bang bangka ang gamitin sa plano?
+Answer: Yes. RUTO includes motorized banca and cargo boat/RoRo options when the route and selected travel type support water travel. The boat fuel estimate is approximate. Oo. May motorized banca at cargo boat/RoRo options kapag ang ruta at travel type ay sumusuporta sa biyahe sa tubig. Tantiya lamang ang konsumo ng bangka.
+
+FAQ 08
+Question: How do I find nearby places? / Paano maghanap ng mga kalapit na lugar?
+Answer: Choose a category in Explore Nearby, select an anchor and a 1, 3, or 5 km radius, then review the results. Categories include groceries, convenience stores, shopping centers, mail/shipping, restaurants, gas, parking, charging, ATMs, and hospitals/clinics. Pumili ng category, reference point, at radius; depende sa available map data ang mga resulta.
+
+FAQ 09
+Question: Is the nearby-place distance the driving distance? / Road distance ba ang layo sa Nearby?
+Answer: No. Nearby distance is straight-line distance. The displayed detour and fuel cost are approximate out-and-back estimates, not a road-routed quote. Hindi. Tuwid na layo ang ipinapakita; tantiya lamang ang detour at fuel impact at hindi ito aktuwal na road-route quote.
+
+FAQ 10
+Question: Can I add a nearby place to my route? / Puwede bang idagdag sa ruta ang nahanap na lugar?
+Answer: Yes. Depending on the result, choose Set Pickup, Add Drop-off, or Add Support Stop. RUTO then recalculates the planner estimates. Oo. Piliin ang Set Pickup, Add Drop-off, o Add Support Stop; pagkatapos ay ia-update ng RUTO ang mga tantiya.
+
+FAQ 11
+Question: Do I need to turn on GPS? / Kailangan bang i-on ang GPS?
+Answer: No, GPS is optional for planning. You can search around your pickup or the map center. Location permission is needed for location-based features such as starting live in-app navigation. Hindi kailangan para magplano; puwede ang pickup o map center. Kailangan ang permission sa location para sa ilang feature gaya ng live navigation.
+
+FAQ 12
+Question: How do I save or schedule a plan? / Paano mag-save o mag-schedule?
+Answer: After setting your pickup and at least one drop-off, review the plan and use Save Delivery to keep it in History. Use Add Delivery Schedule to organize it in Calendar. Kapag may pickup at drop-off na, gamitin ang Save Delivery para makita sa History o Add Delivery Schedule para ilagay sa Calendar.
+
+FAQ 13
+Question: Does RUTO dispatch drivers or guarantee delivery? / Nagpapadala ba ang RUTO ng driver o gumagarantiya ng delivery?
+Answer: No. RUTO is a planning tool; it does not dispatch drivers or guarantee traffic, prices, routes, ETAs, capacity, or delivery results. Hindi. Pantulong ito sa pagpaplano at walang garantiyang live traffic, presyo, ruta, ETA, capacity, o delivery.
+
+FAQ 14
+Question: Does RUTO support company teams? / May team accounts ba ang RUTO?
+Answer: Company accounts can use a company name, but team deliveries are not currently shared between multiple logins. Maaaring gumamit ng company name ang Company account, pero hindi pa shared sa maraming login ang mga delivery.
+
+FAQ 15
+Question: What languages does RUTO support? / Anong languages ang supported?
+Answer: The RUTO interface supports English, Tagalog, and Taglish. The assistant should reply in the language you use. May English, Tagalog, at Taglish ang interface. Sasagot ang assistant ayon sa wikang ginagamit mo.
+
+FAQ 16
+Question: Can I talk to RuBot using a microphone? / Puwede bang magsalita sa RuBot gamit ang mic?
+Answer: The RUTO chat now uses Noupe. Microphone/voice support depends on the Noupe widget and has not been confirmed; if you do not see a microphone button, type your question. Ang RUTO chat ay gumagamit na ng Noupe. Depende sa Noupe widget ang mic/voice at hindi pa ito kumpirmado; kung walang mic button, i-type ang tanong.
+
+FAQ 17
+Question: How do I reset my password? / Paano mag-reset ng password?
+Answer: Use the password-reset link on the sign-in screen and follow Firebase's email instructions. SMS recovery only works for an eligible phone number already linked to the account; carrier charges may apply. Gamitin ang password-reset link sa sign-in at sundin ang email mula Firebase. Para lang sa eligible na naka-link na numero ang SMS recovery at maaaring may carrier charge.
+
+FAQ 18
+Question: How do I contact RUTO Support? / Paano makipag-ugnayan sa RUTO Support?
+Answer: Email ruto.supportph@gmail.com. For privacy requests, include "RUTO privacy request" in the subject. Mag-email sa ruto.supportph@gmail.com. Para sa privacy request, ilagay ang "RUTO privacy request" sa subject.
+
+FAQ 19
+Question: Is my chat or location private? / Pribado ba ang chat at lokasyon ko?
+Answer: RUTO's Privacy Policy explains how account, route, and location information is handled. Noupe says its conversations are recorded and its separate AI Terms apply. RUTO's own code does not provide your saved route or account profile as chat context, but the widget script runs in your browser on the RUTO page. Do not enter passwords, verification codes, or sensitive information. Basahin ang Privacy Policy ng RUTO. Ayon sa Noupe, nire-record ang usapan at may hiwalay itong AI Terms. Hindi ibinibigay ng RUTO ang saved route o account profile bilang chat context, pero tumatakbo ang widget script sa browser habang nasa RUTO page ka. Huwag ilagay ang password, verification code, o sensitibong impormasyon.
+
+FAQ 20
+Question: What should I do if the chatbot cannot answer? / Ano ang gagawin kung hindi alam ng chatbot ang sagot?
+Answer: The chatbot should say it is unsure rather than guess. Contact RUTO Support at ruto.supportph@gmail.com for account or app issues. Dapat sabihin ng chatbot kung hindi ito sigurado sa halip na manghula. Makipag-ugnayan sa RUTO Support sa ruto.supportph@gmail.com para sa account o app issue.

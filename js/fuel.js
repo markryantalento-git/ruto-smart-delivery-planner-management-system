@@ -46,6 +46,25 @@ async function publishedFuel(){
   if(RUTO.FUEL_API_URL)jobs.push(getJSON(RUTO.FUEL_API_URL,{cache:'no-store'},8000));
   const res=await Promise.allSettled(jobs);
   return res.map(r=>r.value).filter(validFuel).sort((a,b)=>b.asOf.localeCompare(a.asOf))[0]||null}
+let fuelAiSdk=null;
+function fuelAiClient(){
+  if(fuelAiSdk)return fuelAiSdk;
+  fuelAiSdk=(async()=>{
+    if(!RUTO.AI.appCheckSiteKey)throw new Error('Set AI.appCheckSiteKey in js/config.js before enabling Firebase AI Logic');
+    const base=`https://www.gstatic.com/firebasejs/${RUTO.AI.sdk}/`,local=['localhost','127.0.0.1'].includes(location.hostname),
+      [app,mod]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-ai.js')]),
+      firebaseApp=app.initializeApp(RUTO.FIREBASE,'ruto-ai'),appCheck=await import(base+'firebase-app-check.js');
+    if(local)self.FIREBASE_APPCHECK_DEBUG_TOKEN=true;
+    appCheck.initializeAppCheck(firebaseApp,{provider:new appCheck.ReCaptchaEnterpriseProvider(RUTO.AI.appCheckSiteKey),isTokenAutoRefreshEnabled:true});
+    return{mod,ai:mod.getAI(firebaseApp,{backend:new mod.GoogleAIBackend()})}})();
+  fuelAiSdk.catch(()=>fuelAiSdk=null);return fuelAiSdk}
+async function tryFuelAiModels(fn){
+  let error;
+  for(const name of RUTO.AI.models){
+    try{return{name,result:await fn(name)}}
+    catch(e){error=e;if(!/404|not.?found|not supported|unavailable|503|429|quota/i.test(e.message))break}
+  }
+  throw error}
 async function fetchFuel(manual){
   const btn=$('#fuelbtn');if(manual){btn.disabled=true;$('#fuelai').innerHTML='';$('#fuelbusy').textContent=t('fSearching')}
   try{
@@ -60,9 +79,9 @@ async function fetchFuel(manual){
   }finally{if(manual){btn.disabled=false;$('#fuelbusy').textContent=''}}}
 /* AI + Google Search. Results are shown with sources and applied only when you press Apply. */
 async function aiFuelLookup(){
-  const ai=await aiSDK(),today=ymd(new Date());
+  const ai=await fuelAiClient(),today=ymd(new Date());
   const prompt=`Today is ${today} in the Philippines. Search the web for the latest NATIONWIDE AVERAGE retail pump prices in the Philippines (PHP per liter) for gasoline RON 91, diesel, and kerosene, preferably from the Department of Energy or news citing it. Do not use Metro Manila only figures if a nationwide average exists. Do not guess. Reply with JSON only: {"asOf":"YYYY-MM-DD","gas":number,"diesel":number,"kero":number|null,"scope":"nationwide|metro manila|other","source":"publisher name"}`;
-  const{result}=await aiTry(name=>ai.mod.getGenerativeModel(ai.ai,{model:name,tools:[{googleSearch:{}}]}).generateContent(prompt));
+  const{result}=await tryFuelAiModels(name=>ai.mod.getGenerativeModel(ai.ai,{model:name,tools:[{googleSearch:{}}]}).generateContent(prompt));
   const res=result.response,g=res.candidates?.[0]?.groundingMetadata,m=res.text().match(/\{[\s\S]*\}/);
   if(!g?.groundingChunks?.length||!m)throw new Error(t('fNoSource'));
   const d=JSON.parse(m[0]);if(!validFuel(d)||d.asOf<st.fuel.asOf&&!st.fuel.manual)throw new Error(t('fNoNewer'));

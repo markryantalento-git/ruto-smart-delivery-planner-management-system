@@ -4,7 +4,7 @@ RUTO is currently free to use: there are no subscriptions, free trials, or payme
 Network, carrier SMS, and infrastructure charges charged by third parties may still apply.
 
 ## Files
-- index.html            - the page (sign in, plan, calendar, history, navigation, assistant)
+- index.html            - the page (sign in, plan, calendar, history, navigation)
 - css/style.css         - styling (light and dark)
 - js/config.js          - **your settings and API keys (edit this one)**
 - js/i18n.js            - translations (English | Tagalog | Taglish) and cargo tips
@@ -13,7 +13,7 @@ Network, carrier SMS, and infrastructure charges charged by third parties may st
 - js/store.js           - save, history, calendar, device calendar
 - js/fuel.js            - fuel price refresh
 - js/nav.js             - live navigation
-- js/assistant.js       - chat and voice assistant, nearby places
+- js/places.js          - nearby place search and category results
 - js/main.js            - start-up
 - data/fuel-prices.json - published nationwide fuel prices
 - firestore.rules, storage.rules, firebase.json
@@ -83,6 +83,12 @@ After saving a delivery, choose **Start delivery** to open RUTO's in-app, Waze-s
 It follows the saved drop-off order with live location, spoken turn guidance, and rerouting while
 the app is open. GPS permission is required; external Google Maps and Waze links are also available.
 
+The planner and navigation maps use OpenFreeMap's public Liberty vector-map style, rendered with
+MapLibre GL JS through its Leaflet adapter. OpenFreeMap's map data comes from OpenStreetMap and its
+public tile service does not require an API key. If the MapLibre adapter fails to load, the app logs
+an error and falls back to OpenStreetMap raster tiles. Routing and nearby-place/address search
+continue to use their separate OpenStreetMap-based services.
+
 ## Firebase console (project ruto-6b418)
 1. Firestore Database > Create database (production mode, asia-southeast1).
    Without this, deliveries are saved on the device only.
@@ -137,11 +143,14 @@ the app is open. GPS permission is required; external Google Maps and Waze links
      code under Authentication > Sign-in method > Phone numbers for testing, then use that pair in
      the app. Do not hardcode test numbers in production.
 8. Authentication > Settings > Authorized domains: remove domains that are no longer used.
-9. App Check > register the web app with reCAPTCHA Enterprise, use its site key in
-   AI.appCheckSiteKey in js/config.js, and monitor valid traffic before enforcing App Check for
-   Cloud Firestore and Firebase AI Logic. For local development, copy the App Check debug token
-   from the browser console into App Check > Apps > Manage debug tokens. Keep it private and never
-   add localhost to the production reCAPTCHA key.
+9. In Google Cloud, enable the reCAPTCHA Enterprise API and create a Web score-based key with the
+   checkbox challenge turned off. Allow the deployed hostname (`markryantalento-git.github.io`).
+   In Firebase App Check, register the web app with that key and use it in
+   AI.appCheckSiteKey in js/config.js. Verify both consoles use the same Google Cloud/Firebase
+   project. Monitor valid traffic before enforcing App Check for Cloud Firestore and Firebase AI
+   Logic. For local development, add the App Check debug token from the browser console under
+   App Check > Apps > Manage debug tokens. Keep it private; never use it in production or add
+   localhost to the production reCAPTCHA key.
 
 ## Live traffic (optional, recommended)
 1. Make a free key at https://developer.tomtom.com (no credit card; monthly free limit).
@@ -153,13 +162,19 @@ traffic data. If a road route cannot be found, RUTO reports the failure instead 
 line across land or water. Use "By water only" for an intentional direct water estimate.
 Edit trafficFactor() in js/routing.js.
 
-## AI assistant (optional)
+## Noupe chatbot
+The Noupe chat widget is loaded only after a visitor chooses "Enable Noupe chatbot" in the cookie notice.
+Noupe states that conversations are recorded. The app does not provide saved routes or account details
+as chat context, but the third-party widget runs in the browser on the RUTO page; review Noupe's AI
+Terms and privacy terms before enabling it. The chatbot has no RUTO app-action integration, and
+microphone support depends on Noupe's widget.
+
+## AI fuel-price search (optional)
 1. Firebase console > AI Logic > Get started > Gemini Developer API.
 2. App Check for AI uses the same AI.appCheckSiteKey configured for the web app above.
 3. Model names are in AI.models.
-Without this the assistant works in basic mode (nearby gas, market, eatery, repair, ice and more).
-Voice input works in Chrome, Edge and Safari. A Tagalog speaking voice depends on the device.
-The "AI web search" for fuel prices uses Google Search grounding, which may not be included in the free tier.
+This only powers the optional "AI web search" for fuel prices. It uses Google Search grounding,
+which may not be included in the free tier; results are shown with sources and applied only when you press Apply.
 
 ## Fuel prices (nationwide)
 There is no official live fuel price API. "Refresh prices" takes the newest of:

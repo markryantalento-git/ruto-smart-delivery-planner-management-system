@@ -11,7 +11,7 @@ function text(s){
 
 function build(){
   if(nmap)return;
-  nmap=L.map('navmap',{zoomControl:false}).setView([14.6,120.98],15);osmTiles().addTo(nmap);
+  nmap=L.map('navmap',{zoomControl:false}).setView([14.6,120.98],15);baseMapTiles().addTo(nmap);
   if(RUTO.TOMTOM_KEY)trafficTiles().addTo(nmap);
   lyr=L.layerGroup().addTo(nmap);nmap.on('dragstart',()=>{if(N){N.follow=false;$('#nvCenter').hidden=false}})}
 

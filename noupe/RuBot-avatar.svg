@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">RuBot RUTO avatar</title>
+  <desc id="description">A friendly RUTO robot with a gold location-pin antenna and delivery-truck badge.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#45494a"/>
+      <stop offset="1" stop-color="#292d2e"/>
+    </linearGradient>
+    <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffef8"/>
+      <stop offset="1" stop-color="#deded7"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#111414" flood-opacity=".35"/>
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="248" fill="url(#background)"/>
+  <circle cx="256" cy="256" r="239" fill="none" stroke="#ffd700" stroke-width="10"/>
+  <circle cx="256" cy="256" r="222" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="2"/>
+
+  <path d="M92 344c-18-32-24-65-17-99" fill="none" stroke="#ffd700" stroke-width="8" stroke-linecap="round" opacity=".8"/>
+  <circle cx="72" cy="231" r="7" fill="#ffd700"/>
+  <path d="M420 344c18-32 24-65 17-99" fill="none" stroke="#ffd700" stroke-width="8" stroke-linecap="round" opacity=".8"/>
+  <circle cx="440" cy="231" r="7" fill="#ffd700"/>
+
+  <g filter="url(#shadow)" stroke="#252a2b" stroke-linejoin="round">
+    <path d="M256 91v35" fill="none" stroke="#ffd700" stroke-width="12" stroke-linecap="round"/>
+    <path d="M256 39c-23 0-42 19-42 42 0 31 42 69 42 69s42-38 42-69c0-23-19-42-42-42Z" fill="#ffd700" stroke-width="8"/>
+    <circle cx="256" cy="80" r="13" fill="#353839" stroke="none"/>
+
+    <path d="M127 226v-17c0-20 16-36 36-36h-8c-22 0-40 18-40 40v28c0 22 18 40 40 40h8c-20 0-36-16-36-36v-19Z" fill="#ffd700" stroke-width="8"/>
+    <path d="M385 226v-17c0-20-16-36-36-36h8c22 0 40 18 40 40v28c0 22-18 40-40 40h-8c20 0 36-16 36-36v-19Z" fill="#ffd700" stroke-width="8"/>
+
+    <rect x="123" y="126" width="266" height="239" rx="72" fill="url(#shell)" stroke-width="12"/>
+    <rect x="148" y="166" width="216" height="151" rx="50" fill="#353839" stroke-width="8"/>
+    <circle cx="207" cy="232" r="22" fill="#ffd700" stroke="none"/>
+    <circle cx="305" cy="232" r="22" fill="#ffd700" stroke="none"/>
+    <circle cx="214" cy="225" r="7" fill="#fffef8" stroke="none"/>
+    <circle cx="312" cy="225" r="7" fill="#fffef8" stroke="none"/>
+    <path d="M220 273c18 20 54 20 72 0" fill="none" stroke="#fffef8" stroke-width="9" stroke-linecap="round"/>
+
+    <path d="M211 362v20m90-20v20" fill="none" stroke="#ffd700" stroke-width="12" stroke-linecap="round"/>
+    <rect x="132" y="365" width="248" height="103" rx="44" fill="url(#shell)" stroke-width="12"/>
+    <rect x="180" y="385" width="152" height="65" rx="30" fill="#353839" stroke="none"/>
+    <circle cx="256" cy="417" r="24" fill="#ffd700" stroke="none"/>
+    <path d="M236 420h31v-13h-13l-7-8h-11v21Zm31-10h8l8 8v2h-16v-10Z" fill="#353839" stroke="none"/>
+    <circle cx="246" cy="423" r="3.5" fill="#ffd700" stroke="none"/>
+    <circle cx="269" cy="423" r="3.5" fill="#ffd700" stroke="none"/>
+  </g>
+
+  <text x="256" y="493" text-anchor="middle" fill="#ffd700" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="700" letter-spacing="5">RUTO</text>
+</svg>

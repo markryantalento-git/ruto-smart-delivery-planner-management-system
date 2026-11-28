@@ -28,7 +28,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
-<link rel="stylesheet" href="css/style.css?v=96">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V" crossorigin="anonymous">
+<link rel="stylesheet" href="css/style.css?v=98">
 </head>
 <body class="ui-guard">
 <aside class="install-banner" id="installBanner" aria-label="Install RUTO" hidden>
@@ -47,20 +48,6 @@
  <stop offset=".45" stop-color="#737E88"/>
  <stop offset="1" stop-color="#343C45"/>
 </linearGradient>
-<linearGradient id="rubot-shell-gradient" x1="0" y1="0" x2="1" y2="1">
- <stop stop-color="#FFF1A8"/>
- <stop offset=".32" stop-color="#FFD700"/>
- <stop offset=".72" stop-color="#D1A600"/>
- <stop offset="1" stop-color="#806200"/>
-</linearGradient>
-<linearGradient id="rubot-screen-gradient" x1="0" y1="0" x2="0" y2="1">
- <stop stop-color="#30363B"/>
- <stop offset="1" stop-color="#101214"/>
-</linearGradient>
-<radialGradient id="rubot-eye-gradient">
- <stop stop-color="#FFF7C2"/>
- <stop offset="1" stop-color="#FFD700"/>
-</radialGradient>
 <symbol id="logo" viewBox="0 0 64 64">
  <image href="assets/app-icon-512.png" width="64" height="64"/>
 </symbol>
@@ -549,37 +536,8 @@
  <div class="navbot">
   <div id="navalts"></div>
   <p id="navinfo"></p>
-  <div class="row"><button class="btn p" id="nvArrive"></button><button class="btn" id="nvAI"><svg class="i"><use href="#g-mic"/></svg> <span data-i="askAI"></span></button><button class="ib" id="nvMute" title="Mute" aria-label="Mute voice"><svg class="i"><use href="#g-sound"/></svg></button><button class="btn" id="nvSim" data-i="simulate"></button><button class="btn" id="nvG">Google Maps</button><button class="btn" id="nvW">Waze</button><button class="btn danger" id="nvEnd" data-i="endNav"></button></div>
+  <div class="row"><button class="btn p" id="nvArrive"></button><button class="ib" id="nvMute" title="Mute" aria-label="Mute voice"><svg class="i"><use href="#g-sound"/></svg></button><button class="btn" id="nvSim" data-i="simulate"></button><button class="btn" id="nvG">Google Maps</button><button class="btn" id="nvW">Waze</button><button class="btn danger" id="nvEnd" data-i="endNav"></button></div>
  </div>
-</div>
-
-<!-- ASSISTANT -->
-<button id="fab" class="fab" hidden aria-label="RuBot assistant" title="RuBot" aria-expanded="false">
- <svg class="i rubot-character" viewBox="0 0 72 64" aria-hidden="true">
-  <ellipse class="rubot-shadow" cx="34" cy="58" rx="19" ry="3"/>
-  <g class="rubot-motion">
-   <g class="rubot-wave"><path class="rubot-arm" d="M52 36Q58 31 60 23"/><path class="rubot-hand" d="M59 24 61 14Q62 12 64 13L64 19 66 11Q68 10 69 12L67 21 70 16Q72 15 71 18L68 27Q66 31 61 32Z"/></g>
-   <path class="rubot-antenna" d="M32 11V7"/>
-   <circle class="rubot-antenna-tip" cx="32" cy="5" r="2.5"/>
-   <rect class="rubot-ear" x="7" y="27" width="8" height="13" rx="4"/>
-   <rect class="rubot-ear" x="51" y="27" width="8" height="13" rx="4"/>
-   <rect class="rubot-shell" x="10" y="11" width="46" height="44" rx="14"/>
-   <path class="rubot-highlight" d="M19 14Q32 8 45 14"/>
-   <rect class="rubot-screen" x="15" y="17" width="36" height="29" rx="9"/>
-   <path class="rubot-screen-glint" d="M19 21Q24 18 29 19"/>
-   <g class="rubot-eyes"><ellipse cx="25" cy="30" rx="3.3" ry="4"/><ellipse cx="41" cy="30" rx="3.3" ry="4"/></g>
-   <g class="rubot-look"><circle cx="25" cy="30" r="1.25"/><circle cx="41" cy="30" r="1.25"/></g>
-   <path class="rubot-mouth" d="M26 39Q33 45 40 39"/>
-  </g>
- </svg>
-</button>
-<div id="ai" hidden role="dialog" aria-label="RuBot assistant">
- <button type="button" id="airesize" aria-label="Resize chat panel" title="Drag up or down to resize"></button>
- <div class="aihead"><span class="ai-bot-icon"><svg class="i rubot-character" viewBox="0 0 72 64" aria-hidden="true"><ellipse class="rubot-shadow" cx="34" cy="58" rx="19" ry="3"/><g class="rubot-motion"><g class="rubot-wave"><path class="rubot-arm" d="M52 36Q58 31 60 23"/><path class="rubot-hand" d="M59 24 61 14Q62 12 64 13L64 19 66 11Q68 10 69 12L67 21 70 16Q72 15 71 18L68 27Q66 31 61 32Z"/></g><path class="rubot-antenna" d="M32 11V7"/><circle class="rubot-antenna-tip" cx="32" cy="5" r="2.5"/><rect class="rubot-ear" x="7" y="27" width="8" height="13" rx="4"/><rect class="rubot-ear" x="51" y="27" width="8" height="13" rx="4"/><rect class="rubot-shell" x="10" y="11" width="46" height="44" rx="14"/><path class="rubot-highlight" d="M19 14Q32 8 45 14"/><rect class="rubot-screen" x="15" y="17" width="36" height="29" rx="9"/><path class="rubot-screen-glint" d="M19 21Q24 18 29 19"/><g class="rubot-eyes"><ellipse cx="25" cy="30" rx="3.3" ry="4"/><ellipse cx="41" cy="30" rx="3.3" ry="4"/></g><g class="rubot-look"><circle cx="25" cy="30" r="1.25"/><circle cx="41" cy="30" r="1.25"/></g><path class="rubot-mouth" d="M26 39Q33 45 40 39"/></g></svg></span><strong data-i="aiTitle"></strong><div class="sp"></div><select id="aiStyle" aria-label="AI response style"><option value="brief" data-i="aiBrief"></option><option value="detailed" data-i="aiDetailed"></option></select><button class="ib" id="aitts" title="Voice replies" aria-label="Voice replies"><svg class="i"><use href="#g-sound"/></svg></button><button class="ib" id="aiclose" aria-label="Close">✕</button></div>
- <div id="aimsgs" aria-live="polite"></div>
- <div id="voiceask" hidden><p data-i="voiceAsk"></p><div class="row"><button class="btn p" id="voiceallow" data-i="voiceAllow"></button><button class="btn" id="voiceno" data-i="notNow"></button></div></div>
- <div id="aichips"></div>
- <form id="aiform"><button type="button" class="ib" id="aimic" title="Speak" aria-label="Speak"><svg class="i"><use href="#g-mic"/></svg></button><input id="aiin" autocomplete="off"><button class="ib" aria-label="Send"><svg class="i"><use href="#g-arrow"/></svg></button></form>
 </div>
 
 <dialog id="dlg"></dialog>
@@ -590,7 +548,7 @@
  <h2 id="tutorialTitle" data-i="tutorialTitle"></h2>
  <p id="tutorialIntro" class="muted" data-i="tutorialIntro"></p>
  <div class="tutorial-progress-copy"><span id="tutorialStepCount"></span><span data-i="tutorialStepsLabel"></span></div>
- <div class="tutorial-progress" id="tutorialProgress" role="progressbar" aria-label="Tutorial progress" aria-valuemin="1" aria-valuemax="12" aria-valuenow="1"><span id="tutorialProgressFill"></span></div>
+ <div class="tutorial-progress" id="tutorialProgress" role="progressbar" aria-label="Tutorial progress" aria-valuemin="1" aria-valuemax="11" aria-valuenow="1"><span id="tutorialProgressFill"></span></div>
  <section class="tutorial-step" aria-live="polite">
   <span class="tutorial-step-icon" id="tutorialStepIcon"><svg class="i" aria-hidden="true"><use href="#g-route"/></svg></span>
   <h3 id="tutorialStepTitle"></h3>
@@ -628,24 +586,26 @@
 if (['localhost', '127.0.0.1'].includes(location.hostname)) self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js" integrity="sha384-tXYNKOHx4T02jMP7YYCtBxPIv1B5gaA5mcVPBzqMp6d7VzWzxJgI2aWF/nJLrQdS" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" integrity="sha384-AQ3POAMqIhwS81FrUH95ekxqBZHeP5tG2JfEL3+7GuTtfRLWnrRh32UxwzM+//A9" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js" integrity="sha384-TnlRYaR4JYz/lpaGuaiU61PjNberSA4vjLjtF+oRC/IkohkJqnWxw5EmDSOt1vA1" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" integrity="sha384-qn4Jh88HhJA8dplNQyGjOh9OGI4izVhrfj/qIFgaKcdgOE06pXqIKGlsCILZcLAC" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js" integrity="sha384-6I0gWsz4FIAr30c0TxIxJnPQuJiZ1FfILdZrgJdjxTH3R8dgPGTvexbyqTvReV6Z" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js" integrity="sha384-E3vxFxXu8FhW5kvqdQJ5Yf8ugrV7iCJP8jgnItRH2Rk8Q08cJzJGTi/oMC3FEp3j" crossorigin="anonymous"></script>
-<script src="js/config.js?v=1"></script>
-<script src="js/i18n.js?v=72"></script>
-<script src="js/auth-consent.js?v=5"></script>
-<script src="js/app.js?v=76"></script>
+<script src="js/config.js?v=5"></script>
+<script src="js/i18n.js?v=76"></script>
+<script src="js/auth-consent.js?v=6"></script>
+<script src="js/app.js?v=79"></script>
 <script src="js/routing.js"></script>
 <script src="js/store.js?v=6"></script>
 <script src="js/notifications.js?v=4"></script>
 <script src="js/updates.js?v=1"></script>
-<script src="js/fuel.js?v=3"></script>
+<script src="js/fuel.js?v=4"></script>
 <script src="js/nav.js"></script>
-<script src="js/assistant.js?v=53"></script>
-<script src="js/main.js?v=59"></script>
+<script src="js/places.js?v=1"></script>
+<script src="js/main.js?v=60"></script>
 <script src="js/pwa.js?v=3"></script>
 <script src="js/waves.js?v=45"></script>
 <script src="js/ui-guard.js"></script>

@@ -12,8 +12,6 @@ function removeRutoCookie(name){
   document.cookie=`${name}=; Path=${rutoCookiePath}; Max-Age=0; SameSite=Lax${secure}`;
   return getRutoCookie(name)===null
 }
-let personalizationAllowed=getRutoCookie('ruto_cookie_consent')==='personalization';
-let chatStyle=personalizationAllowed&&getRutoCookie('ruto_chat_style')==='detailed'?'detailed':'brief';
 let phoneCodeSent=false;
 const t=(k,v)=>{let s=(D[k]||k).split('|')[lang]||(D[k]||k).split('|')[0];if(v)for(const p in v)s=s.replaceAll('{'+p+'}',()=>v[p]);return s};
 const tip=k=>TIPS[k].split('|')[lang?1:0];
@@ -31,36 +29,18 @@ function applyLang(){
   $('#mapLocate').title=t('locateMe');
   $('#planGuideClose').setAttribute('aria-label',t('planGuideHide'));
   $('#planGuideClose').title=t('planGuideHide');
-  $('#aiStyle').setAttribute('aria-label',t('aiStyleLabel'));
-  $('#aiStyle').value=chatStyle;
   $('#phsend').textContent=t(phoneCodeSent?'resendCode':'sendCode');
-  authMode(mode);if(st.user){$('#profileAccountType').value=t(profileData.accountType==='company'?'companyAccount':'personalAccount');editNote();fuelUI();histUI();calUI();render();aiLang()}
+  authMode(mode);if(st.user){$('#profileAccountType').value=t(profileData.accountType==='company'?'companyAccount':'personalAccount');editNote();fuelUI();histUI();calUI();render();if(typeof renderMapCategories==='function')renderMapCategories()}
   if($('#tutorialDialog').open)renderTutorial()
 }
 document.querySelectorAll('.lang').forEach(s=>s.onchange=e=>{lang=+e.target.value;localStorage.setItem('ruto_lang',lang);applyLang()});
 
 function initCookieNotice(){
+  if(getRutoCookie('ruto_chat_style')!==null&&!removeRutoCookie('ruto_chat_style'))console.warn('Could not clear the obsolete chatbot style cookie.');
   const consent=getRutoCookie('ruto_cookie_consent');
-  personalizationAllowed=consent==='personalization';
-  chatStyle=personalizationAllowed&&getRutoCookie('ruto_chat_style')==='detailed'?'detailed':'brief';
-  $('#aiStyle').value=chatStyle;
-  $('#cookieNotice').hidden=consent==='personalization'||consent==='essential';
+  $('#cookieNotice').hidden=consent==='noupe'||consent==='essential';
 }
-function saveCookieConsent(allow){
-  if(allow){
-    if(!writeRutoCookie('ruto_chat_style',chatStyle))return false;
-    if(!writeRutoCookie('ruto_cookie_consent','personalization')){removeRutoCookie('ruto_chat_style');return false}
-    personalizationAllowed=true;
-    return true
-  }
-  if(!removeRutoCookie('ruto_chat_style'))return false;
-  personalizationAllowed=false;
-  return writeRutoCookie('ruto_cookie_consent','essential')
-}
-function setChatStyle(value){
-  chatStyle=value==='detailed'?'detailed':'brief';
-  if(personalizationAllowed&&!writeRutoCookie('ruto_chat_style',chatStyle))toast(t('cookieUnavailable'),'bad')
-}
+function saveCookieConsent(enableNoupe){return writeRutoCookie('ruto_cookie_consent',enableNoupe?'noupe':'essential')}
 
 /* ============ THEME ============ */
 function applyTheme(m){document.documentElement.dataset.theme=m;localStorage.setItem('ruto_theme',m);
@@ -424,9 +404,9 @@ $('#planGuideOpen').onclick=()=>{
   $('#planGuideOpen').hidden=true;
   $('#planGuideHeading').focus()
 };
-const RUTO_TUTORIAL_KEY='ruto_tutorial_seen_v1',RUTO_TUTORIAL_VERSION='2';
-const RUTO_TUTORIAL_TARGETS=['#menuToggle','#addr','#addDrop','#mapCategoryBar','#mapLocate','#fuelMini','#pri',()=>$('#res').hidden?'#empty':'#best','#save','#sched','#notificationButton','#fab'];
-const RUTO_TUTORIAL_ICONS=['#g-globe','#g-pin','#g-box','#g-globe','#g-pin','#g-fuel','#g-route','#g-truck','#g-box','#g-cal','#g-alert','#g-chat'];
+const RUTO_TUTORIAL_KEY='ruto_tutorial_seen_v1',RUTO_TUTORIAL_VERSION='3';
+const RUTO_TUTORIAL_TARGETS=['#menuToggle','#addr','#addDrop','#mapCategoryBar','#mapLocate','#fuelMini','#pri',()=>$('#res').hidden?'#empty':'#best','#save','#sched','#notificationButton'];
+const RUTO_TUTORIAL_ICONS=['#g-globe','#g-pin','#g-box','#g-globe','#g-pin','#g-fuel','#g-route','#g-truck','#g-box','#g-cal','#g-alert'];
 const RUTO_TUTORIAL_STEPS=RUTO_TUTORIAL_TARGETS.length;
 let tutorialStep=0,tutorialUid='',tutorialContinuation=null,tutorialTarget=null;
 function tutorialSeen(uid){return LS(RUTO_TUTORIAL_KEY,{})[uid]===RUTO_TUTORIAL_VERSION}
@@ -776,7 +756,7 @@ function enter(uid,name,details={}){
   window.checkReleaseUpdate?.(uid);
   const intro=$('#brandIntro');
   intro.hidden=false;intro.setAttribute('aria-hidden','false');
-  $('#land').hidden=true;$('#app').hidden=false;$('#fab').hidden=false;$('#who').textContent=name;
+  $('#land').hidden=true;$('#app').hidden=false;$('#who').textContent=name;
   profileData={accountType:'personal',name,email:auth?.currentUser?.email||(/@/.test(uid)?uid:''),photoURL:'',...details};
   applyProfileData(profileData);
   initMap();$('#date').value=ymd(new Date());fuelUI();applyLang();loadHist();
@@ -840,11 +820,19 @@ $('#locskip').onclick=e=>{e.preventDefault();$('#gate').hidden=true};
 $('#mapLocate').onclick=()=>requestCurrentLocation({recenter:true});
 
 /* ============ MAP ============ */
-const osmTiles=()=>L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap · Routing: '+(RUTO.TOMTOM_KEY?'TomTom':'OSRM')});
+const baseMapTiles=()=>{
+  if(window.MaplibreGLLeaflet&&typeof window.MaplibreGLLeaflet.maplibreGL==='function'){
+    return window.MaplibreGLLeaflet.maplibreGL({style:'https://tiles.openfreemap.org/styles/liberty',maxZoom:19})
+  }
+  console.error('OpenFreeMap could not be loaded; falling back to OpenStreetMap raster tiles.');
+  return L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19,attribution:'© OpenStreetMap contributors'
+  })
+};
 const trafficTiles=()=>L.tileLayer('https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key='+encodeURIComponent(RUTO.TOMTOM_KEY),{maxZoom:19,opacity:.75,attribution:'Traffic © TomTom'});
 function initMap(){
   map=L.map('map').setView([14.5995,120.9842],12);
-  tileLayer=osmTiles().addTo(map);
+  tileLayer=baseMapTiles().addTo(map);
   if(RUTO.TOMTOM_KEY)L.control.layers(null,{Traffic:trafficTiles().addTo(map)},{collapsed:false}).addTo(map);
   layer=L.layerGroup().addTo(map);
   map.on('click',e=>addPoint(e.latlng.lat,e.latlng.lng));
