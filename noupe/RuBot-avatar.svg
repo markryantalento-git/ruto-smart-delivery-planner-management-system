@@ -13,6 +13,20 @@
     <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
       <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#111414" flood-opacity=".35"/>
     </filter>
+    <style>
+      .robot-head{animation:rubot-bob 3s ease-in-out infinite}
+      .wave-arm{transform-box:view-box;transform-origin:374px 303px;animation:rubot-wave 2.2s ease-in-out infinite}
+      .eye{transform-box:fill-box;transform-origin:center;animation:rubot-blink 4.6s ease-in-out infinite}
+      .eye-right{animation-delay:.06s}
+      .eye-glint{transform-box:fill-box;transform-origin:center;animation:rubot-glance 4s ease-in-out infinite}
+      .mouth{transform-box:fill-box;transform-origin:center;animation:rubot-mouth 3s ease-in-out infinite}
+      @keyframes rubot-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+      @keyframes rubot-wave{0%,100%{transform:rotate(0)}20%,42%{transform:rotate(-18deg)}62%{transform:rotate(12deg)}82%{transform:rotate(-10deg)}}
+      @keyframes rubot-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
+      @keyframes rubot-glance{0%,42%,100%{transform:translate(0,0)}58%,75%{transform:translate(2px,1px)}}
+      @keyframes rubot-mouth{0%,65%,100%{transform:scaleY(.48)}70%,78%{transform:scaleY(1)}74%{transform:scaleY(.72)}}
+      @media(prefers-reduced-motion:reduce){.robot-head,.wave-arm,.eye,.eye-glint,.mouth{animation:none!important}}
+    </style>
   </defs>
 
   <circle cx="256" cy="256" r="248" fill="url(#background)"/>
@@ -25,6 +39,7 @@
   <circle cx="440" cy="231" r="7" fill="#ffd700"/>
 
   <g filter="url(#shadow)" stroke="#252a2b" stroke-linejoin="round">
+    <g class="robot-head">
     <path d="M256 91v35" fill="none" stroke="#ffd700" stroke-width="12" stroke-linecap="round"/>
     <path d="M256 39c-23 0-42 19-42 42 0 31 42 69 42 69s42-38 42-69c0-23-19-42-42-42Z" fill="#ffd700" stroke-width="8"/>
     <circle cx="256" cy="80" r="13" fill="#353839" stroke="none"/>
@@ -34,11 +49,22 @@
 
     <rect x="123" y="126" width="266" height="239" rx="72" fill="url(#shell)" stroke-width="12"/>
     <rect x="148" y="166" width="216" height="151" rx="50" fill="#353839" stroke-width="8"/>
-    <circle cx="207" cy="232" r="22" fill="#ffd700" stroke="none"/>
-    <circle cx="305" cy="232" r="22" fill="#ffd700" stroke="none"/>
-    <circle cx="214" cy="225" r="7" fill="#fffef8" stroke="none"/>
-    <circle cx="312" cy="225" r="7" fill="#fffef8" stroke="none"/>
-    <path d="M220 273c18 20 54 20 72 0" fill="none" stroke="#fffef8" stroke-width="9" stroke-linecap="round"/>
+    <g class="eye eye-left"><circle cx="207" cy="232" r="22" fill="#ffd700" stroke="none"/><circle class="eye-glint" cx="214" cy="225" r="7" fill="#fffef8" stroke="none"/></g>
+    <g class="eye eye-right"><circle cx="305" cy="232" r="22" fill="#ffd700" stroke="none"/><circle class="eye-glint" cx="312" cy="225" r="7" fill="#fffef8" stroke="none"/></g>
+    <g class="mouth">
+      <ellipse cx="256" cy="272" rx="33" ry="12" fill="#202425" stroke="none"/>
+      <path d="M229 268c15 14 39 14 54 0" fill="none" stroke="#fffef8" stroke-width="5" stroke-linecap="round"/>
+      <path d="M240 278c10 6 22 6 32 0v5c-10 7-22 7-32 0z" fill="#ffd700" stroke="none"/>
+    </g>
+    </g>
+
+    <g class="wave-arm">
+      <path d="M374 303c24-3 36-19 40-42" fill="none" stroke="#252a2b" stroke-width="24" stroke-linecap="round"/>
+      <path d="M374 303c24-3 36-19 40-42" fill="none" stroke="#deded7" stroke-width="15" stroke-linecap="round"/>
+      <circle cx="414" cy="258" r="13" fill="#deded7" stroke-width="5"/>
+      <path d="m407 249-5-14m12 13 1-17m7 21 9-13" fill="none" stroke="#252a2b" stroke-width="7" stroke-linecap="round"/>
+      <path d="m407 249-5-14m12 13 1-17m7 21 9-13" fill="none" stroke="#fffef8" stroke-width="3" stroke-linecap="round"/>
+    </g>
 
     <path d="M211 362v20m90-20v20" fill="none" stroke="#ffd700" stroke-width="12" stroke-linecap="round"/>
     <rect x="132" y="365" width="248" height="103" rx="44" fill="url(#shell)" stroke-width="12"/>

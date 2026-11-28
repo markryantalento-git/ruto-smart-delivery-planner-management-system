@@ -24,7 +24,8 @@ function saveDelivery(scheduled){
   const old=st.H.find(x=>x.id===st.editId),ch=st.chosen,r=st.r;
   const e=clean({id:old?old.id:Date.now(),ts:Date.now(),seq:old?(old.seq||0)+1:0,date:$('#date').value,time:$('#time').value,
     scheduled:scheduled||st.editSched,done:false,origin:st.origin,stops:st.stops,order:r.ord,round:$('#round').checked,pri:$('#pri').value,tmode:$('#tmode').value,
-    veh:ch.parts[0].v.id,veh2:ch.parts[1]?.v.id||null,cost:ch.cost,fuelCost:ch.fuelCost,km:ch.km,hrs:ch.hrs});
+    veh:ch.parts[0].v.id,veh2:ch.parts[1]?.v.id||null,cost:ch.cost,fuelCost:ch.fuelCost,km:ch.km,hrs:ch.hrs,
+    fleetCount:ch.fleetCount,savings:ch.savings});
   const i=st.H.findIndex(x=>x.id===e.id);if(i>=0)st.H[i]=e;else st.H.unshift(e);
   if(!persist()&&!db){toast(t('saveFail'),'bad');return}
   calDay=e.date;calMonth=new Date(e.date+'T00:00');

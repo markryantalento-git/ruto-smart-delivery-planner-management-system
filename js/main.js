@@ -1,5 +1,70 @@
 /* ============ START ============ */
-let dashCostChart=null,dashDistanceChart=null,weatherKey='',weatherFetchedAt=0,weatherBusy=false;
+let dashTripsChart=null,dashCostChart=null,dashVehiclesChart=null,dashDurationChart=null,dashDistanceChart=null,dashPeriod='month',weatherKey='',weatherFetchedAt=0,weatherBusy=false;
+const dashPeriodCounts={day:7,week:8,month:12,quarter:8,year:5};
+const dashboardDateKey=date=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+function dashboardBucketStart(date,period){
+  const start=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+  if(period==='week')start.setDate(start.getDate()-((start.getDay()+6)%7));
+  if(period==='month')start.setDate(1);
+  if(period==='quarter')start.setMonth(Math.floor(start.getMonth()/3)*3,1);
+  if(period==='year')start.setMonth(0,1);
+  return start
+}
+function dashboardBucketKey(date,period){
+  const start=dashboardBucketStart(date,period),year=start.getFullYear(),month=String(start.getMonth()+1).padStart(2,'0');
+  if(period==='day'||period==='week')return dashboardDateKey(start);
+  if(period==='month')return `${year}-${month}`;
+  if(period==='quarter')return `${year}-Q${Math.floor(start.getMonth()/3)+1}`;
+  return String(year)
+}
+function dashboardPeriodLabel(start,period,locale){
+  if(period==='day')return start.toLocaleDateString(locale,{weekday:'short',month:'short',day:'numeric'});
+  if(period==='week'){
+    const end=new Date(start);end.setDate(end.getDate()+6);
+    return `${start.toLocaleDateString(locale,{month:'short',day:'numeric'})}–${end.toLocaleDateString(locale,{month:'short',day:'numeric'})}`
+  }
+  if(period==='month')return start.toLocaleDateString(locale,{month:'short',year:'2-digit'});
+  if(period==='quarter')return `Q${Math.floor(start.getMonth()/3)+1} ${start.getFullYear()}`;
+  return String(start.getFullYear())
+}
+function dashboardPeriodBuckets(period,now=new Date()){
+  const safePeriod=Object.prototype.hasOwnProperty.call(dashPeriodCounts,period)?period:'month',
+    count=dashPeriodCounts[safePeriod],latest=dashboardBucketStart(now,safePeriod),locale=lang===1?'fil-PH':'en-PH',buckets=[];
+  for(let offset=count-1;offset>=0;offset--){
+    const start=new Date(latest);
+    if(safePeriod==='day')start.setDate(start.getDate()-offset);
+    if(safePeriod==='week')start.setDate(start.getDate()-7*offset);
+    if(safePeriod==='month')start.setMonth(start.getMonth()-offset);
+    if(safePeriod==='quarter')start.setMonth(start.getMonth()-3*offset);
+    if(safePeriod==='year')start.setFullYear(start.getFullYear()-offset);
+    buckets.push({key:dashboardBucketKey(start,safePeriod),start,label:dashboardPeriodLabel(start,safePeriod,locale),trips:0,cost:0,savings:0,savingsCount:0,vehicles:0,distance:0,durationTotal:0,durationCount:0})
+  }
+  return buckets
+}
+function dashboardAggregate(history,period,now=new Date()){
+  const buckets=dashboardPeriodBuckets(period,now),byKey=new Map(buckets.map(bucket=>[bucket.key,bucket])),today=dashboardDateKey(now);
+  for(const entry of Array.isArray(history)?history:[]){
+    if(!entry||typeof entry.date!=='string')continue;
+    const date=new Date(`${entry.date}T12:00:00`);
+    if(!Number.isFinite(date.getTime())||dashboardDateKey(date)>today)continue;
+    const bucket=byKey.get(dashboardBucketKey(date,period));
+    if(!bucket)continue;
+    bucket.trips++;
+    const cost=Number(entry.cost),distance=Number(entry.km),duration=Number(entry.hrs);
+    if(Number.isFinite(cost)&&cost>=0)bucket.cost+=cost;
+    if(Number.isFinite(distance)&&distance>=0)bucket.distance+=distance;
+    if(Number.isFinite(duration)&&duration>=0){bucket.durationTotal+=duration;bucket.durationCount++}
+    if(typeof entry.savings==='number'&&Number.isFinite(entry.savings)&&entry.savings>=0){bucket.savings+=entry.savings;bucket.savingsCount++}
+    const vehicleTypes=[entry.veh,entry.veh2].filter((id,index,all)=>typeof id==='string'&&id&&all.indexOf(id)===index),
+      fleetCount=typeof entry.fleetCount==='number'&&Number.isFinite(entry.fleetCount)&&entry.fleetCount>=0?entry.fleetCount:vehicleTypes.length;
+    bucket.vehicles+=fleetCount
+  }
+  return buckets.map(bucket=>({...bucket,averageDuration:bucket.durationCount?bucket.durationTotal/bucket.durationCount:null}))
+}
+function destroyDashboardCharts(){
+  [dashTripsChart,dashCostChart,dashVehiclesChart,dashDurationChart,dashDistanceChart].forEach(chart=>chart?.destroy());
+  dashTripsChart=dashCostChart=dashVehiclesChart=dashDurationChart=dashDistanceChart=null
+}
 function dashboardUI(){
   dashboardCalendarUI();
   $('#dashFuel').innerHTML=FK.map(([key,label])=>{
@@ -10,24 +75,51 @@ function dashboardUI(){
     return `<div class="dash-price"><span>${t(label)}</span><span class="dash-price-quote"><strong>₱${current.toFixed(2)}<small>${unit}</small></strong>${trend}</span></div>`
   }).join('');
   $('#dashFuelAsOf').textContent=st.fuel.manual?t('fManual'):t('fAsOf',{d:st.fuel.asOf,s:st.fuel.source});
-  const entries=[...st.H].filter(x=>x.date).sort((a,b)=>(a.ts||0)-(b.ts||0)).slice(-7);
-  if(!entries.length){
-    dashCostChart?.destroy();dashDistanceChart?.destroy();dashCostChart=dashDistanceChart=null;
-    $('#dashboardCharts').hidden=true;$('#dashboardChartsEmpty').textContent=t('dashNoHistory');$('#dashboardChartsEmpty').hidden=false;
+  const period=$('#dashPeriod').value;
+  if(Object.prototype.hasOwnProperty.call(dashPeriodCounts,period))dashPeriod=period;
+  const buckets=dashboardAggregate(st.H,dashPeriod),trips=buckets.reduce((sum,bucket)=>sum+bucket.trips,0),
+    totals=buckets.reduce((sum,bucket)=>({cost:sum.cost+bucket.cost,savings:sum.savings+bucket.savings,savingsCount:sum.savingsCount+bucket.savingsCount,
+      vehicles:sum.vehicles+bucket.vehicles,distance:sum.distance+bucket.distance,durationTotal:sum.durationTotal+bucket.durationTotal,durationCount:sum.durationCount+bucket.durationCount}),
+    {cost:0,savings:0,savingsCount:0,vehicles:0,distance:0,durationTotal:0,durationCount:0});
+  if(!trips){
+    destroyDashboardCharts();$('#dashboardSummary').hidden=true;$('#dashboardCharts').hidden=true;
+    const hasHistory=Array.isArray(st.H)&&st.H.some(entry=>entry&&typeof entry.date==='string'&&entry.date<=dashboardDateKey(new Date()));
+    $('#dashboardChartsEmpty').textContent=t(hasHistory?'dashNoPeriodHistory':'dashNoHistory');$('#dashboardChartsEmpty').hidden=false;
     return
   }
+  $('#dashboardSummary').hidden=false;
+  $('#dashTripsTotal').textContent=String(trips);
+  $('#dashSpendTotal').textContent=peso(totals.cost);
+  $('#dashVehiclesTotal').textContent=String(totals.vehicles);
+  $('#dashSavingsTotal').textContent=totals.savingsCount?peso(totals.savings):'—';
   if(!window.Chart){
-    $('#dashboardCharts').hidden=true;$('#dashboardChartsEmpty').textContent=t('dashChartUnavailable');$('#dashboardChartsEmpty').hidden=false;
+    destroyDashboardCharts();$('#dashboardCharts').hidden=true;$('#dashboardChartsEmpty').textContent=t('dashChartUnavailable');$('#dashboardChartsEmpty').hidden=false;
     return
   }
-  const locale=lang===1?'fil-PH':'en-PH',labels=entries.map(x=>new Date(x.date+'T12:00:00').toLocaleDateString(locale,{month:'short',day:'numeric'})),
-    ink=getComputedStyle(document.body).getPropertyValue('--ink').trim();
+  $('#dashboardChartsEmpty').hidden=true;$('#dashboardCharts').hidden=true;
+  destroyDashboardCharts();$('#dashboardCharts').hidden=false;
+  const labels=buckets.map(bucket=>bucket.label),ink=getComputedStyle(document.body).getPropertyValue('--ink').trim(),
+    reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    common={responsive:true,maintainAspectRatio:false,animation:{duration:reducedMotion?0:650,easing:'easeOutQuart'},interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:{maxRotation:35,autoSkip:true}},y:{beginAtZero:true}}},
+    create=(id,type,datasets,options={})=>new Chart($('#'+id),{type,data:{labels,datasets},options:{...common,...options,plugins:{...common.plugins,...options.plugins},scales:{...common.scales,...options.scales}}}),
+    integerAxis={beginAtZero:true,ticks:{precision:0,stepSize:1}},moneyAxis={beginAtZero:true,ticks:{callback:value=>'₱'+Number(value).toLocaleString('en-PH')}};
   Chart.defaults.color=ink;
-  const update=(chart,canvas,type,dataset)=>{if(!chart)return new Chart(canvas,{type,data:{labels,datasets:[dataset]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:value=>type==='bar'?'₱'+Number(value).toLocaleString('en-PH'):value+' km'}}}}});
-    chart.data.labels=labels;chart.data.datasets[0].data=dataset.data;chart.update();return chart};
-  dashCostChart=update(dashCostChart,$('#dashCostChart'),'bar',{label:t('dashCosts'),data:entries.map(x=>Number(x.cost)||0),backgroundColor:'#FFD700',borderRadius:5});
-  dashDistanceChart=update(dashDistanceChart,$('#dashDistanceChart'),'line',{label:t('dashDistance'),data:entries.map(x=>Number(x.km)||0),borderColor:'#A47C00',backgroundColor:'rgba(255,215,0,.2)',pointBackgroundColor:'#FFD700',fill:true,tension:.3});
-  $('#dashboardChartsEmpty').hidden=true;$('#dashboardCharts').hidden=false
+  const savingsLabel=t('dashSavings');
+  dashTripsChart=create('dashTripsChart','line',[{label:t('dashTrips'),data:buckets.map(bucket=>bucket.trips),borderColor:'#087A35',backgroundColor:'rgba(8,122,53,.15)',pointBackgroundColor:'#087A35',fill:true,tension:.35,pointRadius:3}],
+    {plugins:{legend:{display:false}},scales:{y:{...integerAxis}}});
+  dashCostChart=create('dashCostChart','bar',[
+    {label:t('dashSpend'),data:buckets.map(bucket=>bucket.cost),backgroundColor:'#FFD700',borderRadius:5},
+    {label:savingsLabel,data:buckets.map(bucket=>bucket.savingsCount?bucket.savings:null),backgroundColor:'#2DAA68',borderRadius:5}],
+    {plugins:{legend:{display:true,position:'bottom'},tooltip:{callbacks:{label:context=>`${context.dataset.label}: ${peso(Number(context.parsed.y)||0)}`}}},scales:{y:{...moneyAxis}}});
+  dashVehiclesChart=create('dashVehiclesChart','bar',[{label:t('dashVehicles'),data:buckets.map(bucket=>bucket.vehicles),backgroundColor:'#7954A1',borderRadius:5}],
+    {plugins:{legend:{display:false}},scales:{y:{...integerAxis}}});
+  dashDurationChart=create('dashDurationChart','line',[{label:t('dashDuration'),data:buckets.map(bucket=>bucket.averageDuration),borderColor:'#087A35',backgroundColor:'rgba(8,122,53,.15)',pointBackgroundColor:'#087A35',fill:true,tension:.35,pointRadius:3}],
+    {plugins:{legend:{display:false},tooltip:{callbacks:{label:context=>context.parsed.y===null?'—':fmtT(Math.round(context.parsed.y*60))}}},scales:{y:{beginAtZero:true,ticks:{callback:value=>fmtT(Math.round(Number(value)*60))}}}});
+  dashDistanceChart=create('dashDistanceChart','line',[{label:t('dashDistance'),data:buckets.map(bucket=>bucket.distance),borderColor:'#A47C00',backgroundColor:'rgba(255,215,0,.2)',pointBackgroundColor:'#FFD700',fill:true,tension:.3,pointRadius:3}],
+    {plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:value=>Number(value).toLocaleString('en-PH')+' km'}}}});
+  [ ['dashTripsChart',t('dashTrips')],['dashCostChart',t('dashCosts')],['dashVehiclesChart',t('dashVehicles')],['dashDurationChart',t('dashDuration')],['dashDistanceChart',t('dashDistance')] ]
+    .forEach(([id,label])=>$('#'+id).setAttribute('aria-label',`${label}: ${labels.join(', ')}`))
 }
 function weatherLabel(code){
   if(code===0)return t('weatherClear');
@@ -70,8 +162,9 @@ function updateDashboardClock(){
 $('#dashWeatherRefresh').onclick=()=>refreshDashboardWeather(true);
 $('#dashFuelRefresh').onclick=()=>$('#fuelbtn').click();
 $('#dashFuelEdit').onclick=()=>{showView('plan');$('#fuelPanel').open=true};
+$('#dashPeriod').addEventListener('change',()=>{dashPeriod=$('#dashPeriod').value;dashboardUI()});
 $$('.th').forEach(button=>button.addEventListener('click',()=>setTimeout(()=>{if(!$('#v_dash').hidden)dashboardUI()},0)));
-$$('.lang').forEach(select=>select.addEventListener('change',()=>{updateDashboardClock();$('#dashWeatherRefresh').setAttribute('aria-label',t('weatherRefresh'));if(!$('#v_dash').hidden)refreshDashboardWeather(true)}));
+$$('.lang').forEach(select=>select.addEventListener('change',()=>{updateDashboardClock();$('#dashWeatherRefresh').setAttribute('aria-label',t('weatherRefresh'));if(!$('#v_dash').hidden){dashboardUI();refreshDashboardWeather(true)}}));
 $('#dashWeatherRefresh').setAttribute('aria-label',t('weatherRefresh'));
 updateDashboardClock();setInterval(updateDashboardClock,1000);
 setInterval(()=>{if(st.user&&!$('#v_dash').hidden)refreshDashboardWeather()},900000);
@@ -115,9 +208,8 @@ applyLang();
 initCookieNotice();
 if(getRutoCookie('ruto_cookie_consent')==='noupe')loadNoupeChat();
 if(auth){
-  const hasKnownAccount=()=>!!LS('ruto_session',null)||Object.keys(LS('ruto_profiles',{})).length>0||Object.keys(LS('ruto_users',{})).length>0,
-    shouldRestoreSession=user=>installedAppMode||keepBrowserLogin()||hasBrowserSession(user.uid),
-    showReturningSignIn=()=>{if(!st.user&&hasKnownAccount()&&$('#authModal').hidden)openAuth('in',$('#openSignIn'))};
+  const shouldRestoreSession=user=>installedAppMode||keepBrowserLogin()||hasBrowserSession(user.uid),
+    showReturningSignIn=()=>{refreshAuthEntryLabel();if(!st.user&&hasKnownAccount()&&$('#authModal').hidden)openAuth('in',$('#openSignIn'))};
   let restoringUid=null;
   const consentRedirect=RutoConsent.hasPendingRedirect();
   const showConsentGate=async message=>{

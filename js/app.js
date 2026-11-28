@@ -31,7 +31,7 @@ function applyLang(){
   $('#planGuideClose').setAttribute('aria-label',t('planGuideHide'));
   $('#planGuideClose').title=t('planGuideHide');
   $('#phsend').textContent=t(phoneCodeSent?'resendCode':'sendCode');
-  authMode(mode);if(st.user){$('#profileAccountType').value=t(profileData.accountType==='company'?'companyAccount':'personalAccount');editNote();fuelUI();histUI();calUI();render();if(typeof renderMapCategories==='function')renderMapCategories()}
+  authMode(mode);refreshAuthEntryLabel();if(st.user){$('#profileAccountType').value=t(profileData.accountType==='company'?'companyAccount':'personalAccount');editNote();fuelUI();histUI();calUI();render();if(typeof renderMapCategories==='function')renderMapCategories()}
   if($('#tutorialDialog').open)renderTutorial()
 }
 document.querySelectorAll('.lang').forEach(s=>s.onchange=e=>{lang=+e.target.value;localStorage.setItem('ruto_lang',lang);applyLang()});
@@ -67,7 +67,7 @@ const V=[
 {id:'bangka',name:'Bangka (Motorized Boat)',icon:'g-boat',fuel:'gas',fuelLph:1.75,cap:500,speed:20,hourly:200,effort:4,closed:false,tf:1,maxKm:80,dom:'water'},
 // Keeps the prior 0.8 km/L estimate at 18 km/h, expressed in the boat's L/h unit.
 {id:'cargo',name:'Cargo Boat / RoRo',icon:'g-ship',fuel:'diesel',fuelLph:22.5,cap:8000,speed:18,hourly:900,effort:2,closed:true,tf:1,dom:'water'}];
-const SERVICE_MIN=6,MAXTRIPS=5,PORT_MIN=20;
+const SERVICE_MIN=6,MAXFLEET=5,PORT_MIN=20;
 /* cargo rules: max safe minutes, needs enclosed vehicle, perishable, icons */
 const MAXMIN={meat:120,cold:90,food:60,produce:240,med:180};
 const CLOSED=['fragile','meat','cold','food','elec','med'],PERISH=['meat','cold','food','med'];
@@ -100,6 +100,7 @@ const pad=n=>String(n).padStart(2,'0');
 const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); // local date (not UTC)
 const vById=id=>V.find(v=>v.id===id);
 const st={user:null,origin:null,stops:[],sel:{},lastPick:null,editId:null,editSched:false,r:null,chosen:null,anim:null,me:null,H:[]};
+let stopsCollapsed=false;
 const PHOTO_COOLDOWN_MS=30*24*60*60*1000,PHOTO_CROP_SIZE=320,PHOTO_OUTPUT_SIZE=512;
 let accountType='personal',profileData={accountType:'personal',name:'',companyName:'',email:'',photoURL:''},profilePhotoBlob=null,profilePhotoObjectURL='',profilePhotoCooldownUntil=0,profilePhotoCheck=0,
   photoCropImage=null,photoCropSourceURL='',photoCropZoom=1,photoCropX=0,photoCropY=0,photoCropPointer=null;
@@ -168,7 +169,7 @@ function showCredentialError(){
 /* ============ AUTH: email ============ */
 const sha=async s=>crypto.subtle?[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('ruto:'+s)))].map(b=>b.toString(16).padStart(2,'0')).join(''):btoa(s);
 function authMode(m){
-  mode=m;$$('#auth .tabs .btn').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  mode=m;$$('#auth .tabs .btn').forEach(b=>{const active=b.dataset.m===m;b.classList.toggle('on',active);b.setAttribute('aria-pressed',String(active))});
   $('#nmw').hidden=m==='in';$('#forgotPassword').hidden=true;$('#signupRule').hidden=m!=='up';
   $('#pw').autocomplete=m==='in'?'current-password':'new-password';
   $('#keepLoggedIn').checked=keepBrowserLogin();
@@ -178,6 +179,13 @@ function authMode(m){
   $('#sub').textContent=t(m==='in'?'signin':'signup');clearAuthError();
   updateAccountTypeUI();RutoConsent.refresh(m==='up');
 }
+function hasKnownAccount(){
+  return !!LS('ruto_session',null)||Object.keys(LS('ruto_profiles',{})).length>0||Object.keys(LS('ruto_users',{})).length>0||!!auth?.currentUser
+}
+function refreshAuthEntryLabel(){
+  const key=hasKnownAccount()?'signin':'signup',button=$('#openSignIn');
+  button.dataset.i=key;button.textContent=t(key)
+}
 $('#keepLoggedIn').addEventListener('change',()=>{
   if(!SV(RUTO_KEEP_LOGGED_IN_KEY,$('#keepLoggedIn').checked))$('#err').textContent=t('keepLoggedInSaveFailed');
   else if($('#err').textContent===t('keepLoggedInSaveFailed'))$('#err').textContent=''
@@ -185,6 +193,8 @@ $('#keepLoggedIn').addEventListener('change',()=>{
 $('#keepLoginWrap').hidden=installedAppMode;
 function updateAccountTypeUI(){
   const company=accountType==='company',phoneOn=!$('#phoneBox').hidden;
+  const nameLabelKey=company?'ownerContactName':'name';
+  $('#nmLabel').dataset.i=nameLabelKey;$('#nmLabel').textContent=t(nameLabelKey);
   $$('#accountTypeChoice [data-account-type]').forEach(b=>{
     const active=b.dataset.accountType===accountType;
     b.classList.toggle('on',active);b.setAttribute('aria-pressed',String(active))});
@@ -198,7 +208,7 @@ function updateAccountTypeUI(){
 }
 $$('#accountTypeChoice [data-account-type]').forEach(b=>b.onclick=()=>{
   accountType=b.dataset.accountType;updateAccountTypeUI();$('#err').textContent=''});
-$$('#auth .tabs .btn').forEach(b=>b.onclick=()=>authMode(b.dataset.m));
+$$('#auth .tabs .btn').forEach(b=>b.onclick=()=>b.dataset.m==='up'?openSignupAccountChoice(b):authMode('in'));
 ['#em','#pw'].forEach(selector=>$(selector).addEventListener('input',()=>{$('#forgotPassword').hidden=true;clearAuthError()}));
 const isCredentialFailure=code=>['auth/invalid-credential','auth/wrong-password','auth/user-not-found'].includes(code);
 // Profile updates merge existing consent and creation metadata instead of replacing them.
@@ -392,23 +402,41 @@ $('#phsend').onclick=sendCode;$('#phok').onclick=verifyCode;
 
 /* ============ LANDING ============ */
 let authOpener=null;
-function openAuth(formMode,opener){
+function openAuth(formMode,opener,selectedAccountType){
   authOpener=opener;
+  if(['personal','company'].includes(selectedAccountType))accountType=selectedAccountType;
   if(!$('#phoneBox').hidden)phonePanel(false);
+  $('#accountChoicePanel').hidden=true;$('#auth').hidden=false;
+  $('#authDialog').setAttribute('aria-labelledby','authHeading');
   authMode(formMode);
+  refreshAuthEntryLabel();
   $('#authModal').hidden=false;
   document.body.classList.add('auth-modal-open');
   requestAnimationFrame(()=>$(formMode==='up'?'#nm':'#em').focus());
 }
+function openSignupAccountChoice(opener){
+  authOpener=opener;
+  if(!$('#phoneBox').hidden)phonePanel(false);
+  $('#auth').hidden=true;$('#accountChoicePanel').hidden=false;
+  $('#authDialog').setAttribute('aria-labelledby','accountChoiceHeading');
+  $('#authModal').hidden=false;
+  document.body.classList.add('auth-modal-open');
+  requestAnimationFrame(()=>$('#choosePersonalSignup').focus());
+}
 function closeAuth(){
   if($('#authModal').hidden)return;
   $('#authModal').hidden=true;
+  $('#accountChoicePanel').hidden=true;$('#auth').hidden=false;
+  $('#authDialog').setAttribute('aria-labelledby','authHeading');
   document.body.classList.remove('auth-modal-open');
   if(authOpener?.isConnected)authOpener.focus();
 }
-$('#startNow').onclick=event=>openAuth('up',event.currentTarget);
-$('#cta').onclick=event=>openAuth('up',event.currentTarget);
-$('#openSignIn').onclick=event=>openAuth('in',event.currentTarget);
+$('#startNow').onclick=event=>openSignupAccountChoice(event.currentTarget);
+$('#cta').onclick=event=>openSignupAccountChoice(event.currentTarget);
+$('#openSignIn').onclick=event=>hasKnownAccount()?openAuth('in',event.currentTarget):openSignupAccountChoice(event.currentTarget);
+$$('#accountChoicePanel [data-signup-account]').forEach(button=>button.onclick=()=>{
+  openAuth('up',authOpener,button.dataset.signupAccount)
+});
 $('#authClose').onclick=closeAuth;
 $('#authBackdrop').onclick=closeAuth;
 $('#planGuideClose').onclick=()=>{
@@ -905,6 +933,7 @@ const pinMarkup=(x,o)=>`<div class="pin ${o?'o':''}"><b>${x}</b></div>`;
 window.rutoPinMarkup=pinMarkup;
 const pinI=(x,o)=>L.divIcon({className:'',html:pinMarkup(x,o),iconSize:[30,30],iconAnchor:[15,30]});
 let fitKey='';
+const roundTripEnabled=()=>$('#round').getAttribute('aria-pressed')==='true';
 function drawRoute(group,legs){
   const styles=getComputedStyle(document.documentElement),road=styles.getPropertyValue('--road').trim(),water=styles.getPropertyValue('--water').trim(),amber=styles.getPropertyValue('--amber').trim();
   legs.forEach(l=>l.segs.forEach(s=>{
@@ -925,7 +954,7 @@ function drawMap(r){
     mapMarkers.push({id:'stop:'+i,lat:s.lat,lng:s.lng,html:pinMarkup(i+1),anchor:'bottom',label:s.name,popup:s.name})});
   planner3D?.setRoute(r?r.legs.flatMap(leg=>leg.segs):[]);
   planner3D?.setMarkers('route',mapMarkers);
-  const key=JSON.stringify([st.origin,st.stops.map(s=>[s.lat,s.lng]),!!r,$('#round').checked]);
+  const key=JSON.stringify([st.origin,st.stops.map(s=>[s.lat,s.lng]),!!r,roundTripEnabled()]);
   if(key===fitKey)return;fitKey=key;
   if(planner3D?.visible)planner3D.fitPoints(pts);
   else if(pts.length>1)map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lng])),{padding:[40,40]});
@@ -1043,8 +1072,8 @@ addrInput.addEventListener('keydown',e=>{
 });
 $('#gps').onclick=()=>requestCurrentLocation({setOrigin:true,recenter:true});
 function clearForm(){
-  st.origin=null;st.stops=[];st.sel={};st.lastPick=null;st.editId=null;st.editSched=false;fitKey='';
-  selectedAddress=null;addrInput.value='';closeAddrSuggestions();setAddrStatus(null);$('#date').value=ymd(new Date());$('#time').value='08:00';$('#round').checked=true;$('#pri').value='balanced';$('#tmode').value='auto';$('#budget').value='';
+  st.origin=null;st.stops=[];st.sel={};st.lastPick=null;st.editId=null;st.editSched=false;stopsCollapsed=false;fitKey='';
+  selectedAddress=null;addrInput.value='';closeAddrSuggestions();setAddrStatus(null);$('#date').value=ymd(new Date());$('#time').value='08:00';$('#round').setAttribute('aria-pressed','false');$('#pri').value='balanced';$('#tmode').value='auto';$('#budget').value='';
   editNote();render();
   const center=st.me||{lat:14.5995,lng:120.9842};
   if(planner3D?.visible)planner3D.flyTo(center,12,350);else map.setView(center,12)
@@ -1057,25 +1086,34 @@ function editNote(){const x=st.editId&&st.H.find(q=>q.id===st.editId);$('#editno
 const depart=()=>new Date(($('#date').value||ymd(new Date()))+'T'+($('#time').value||'08:00'));
 function evalV(v,r){
   const water=v.dom==='water',km1=water?r.waterKm:r.landKm,
-  kg=st.stops.filter(s=>s.kind!=='support').reduce((a,s)=>a+ +s.kg,0),needC=st.stops.some(s=>s.kind!=='support'&&CLOSED.includes(s.cargo)),trips=Math.max(1,Math.ceil(kg/v.cap)),
+  kg=st.stops.filter(s=>s.kind!=='support').reduce((a,s)=>a+ +s.kg,0),needC=st.stops.some(s=>s.kind!=='support'&&CLOSED.includes(s.cargo)),fleetSize=Math.max(1,Math.ceil(kg/v.cap)),
   // land: road time with traffic x vehicle factor, never faster than the vehicle's own speed
   sec1=water?km1/v.speed*3600+r.portStops*PORT_MIN*60:Math.max(r.landSec*v.tf,km1/v.speed*3600),
   service=(water&&r.landKm>0)?0:st.stops.length*SERVICE_MIN/60,
-  km=km1*trips,driveHrs=sec1/3600,hrs=driveHrs*trips+service,
+  // Capacity determines simultaneous vehicles; ETA is for one planned delivery wave.
+  km=km1*fleetSize,driveHrs=sec1/3600,hrs=driveHrs+service,
   idle=water?1:1+.35*Math.max(0,r.factor-1),
   averageSpeed=driveHrs?km1/driveHrs:0,
-  fuelPerHour=water?v.fuelLph:averageSpeed/v.kmpl*idle,
-  fuelAmount=fuelPerHour*(water?km1/v.speed:driveHrs)*trips,
+  fuelPerHour=(water?v.fuelLph:averageSpeed/v.kmpl*idle)*fleetSize,
+  fuelAmount=fuelPerHour*(water?km1/v.speed:driveHrs),
   fuelUnit=v.fuel==='ev'?'kWh':'L',
-  fuelCost=fuelAmount*st.fuel[v.fuel],labor=hrs*v.hourly,lvl=Math.min(5,v.effort+trips-1);
-  let why='';if(needC&&!v.closed)why=t('needClosed');else if(trips>MAXTRIPS)why=t('capShort')+' ('+kg+' kg)';else if(v.maxKm&&km1>v.maxKm)why=t('tooFar',{km:v.maxKm});
-  return{v,km,hrs,driveHrs,service,trips,fuelAmount,fuelPerHour,fuelUnit,fuelCost,labor,cost:fuelCost+labor,lvl,eff:lvl*hrs,ok:!why,why}}
+  fuelCost=fuelAmount*st.fuel[v.fuel],labor=hrs*v.hourly*fleetSize,lvl=Math.min(5,v.effort);
+  let why='';if(needC&&!v.closed)why=t('needClosed');else if(fleetSize>MAXFLEET)why=t('fleetOverLimit',{n:fleetSize});else if(v.maxKm&&km1>v.maxKm)why=t('tooFar',{km:v.maxKm});
+  return{v,km,hrs,driveHrs,service,fleetSize,fuelAmount,fuelPerHour,fuelUnit,fuelCost,labor,cost:fuelCost+labor,lvl,eff:lvl*hrs*fleetSize,ok:!why,why}}
 const W={balanced:[.4,.35,.25],cheap:[1,0,0],fast:[0,1,0],easy:[0,0,1]};
 const lvlN=n=>t(n<=2?'L1':n<=3?'L2':'L3');
 const fmtT=m=>{const h=Math.floor(Math.round(m)/60),mm=Math.round(m)%60;return h?h+'h '+mm+'m':mm+' min'};
 const clock=d=>d.toLocaleTimeString('en-PH',{hour:'numeric',minute:'2-digit'});
 
 /* ============ RENDER ============ */
+function updateStopsToggle(){
+  $('#stopsPanel').hidden=stopsCollapsed;
+  const button=$('#toggleStops');
+  button.hidden=st.stops.length===0;
+  button.setAttribute('aria-expanded',String(!stopsCollapsed));
+  $('#toggleStopsLabel').textContent=stopsCollapsed?t('showStops',{n:st.stops.length}):t('hideStops')
+}
+$('#toggleStops').onclick=()=>{stopsCollapsed=!stopsCollapsed;updateStopsToggle()};
 function stopsUI(){
   $('#nostop').hidden=st.stops.length>0;
   $('#stops').innerHTML=st.stops.map((s,i)=>{const support=s.kind==='support';return `<div class="stop ${support?'support-stop':''}">
@@ -1083,7 +1121,9 @@ function stopsUI(){
    ${support?`<span class="stop-kind">${t('poiSupportStop')}</span>`:`<input type="number" min="0" value="${+s.kg}" onchange="upd(${i},'kg',this.value)" aria-label="kg" title="kg">`}
    <div class="sub">${support?'':`<select onchange="upd(${i},'cargo',this.value)">${Object.keys(CI).map(k=>`<option value="${k}" ${k==s.cargo?'selected':''}>${t('c_'+k)}</option>`).join('')}`}
    ${t('by')} <input type="time" value="${esc(s.by)}" onchange="upd(${i},'by',this.value)">
-   <span class="acts"><button class="ib" title="Edit" onclick="$('#sn${i}').focus()">${ic('edit')}</button><button class="ib" title="Update" onclick="relocate(${i})">${ic('refresh')}</button><button class="ib d" title="Delete" onclick="del(${i})">${ic('trash')}</button></span></div></div>`}).join('')}
+   <span class="acts"><button class="ib" title="Edit" onclick="$('#sn${i}').focus()">${ic('edit')}</button><button class="ib" title="Update" onclick="relocate(${i})">${ic('refresh')}</button><button class="ib d" title="Delete" onclick="del(${i})">${ic('trash')}</button></span></div></div>`}).join('');
+  updateStopsToggle()
+}
 window.upd=(i,k,v)=>{st.stops[i][k]=k==='kg'?Math.max(0,+v||0):v;if(k!=='name')render()};
 window.del=i=>{st.stops.splice(i,1);render()};
 window.relocate=async i=>{const p=await geocode(st.stops[i].name);if(!p){toast(t('notFound'),'bad');return}Object.assign(st.stops[i],p);render()};
@@ -1094,7 +1134,7 @@ async function render(){
   const n=++seq;st.r=null;st.chosen=null;
   if(!st.origin||!st.stops.length){drawMap();$('#res').hidden=true;$('#empty').hidden=false;$('#loading').hidden=true;return}
   $('#empty').hidden=true;$('#loading').hidden=false;$('#res').classList.add('stale');drawMap();
-  let r;try{r=await plan({origin:st.origin,stops:st.stops,round:$('#round').checked,depart:depart(),pri:$('#pri').value,mode:$('#tmode').value,cancelled:()=>n!==seq})}
+  let r;try{r=await plan({origin:st.origin,stops:st.stops,round:roundTripEnabled(),depart:depart(),pri:$('#pri').value,mode:$('#tmode').value,cancelled:()=>n!==seq})}
   catch(e){if(n!==seq)return;$('#loading').hidden=true;$('#res').hidden=true;$('#empty').hidden=false;if(e.message!=='cancelled'){$('#empty').textContent=t(D[e.message]?e.message:'routeFail')}return}
   if(n!==seq)return;st.r=r;$('#empty').textContent=t('empty');$('#loading').hidden=true;$('#res').classList.remove('stale');$('#res').hidden=false;
   renderResults()}
@@ -1112,8 +1152,9 @@ function renderResults(){
   $('#res').classList.remove('stale');
   const budget=budgetInput.value===''?null:budgetInput.valueAsNumber;
   const need=[r.landKm>.05?'land':null,r.waterKm>.05?'water':null].filter(Boolean);if(!need.length)need.push('land');
-  const types=[...new Set(st.stops.filter(s=>s.kind!=='support').map(s=>s.cargo))],perish=types.some(x=>PERISH.includes(x)),pri=$('#pri').value,
-    w=perish&&pri==='balanced'?[.2,.7,.1]:W[pri];
+  const types=[...new Set(st.stops.filter(s=>s.kind!=='support').map(s=>s.cargo))],perish=types.some(x=>PERISH.includes(x)),
+    urgent=perish||st.stops.some(s=>s.kind!=='support'&&s.by),pri=$('#pri').value,
+    w=urgent&&pri==='balanced'?[.2,.7,.1]:W[pri];
   // Only vehicles that fit this trip: land vehicles for road parts, boats for water parts
   const groups=need.map(dom=>{
     const rows=V.filter(v=>v.dom===dom).map(v=>evalV(v,r)),ok=rows.filter(x=>x.ok);
@@ -1147,16 +1188,17 @@ function renderResults(){
     const eligible=g.ok.filter(x=>g.eligible.has(x));
     if(eligible.length)g.m={cost:Math.min(...eligible.map(x=>x.cost)),hrs:Math.min(...eligible.map(x=>x.hrs)),eff:Math.min(...eligible.map(x=>x.eff))}
   });
+  const worst=validCombos.length?Math.max(...validCombos.map(combo=>combo.cost)):0;
   const complete=groups.every(g=>g.ch),parts=groups.map(g=>g.ch).filter(Boolean),sum=k=>parts.reduce((a,x)=>a+x[k],0);
   const ch=st.chosen=complete?{parts,land:groups.find(g=>g.dom==='land')?.ch||null,water:groups.find(g=>g.dom==='water')?.ch||null,
-    cost:sum('cost'),fuelCost:sum('fuelCost'),fuelUse:parts.map(x=>`${x.fuelAmount.toFixed(2)} ${x.fuelUnit} (${x.fuelPerHour.toFixed(2)} ${x.fuelUnit}/h)`).join(' + '),hrs:sum('hrs'),km:sum('km')}:null;
+    cost:sum('cost'),fuelCost:sum('fuelCost'),fuelUse:parts.map(x=>`${x.fuelAmount.toFixed(2)} ${x.fuelUnit} (${x.fuelPerHour.toFixed(2)} ${x.fuelUnit}/h)`).join(' + '),hrs:sum('hrs'),km:sum('km'),
+    fleetCount:sum('fleetSize'),savings:Math.max(0,worst-sum('cost'))}:null;
   navButton.hidden=!complete;navButton.disabled=!complete;
   if(st.me)showMe();
   const isBest=complete&&groups.every(g=>g.ch===g.best);
-  const worst=complete?Math.max(...validCombos.map(combo=>combo.cost)):0;
   const kind=need.length>1?t('tBoth'):need[0]==='water'?t('tWater'):t('tLand');
   const noOption=allCombos.length&&budget!==null?t('budgetNoFit',{budget:peso(budget)}):t('noOk');
-  const fleetSummary=ch?.parts.map(x=>t('fleetUnits',{n:x.trips,vehicle:x.v.name})).join(' · ');
+  const fleetSummary=ch?.parts.map(x=>t('fleetUnits',{n:x.fleetSize,vehicle:x.v.name})).join(' · ');
   $('#best').innerHTML=!ch?`<strong>${esc(noOption)}</strong>`:
    `<div class="big">${ch.parts.map(x=>ic(x.v.icon)).join(' ')}</div><div><small>${t(isBest?'best':'chosen')} · ${kind}</small><strong>${ch.parts.map(x=>x.v.name).join(' + ')}</strong></div>
    <div><small>${t('total')}</small><strong>${peso(ch.cost)}</strong></div><div><small>${t('fuelUsed')}</small><strong>${ch.fuelUse}</strong></div>
@@ -1177,11 +1219,11 @@ function renderResults(){
   }).join('')}</div>`).join('');
   etaUI(r,ch);
   const tag=(g,x,k)=>x.ok&&x[k]===g.m[k]?`<span class="b">${t('low')}</span>`:'';
-  $('#cmp').innerHTML=`<table><tr><th>${t('vehicle')}</th><th>${ic('g-clock')}</th><th>${t('cost')}</th><th>${t('fuelUsed')}</th><th>${t('fuelC')}</th><th>${t('labor')}</th><th>${t('effort')}</th><th>${t('trips')}</th></tr>${groups.map(g=>g.rows.map(x=>{
+  $('#cmp').innerHTML=`<table><tr><th>${t('vehicle')}</th><th>${ic('g-clock')}</th><th>${t('cost')}</th><th>${t('fuelUsed')}</th><th>${t('fuelC')}</th><th>${t('labor')}</th><th>${t('effort')}</th><th>${t('fleetCount')}</th></tr>${groups.map(g=>g.rows.map(x=>{
     const budgetBlocked=budget!==null&&x.ok&&!g.eligible.has(x);
     if(!x.ok)return `<tr class="muted"><td>${ic(x.v.icon)} ${x.v.name}</td><td colspan="7">${x.why}</td></tr>`;
     if(budgetBlocked)return `<tr class="muted"><td>${ic(x.v.icon)} ${x.v.name}</td><td colspan="7">${t('budgetBlocked')}</td></tr>`;
-    return `<tr><td>${ic(x.v.icon)} ${x.v.name}${x===g.best?' '+ic('g-trophy'):''}</td><td>${fmtT(x.hrs*60)}${tag(g,x,'hrs')}</td><td>${peso(x.cost)}${tag(g,x,'cost')}</td><td>${x.fuelAmount.toFixed(2)} ${x.fuelUnit}<br><small>${x.fuelPerHour.toFixed(2)} ${x.fuelUnit}/h</small></td><td>${peso(x.fuelCost)}</td><td>${peso(x.labor)}</td><td>${lvlN(x.lvl)}${tag(g,x,'eff')}</td><td>${x.trips}</td></tr>`
+    return `<tr><td>${ic(x.v.icon)} ${x.v.name}${x===g.best?' '+ic('g-trophy'):''}</td><td>${fmtT(x.hrs*60)}${tag(g,x,'hrs')}</td><td>${peso(x.cost)}${tag(g,x,'cost')}</td><td>${x.fuelAmount.toFixed(2)} ${x.fuelUnit}<br><small>${x.fuelPerHour.toFixed(2)} ${x.fuelUnit}/h</small></td><td>${peso(x.fuelCost)}</td><td>${peso(x.labor)}</td><td>${lvlN(x.lvl)}${tag(g,x,'eff')}</td><td>${x.fleetSize}</td></tr>`
   }).join('')).join('')}</table>`;
   if(ch)charts(groups.flatMap(g=>g.ok.filter(x=>g.eligible.has(x))),ch,r);
   drawMap(r)}
@@ -1234,4 +1276,8 @@ $('#play').onclick=()=>{
   $('#map').scrollIntoView({behavior:'smooth',block:'nearest'});
   st.anim=setInterval(()=>{if(k>=pts.length){clearInterval(st.anim);return}const[p,n]=pts[k];if(n!==cur){cur=n;mk.setIcon(mkIcon(n))}mk.setLatLng(p);k+=step},30)};
 
-['date','time','pri','round','tmode'].forEach(id=>$('#'+id).onchange=()=>render());
+$('#round').onclick=()=>{
+  const button=$('#round'),enabled=button.getAttribute('aria-pressed')!=='true';
+  button.setAttribute('aria-pressed',String(enabled));render()
+};
+['date','time','pri','tmode'].forEach(id=>$('#'+id).onchange=()=>render());
