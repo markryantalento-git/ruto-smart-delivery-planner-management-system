@@ -94,7 +94,21 @@ async function findPlaces(category,name,limit=5,options={}){
   placesCache.set(cacheKey,{at:Date.now(),places,result});
   return{places,...result}}
 
-let mapPoiLayer=null,mapPoiRequest=0,activeMapCategory='',lastMapPoiResult=null;
+let mapPoiLayer=null,mapPoiSearchLayer=null,mapPoiRequest=0,activeMapCategory='',lastMapPoiResult=null;
+function clearPoiSearchPulse(){
+  if(mapPoiSearchLayer)mapPoiSearchLayer.clearLayers();
+  planner3D?.setMarkers('poi-search',[])
+}
+function showPoiSearchPulse(point){
+  const html='<span class="poi-search-ripple" aria-hidden="true"><span></span><span></span><span></span><i></i></span>',
+    icon=L.divIcon({className:'poi-search-map-marker',html,iconSize:[68,68],iconAnchor:[34,34]});
+  if(!mapPoiSearchLayer)mapPoiSearchLayer=L.layerGroup().addTo(map);
+  mapPoiSearchLayer.clearLayers();
+  L.marker(point,{icon,interactive:false,zIndexOffset:1200}).addTo(mapPoiSearchLayer);
+  planner3D?.setMarkers('poi-search',[{
+    id:'active',lat:point.lat,lng:point.lng,html,className:'poi-search-map-marker',label:t('poiSearching')
+  }])
+}
 function mapCategoryButton(category){
   const button=document.createElement('button'),badge=document.createElement('span'),icon=document.createElementNS('http://www.w3.org/2000/svg','svg'),
     use=document.createElementNS('http://www.w3.org/2000/svg','use'),label=document.createElement('span');
@@ -108,8 +122,8 @@ function mapCategoryButton(category){
 }
 function updatePoiAnchorOptions(){
   const select=$('#poiAnchor');if(!select)return;
-  const current=select.value||'auto',gps=NAV.position||st.me,options=[{value:'auto',label:t('poiAnchorAuto')}];
-  if(gps)options.push({value:'gps',label:t('poiAnchorGps')});
+  const current=select.value||'auto',options=[{value:'auto',label:t('poiAnchorAuto')}];
+  options.push({value:'gps',label:t('poiAnchorGps')});
   if(st.origin)options.push({value:'pickup',label:t('poiAnchorPickup')});
   st.stops.forEach((stop,index)=>options.push({value:'drop:'+index,label:t('poiAnchorDropoff',{n:index+1})}));
   options.push({value:'map',label:t('poiAnchorMap')});
@@ -183,15 +197,22 @@ function showMapPlaces(result,category){
   panel.hidden=false;$('#poiHeading').textContent=t(config.k);
   $('#poiSummary').textContent=t('poiSearchSummary',{n:result.places.length,radius:result.radiusKm,anchor:result.anchorLabel});
   list.replaceChildren();if(mapPoiLayer)mapPoiLayer.clearLayers();
+  const nativeMarkers=[];
   if(!result.places.length){
+    planner3D?.setMarkers('poi',[]);
     const empty=document.createElement('p');empty.className='muted';empty.textContent=t('poiNoResults');list.append(empty);return
   }
   // Keep the category markers separate from app.js route markers on the shared Leaflet map.
   if(!mapPoiLayer)mapPoiLayer=L.layerGroup().addTo(map);
-  result.places.forEach(place=>{
+  result.places.forEach((place,index)=>{
     const impact=place.impact,marker=L.marker(place,{icon:L.divIcon({className:'poi-icon-wrap',
       html:`<span class="poi-map-icon" style="--poi-color:${config.color};--poi-marker-ink:${config.markerInk||'#353839'}"><span class="poi-map-badge">${config.badge}</span><svg class="poi-marker-svg" aria-hidden="true"><use href="#${config.icon}"></use></svg></span>`,
       iconSize:[42,48],iconAnchor:[21,46]})}).addTo(mapPoiLayer);
+    const markerHtml=`<span class="poi-map-icon" style="--poi-color:${config.color};--poi-marker-ink:${config.markerInk||'#353839'}"><span class="poi-map-badge">${config.badge}</span><svg class="poi-marker-svg" aria-hidden="true"><use href="#${config.icon}"></use></svg></span>`;
+    nativeMarkers.push({
+      id:place.id||index,lat:place.lat,lng:place.lng,html:markerHtml,className:'poi-icon-wrap',
+      anchor:'bottom',label:place.name,popup:`${place.name} · ${poiDistance(place.km)} · ${t('poiFuelImpact',{cost:impact.fuelCost===null?'—':peso(impact.fuelCost)})}`
+    });
     marker.bindPopup(`<strong>${esc(place.name)}</strong><br><span>${esc(poiDistance(place.km))}</span><br><span>${esc(t('poiFuelImpact',{cost:impact.fuelCost===null?'—':peso(impact.fuelCost)}))}</span>`);
     const row=document.createElement('article'),icon=document.createElement('span'),svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),
       use=document.createElementNS('http://www.w3.org/2000/svg','use'),details=document.createElement('div'),
@@ -218,17 +239,31 @@ function showMapPlaces(result,category){
     }
     row.append(icon,details,actions);list.append(row)
   });
-  map.fitBounds(L.latLngBounds([result.at,...result.places].map(place=>[place.lat,place.lng])),{padding:[30,30],maxZoom:15})
+  planner3D?.setMarkers('poi',nativeMarkers);
+  const bounds=[result.at,...result.places];
+  if(planner3D?.visible)planner3D.fitPoints(bounds);
+  else map.fitBounds(L.latLngBounds(bounds.map(place=>[place.lat,place.lng])),{padding:[30,30],maxZoom:15})
 }
 async function searchMapCategory(category){
   if(!PLACE_CATEGORY_BY_ID[category])return;
-  const request=++mapPoiRequest,radiusKm=Number($('#poiRadius').value)||3,anchor=poiAnchor(),sortBy=$('#poiSort').value;
+  const request=++mapPoiRequest,radiusKm=Number($('#poiRadius').value)||3,sortBy=$('#poiSort').value;
+  clearPoiSearchPulse();
   activeMapCategory=category;updateMapCategoryState();
   const panel=$('#poiPanel');panel.hidden=false;panel.setAttribute('aria-busy','true');
   $('#poiHeading').textContent=t(PLACE_CATEGORY_BY_ID[category].k);$('#poiSummary').textContent=t('poiSearching');
   $('#poiResults').replaceChildren();
+  if(mapPoiLayer)mapPoiLayer.clearLayers();planner3D?.setMarkers('poi',[]);
   $$('#mapCategoryBar [data-poi-cat]').forEach(button=>button.disabled=true);
   try{
+    if($('#poiAnchor').value==='gps'&&!NAV.position&&!st.me){
+      $('#poiSummary').textContent=t('poiLocating');
+      const current=await requestCurrentLocation({recenter:true});
+      if(request!==mapPoiRequest)return;
+      if(!current){$('#poiSummary').textContent=t('poiGpsRequired');return}
+      updatePoiAnchorOptions();$('#poiAnchor').value='gps'
+    }
+    const anchor=poiAnchor();
+    showPoiSearchPulse(anchor.point);
     const result=await findPlaces(category,null,100,{at:anchor.point,radius:radiusKm*1000,radiusKm,maxResults:240});
     if(request===mapPoiRequest){
       const places=result.places.map(place=>({...place,km:hav(anchor.point,place)}))
@@ -241,9 +276,13 @@ async function searchMapCategory(category){
     }
   }catch(error){
     console.warn('Nearby place search failed.',error);
-    if(request===mapPoiRequest){$('#poiSummary').textContent=t('poiSearchFailed');$('#poiResults').replaceChildren();if(mapPoiLayer)mapPoiLayer.clearLayers()}
+    if(request===mapPoiRequest){
+      $('#poiSummary').textContent=t('poiSearchFailed');$('#poiResults').replaceChildren();
+      if(mapPoiLayer)mapPoiLayer.clearLayers();planner3D?.setMarkers('poi',[])
+    }
   }finally{
     if(request===mapPoiRequest){
+      clearPoiSearchPulse();
       panel.setAttribute('aria-busy','false');
       $$('#mapCategoryBar [data-poi-cat]').forEach(button=>button.disabled=false)
     }
@@ -254,8 +293,9 @@ $('#poiRadius').addEventListener('change',()=>{if(activeMapCategory)searchMapCat
 $('#poiSort').addEventListener('change',()=>{if(activeMapCategory)searchMapCategory(activeMapCategory)});
 $('#poiClose').onclick=()=>{
   mapPoiRequest++;lastMapPoiResult=null;
+  clearPoiSearchPulse();
   $('#poiPanel').hidden=true;$('#poiPanel').removeAttribute('aria-busy');
   $$('#mapCategoryBar [data-poi-cat]').forEach(button=>button.disabled=false);
-  activeMapCategory='';updateMapCategoryState();if(mapPoiLayer)mapPoiLayer.clearLayers()
+  activeMapCategory='';updateMapCategoryState();if(mapPoiLayer)mapPoiLayer.clearLayers();planner3D?.setMarkers('poi',[])
 };
 renderMapCategories();

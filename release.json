@@ -1,7 +1,10 @@
 {
-  "version": "0.2.34",
-  "publishedAt": "2026-11-28T04:17:43.869Z",
+  "version": "0.2.36",
+  "publishedAt": "2026-11-28T05:35:04.058Z",
   "changes": [
+    "Added an animated nearby-category search pulse and perspective-styled vehicle models that follow the active navigation vehicle and heading.",
+    "Added a native OpenFreeMap 3D mode with accurately aligned route, nearby-place, and animated vehicle markers, plus direct navigation from unsaved planner routes.",
+    "Added explicit current-location anchoring for nearby searches and reduced the Noupe chat launcher's footprint.",
     "Replaced the built-in chatbot with the optional Noupe widget, loaded only after explicit chatbot consent.",
     "Updated the Privacy Policy and account-consent version to explain Noupe message processing.",
     "Preserved nearby category search and AI fuel-price lookup while removing the old chat interface and Gemini chat code.",

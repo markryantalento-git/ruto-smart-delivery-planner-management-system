@@ -13,6 +13,7 @@ Network, carrier SMS, and infrastructure charges charged by third parties may st
 - js/store.js           - save, history, calendar, device calendar
 - js/fuel.js            - fuel price refresh
 - js/nav.js             - live navigation
+- js/map3d.js           - native OpenFreeMap 3D map and aligned overlays
 - js/places.js          - nearby place search and category results
 - js/main.js            - start-up
 - data/fuel-prices.json - published nationwide fuel prices
@@ -72,22 +73,30 @@ step-by-step tour that highlights the menu, pickup and stop controls, nearby pla
 fuel estimates, delivery preferences, route comparisons, saving, scheduling, notifications, and
 RuBot. Choose **Skip tutorial** to continue immediately, or reopen it later from
 **About > Show the quick-start tutorial**.
-Open the RUTO Assistant by tapping the orange chat bubble at the bottom-right of the signed-in app.
+RuBot is provided by the optional, consent-gated Noupe widget in the lower-right corner. Its smaller
+launcher is available after choosing to enable Noupe in the cookie notice.
 Fuel prices per liter are editable in the planner; changes are saved on this device and update trip
 cost estimates. Road fuel estimates use average speed divided by km/L, multiplied by driving time,
 with a traffic adjustment; EV energy is calculated in kWh. Boat fuel is estimated by cruising
 liters per hour: the motorized-banca preset is 1.75 L/h (the midpoint of 1–2.5 L/h), while the
 cargo-boat preset retains its existing equivalent of 22.5 L/h. The comparison shows both trip
 quantity and hourly use. During an active route, use **Simulate** to move along the route without GPS.
-After saving a delivery, choose **Start delivery** to open RUTO's in-app, Waze-style navigation.
-It follows the saved drop-off order with live location, spoken turn guidance, and rerouting while
-the app is open. GPS permission is required; external Google Maps and Waze links are also available.
+From a completed plan, choose **Start navigation** to launch the current route directly without
+saving a delivery. Saved deliveries can also use **Start delivery**. In-app navigation follows the
+planned drop-off order with live location, spoken turn guidance, and rerouting while the app is open.
+GPS permission is required; external Google Maps and Waze links are also available.
 
-The planner and navigation maps use OpenFreeMap's public Liberty vector-map style, rendered with
-MapLibre GL JS through its Leaflet adapter. OpenFreeMap's map data comes from OpenStreetMap and its
-public tile service does not require an API key. If the MapLibre adapter fails to load, the app logs
-an error and falls back to OpenStreetMap raster tiles. Routing and nearby-place/address search
-continue to use their separate OpenStreetMap-based services.
+The planner and navigation maps use OpenFreeMap's public Liberty vector-map style. Their **3D**
+toggle opens a native MapLibre GL view with a pitched camera and the style's 3D buildings; route,
+nearby-place, and vehicle markers are rendered on that same map so they remain accurately aligned.
+While a nearby category is searching, an expanding pulse marks the selected search anchor. During
+navigation, a perspective-rendered vehicle model follows the active land or water route segment and
+turns with the reported travel heading.
+The standard 2D view continues to use the Leaflet adapter. OpenFreeMap's map data comes from
+OpenStreetMap and its public tile service does not require an API key. If the Leaflet adapter fails,
+the app logs an error and falls back to OpenStreetMap raster tiles. Routing and nearby-place/address
+search continue to use their separate OpenStreetMap-based services. Choose **My location** in the
+nearby-search anchor selector to request GPS when a location has not already been obtained.
 
 ## Firebase console (project ruto-6b418)
 1. Firestore Database > Create database (production mode, asia-southeast1).

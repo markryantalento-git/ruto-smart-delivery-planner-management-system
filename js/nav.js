@@ -1,6 +1,6 @@
 /* ============ LIVE NAVIGATION (follows the road, reroutes, voice guidance) ============ */
 const NAV=(()=>{
-let N=null,nmap=null,lyr,meM,seqN=0;
+let N=null,nmap=null,nav3D=null,lyr,meM,meVehicleId=null,seqN=0;
 const ANGLE={straight:0,'slight right':45,right:90,'sharp right':135,uturn:180,'sharp left':-135,left:-90,'slight left':-45};
 const MODKEY={straight:'nStraight','slight right':'nSRight',right:'nRight','sharp right':'nShRight',uturn:'nUturn','sharp left':'nShLeft',left:'nLeft','slight left':'nSLeft'};
 const dist=m=>m<1000?Math.max(10,Math.round(m/10)*10)+' m':(m/1000).toFixed(1)+' km';
@@ -9,11 +9,38 @@ function text(s){
   const base=s.type==='depart'?t('nDepart'):/roundabout|rotary/.test(s.type)&&s.exit?t('nRound',{n:s.exit}):t(MODKEY[s.mod]||'nStraight');
   return base+(s.road?' '+t('nOnto',{r:s.road}):'')}
 
+function toggle3D(enabled){
+  if(!nav3D)return;
+  try{
+    if(enabled){
+      const center=N?.pos||nmap.getCenter();
+      nav3D.setVisible(true,{center:{lat:center.lat,lng:center.lng},zoom:nmap.getZoom()})
+    }else{
+      const view=nav3D.setVisible(false);
+      if(view){nmap.setView([view.center.lat,view.center.lng],view.zoom,{animate:false});nmap.invalidateSize()}
+    }
+    setMap3DButton($('#nav3dToggle'),enabled)
+    if(enabled&&N?.pos)nav3D.flyTo(N.pos,17)
+  }catch(error){
+    console.error('Could not switch the navigation map view.',error);
+    const view=nav3D.setVisible(false);
+    if(view)nmap.setView([view.center.lat,view.center.lng],view.zoom,{animate:false});
+    nmap.invalidateSize();setMap3DButton($('#nav3dToggle'),false);toast(t('map3dError'),'bad')
+  }
+}
 function build(){
   if(nmap)return;
   nmap=L.map('navmap',{zoomControl:false}).setView([14.6,120.98],15);baseMapTiles().addTo(nmap);
   if(RUTO.TOMTOM_KEY)trafficTiles().addTo(nmap);
-  lyr=L.layerGroup().addTo(nmap);nmap.on('dragstart',()=>{if(N){N.follow=false;$('#nvCenter').hidden=false}})}
+  lyr=L.layerGroup().addTo(nmap);
+  nav3D=window.createRuto3DMap({
+    mapElement:$('#navmap'),container:$('#navmap3d'),
+    onDragStart:()=>{if(N){N.follow=false;$('#nvCenter').hidden=false}},
+    onError:()=>toast(t('map3dError'),'bad')
+  });
+  $('#nav3dToggle').onclick=()=>toggle3D($('#nav3dToggle').dataset.enabled!=='true');
+  nmap.on('dragstart',()=>{if(N){N.follow=false;$('#nvCenter').hidden=false}})
+}
 
 function here(){return new Promise(ok=>{
   if(st.me)return ok(st.me);
@@ -79,7 +106,7 @@ async function routeTo(){
   use(me.pri==='cheap'?cheap:me.pri==='fast'?fast:pickAlt(me.opts,me.pri));
   say(t('goingTo',{s:to.name})+'. '+text(me.route.steps[0]))}
 function use(r){N.route=r;N.idx=0;N.off=0;N.along=0;draw();altsUI();update(N.pos,0);
-  if(!N.follow)return;nmap.setView(ll(N.pos),17)}
+  if(!N.follow)return;if(nav3D.visible)nav3D.flyTo(N.pos,17);else nmap.setView(ll(N.pos),17)}
 function altsUI(){
   const{fast,cheap,route}=N,list=fast===cheap?[[fast,t('recommended')]]:[[fast,t('faster')],[cheap,t('saver')]];
   $('#navalts').innerHTML=list.map(([r,l],i)=>`<button class="chip ${r===route?'on':''}" data-alt="${i}"><b>${l}</b> ${fmtT(r.sec/60)} · ${r.km.toFixed(1)} km · ~${peso(r.cost)}</button>`).join('');
@@ -89,10 +116,24 @@ function draw(){
   N.opts.filter(o=>o!==N.route).forEach(o=>L.polyline(o.path,{color:'#7c879d',weight:5,opacity:.7,dashArray:'1 8'}).addTo(lyr).on('click',()=>use(o)));
   drawRoute(lyr,[{segs:N.route.segs}]);
   N.queue.forEach((s,i)=>L.marker(s,{icon:pinI(i?i+1:ic('g-pin'),!i)}).addTo(lyr).bindTooltip(esc(s.name)));
+  nav3D.setRoute(N.route.segs);
+  nav3D.setMarkers('route',N.queue.map((stop,index)=>({
+    id:index,lat:stop.lat,lng:stop.lng,
+    html:window.rutoPinMarkup(index?index+1:ic('g-pin'),!index),
+    anchor:'bottom',label:stop.name,popup:stop.name
+  })));
   mark(N.pos,N.heading||0)}
 function mark(p,h){
-  if(!meM)meM=L.marker(p,{icon:L.divIcon({className:'',html:'<div class="arrowme"><svg viewBox="0 0 24 24"><path d="M12 2l8 19-8-5-8 5z"/></svg></div>',iconSize:[40,40],iconAnchor:[20,20]}),zIndexOffset:999}).addTo(lyr);
-  meM.setLatLng(p);const s=meM.getElement()?.querySelector('svg');if(s)s.style.transform=`rotate(${h}deg)`}
+  const segment=segAt(N.along||0),vehicle=segment?.water?N.water:N.land,html=window.rutoNavigationVehicleMarkup(vehicle),
+    icon=L.divIcon({className:'',html,iconSize:[72,72],iconAnchor:[36,36]});
+  if(!meM)meM=L.marker(p,{icon,zIndexOffset:1100}).addTo(lyr);
+  else if(meVehicleId!==vehicle?.id)meM.setIcon(icon);
+  meVehicleId=vehicle?.id;meM.setLatLng(p);
+  const marker=meM.getElement()?.querySelector('.vehicle-location-marker');
+  if(marker)marker.style.setProperty('--vehicle-heading',h+'deg');
+  nav3D.setMarker('user','current',{
+    lat:p.lat,lng:p.lng,html,className:'vehicle-marker-host',bearing:h,label:t('currentLocation')
+  })}
 
 /* nearest point on the route: returns distance from route (km) and distance travelled (km) */
 function snap(p){
@@ -108,7 +149,11 @@ function onPos(p,acc=10,heading){
   const prev=N.pos;N.pos=p;
   if(heading!=null&&!isNaN(heading))N.heading=heading;
   else if(prev&&hav(prev,p)>.004)N.heading=(Math.atan2(rad(p.lng-prev.lng)*Math.cos(rad(p.lat)),rad(p.lat-prev.lat))*180/Math.PI+360)%360;
-  if(N.route){mark(p,N.heading||0);if(N.follow)nmap.panTo(ll(p),{animate:true,duration:.3});update(p,acc)}}
+  if(N.route){
+    mark(p,N.heading||0);
+    if(N.follow){if(nav3D.visible)nav3D.flyTo(p,17,300);else nmap.panTo(ll(p),{animate:true,duration:.3})}
+    update(p,acc)
+  }}
 function update(p,acc){
   const r=N.route,to=N.queue[0];if(!r||N.arrived)return;
   const s=snap(p);N.idx=s.i;N.along=s.along;
@@ -154,9 +199,18 @@ function simToggle(){
     const a=r.path[i-1],b=r.path[i]||a,u=(d-r.cum[i-1])/((r.cum[i]-r.cum[i-1])||1);
     onPos({lat:a[0]+(b[0]-a[0])*u,lng:a[1]+(b[1]-a[1])*u},5)},250)}
 
-function say(m){if(N&&!N.mute)speak(m,true)}
+function say(message){
+  if(!N||N.mute||!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;
+  window.speechSynthesis.cancel();
+  const utterance=new window.SpeechSynthesisUtterance(message);
+  utterance.lang=lang?'fil-PH':'en-PH';
+  window.speechSynthesis.speak(utterance)
+}
 function stop(){
   if(N){simStop();clearInterval(N.timer);if(N.watch!=null)navigator.geolocation?.clearWatch(N.watch);N.lock?.release?.().catch(()=>{});window.speechSynthesis?.cancel()}
+  if(nav3D?.visible)toggle3D(false);
+  nav3D?.setMarkers('user',[]);nav3D?.setMarkers('route',[]);nav3D?.setRoute([]);
+  setMap3DButton($('#nav3dToggle'),false);meVehicleId=null;
   N=null;seqN++;$('#nav').hidden=true;document.body.classList.remove('navon');if(map)setTimeout(()=>map.invalidateSize(),60)}
 function detour(place){
   const p={lat:place.lat,lng:place.lng,name:place.name,kind:'place'};
@@ -166,10 +220,19 @@ function detour(place){
 
 $('#nvEnd').onclick=stop;
 $('#nvArrive').onclick=next;
-$('#nvCenter').onclick=()=>{if(N){N.follow=true;nmap.setView(ll(N.pos),17);$('#nvCenter').hidden=true}};
+$('#nvCenter').onclick=()=>{if(N){N.follow=true;if(nav3D.visible)nav3D.flyTo(N.pos,17);else nmap.setView(ll(N.pos),17);$('#nvCenter').hidden=true}};
 $('#nvMute').onclick=()=>{if(!N)return;N.mute=!N.mute;$('#nvMute').classList.toggle('on',N.mute);if(N.mute)window.speechSynthesis?.cancel()};
 $('#nvSim').onclick=simToggle;
 const ext=f=>{const p=N?.queue[0];if(p)window.open(f(p),'_blank','noopener')};
 $('#nvG').onclick=()=>ext(p=>`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}&travelmode=driving&dir_action=navigate`);
 $('#nvW').onclick=()=>ext(p=>`https://waze.com/ul?ll=${p.lat},${p.lng}&navigate=yes`);
-return{start,stop,detour,get position(){return N?.pos||null},get active(){return!!N}}})();
+async function startFromPlanner(){
+  if(!st.origin||!st.stops.length||!st.r||!st.chosen){toast(t('navPlanUnavailable'),'bad');return}
+  return start({
+    origin:{...st.origin},stops:st.stops.map(stop=>({...stop})),order:[...st.r.ord],
+    round:$('#round').checked,pri:$('#pri').value,tmode:$('#tmode').value,
+    veh:st.chosen.land?.v.id,veh2:st.chosen.water?.v.id
+  })
+}
+$('#startNavPlan').onclick=()=>startFromPlanner();
+return{start,stop,detour,startFromPlanner,get position(){return N?.pos||null},get active(){return!!N}}})();
